@@ -1,0 +1,38 @@
+---
+version: 2.1
+
+executors:
+  chart-releaser:
+    docker:
+       - image: quay.io/helmpack/chart-releaser:v1.5.0
+    environment:
+      LC_ALL: "C.UTF-8"
+    resource_class: medium
+
+commands:
+  build-cr:
+    steps:
+      - run:
+          command: apk add helm yq github-cli git jq openssh
+          name: Install dependencies for the chart publish image
+  deploy-cr:
+    steps:
+      - run:
+          command: ./scripts/chart_publish.sh $APIKey
+          name: Run the release script
+
+jobs:
+  release-chart:
+    executor: chart-releaser
+    steps:
+      - build-cr
+      - checkout
+      - deploy-cr
+
+workflows:
+  releaser:
+    jobs:
+      - release-chart:
+          filters:
+            branches:
+              only: main
