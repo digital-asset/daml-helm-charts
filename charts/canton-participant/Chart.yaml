@@ -5,8 +5,8 @@ version: 0.0.6
 appVersion: 2.6.0
 kubeVersion: ">= 1.21.0-0"
 description: "A Helm chart for Canton Participants"
-home: https://github.com/DACH-NY/daml-enterprise-k8s-support/tree/main/charts/canton-participant
-icon: https://raw.githubusercontent.com/DACH-NY/daml-enterprise-k8s-support/main/images/canton-logo.png
+home: https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant
+icon: https://raw.githubusercontent.com/digital-asset/daml-helm-charts/main/images/canton-logo.png
 keywords:
   - canton
   - cluster
@@ -16,7 +16,7 @@ keywords:
   - participant
 maintainers:
   - name: "Digital Asset"
-    url: https://github.com/DACH-NY/
+    url: https://github.com/digital-asset/
 sources:
   - https://docs.daml.com/canton/about.html
 annotations:
