@@ -12,9 +12,8 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 ### TL;DR
 
 * Run script: `make refresh`
-* Verify the result: `git diff`
-* Commit a fork, create a new branch and open a pull request
-* Verify the pipeline is green (updating documentation should not break anything)
+* Verify the changes: `git diff`
+* Create a fork, create a new branch, commit your changes and open a pull request
 
 ### Auto-generated sections
 
