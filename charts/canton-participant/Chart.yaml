@@ -1,0 +1,23 @@
+---
+apiVersion: v2
+name: "canton-participant"
+version: 0.0.6
+appVersion: 2.6.0
+kubeVersion: ">= 1.21.0-0"
+description: "A Helm chart for Canton Participants"
+home: https://github.com/DACH-NY/daml-enterprise-k8s-support/tree/main/charts/canton-participant
+icon: https://raw.githubusercontent.com/DACH-NY/daml-enterprise-k8s-support/main/images/canton-logo.png
+keywords:
+  - canton
+  - cluster
+  - daml
+  - grpc
+  - ledger
+  - participant
+maintainers:
+  - name: "Digital Asset"
+    url: https://github.com/DACH-NY/
+sources:
+  - https://docs.daml.com/canton/about.html
+annotations:
+  artifacthub.io/license: Apache-2.0

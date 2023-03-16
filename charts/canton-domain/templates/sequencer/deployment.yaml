@@ -1,0 +1,184 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "canton-node.fullname" . }}-sequencer
+  {{- with .Values.sequencer.deployment.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-node.labels" (list . "sequencer") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.sequencer.deployment.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.sequencer.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "canton-node.selectorLabels" (list . "sequencer") | nindent 6 }}
+  {{- with .Values.sequencer.deployment.strategy }}
+  strategy: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      annotations:
+        "checksum/config": {{ include (print $.Template.BasePath "/sequencer/configmap.yaml") . | sha256sum | quote }}
+        "checksum/env": {{ include (print $.Template.BasePath "/sequencer/configmap-env.yaml") . | sha256sum | quote }}
+        "checksum/secret": {{ include (print $.Template.BasePath "/sequencer/secret-env.yaml") . | sha256sum | quote }}
+        {{- with .Values.sequencer.pod.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels: {{- include "canton-node.labels" (list . "sequencer") | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.sequencer.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.common.serviceAccount.create }}
+      serviceAccountName: {{ template "canton-node.fullname" . }}
+      {{- end }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: canton
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "daemon"
+            - "--log-profile=container"
+            - "--log-encoder={{ .Values.common.logEncoder }}"
+            - "--log-level-root={{ .Values.common.logLevel.root }}"
+            - "--log-level-canton={{ .Values.common.logLevel.canton }}"
+            - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
+            - "--config=/canton/sequencer.conf"
+          envFrom:
+            {{- if or .Values.common.environment .Values.sequencer.environment }}
+            - configMapRef:
+                name: {{ include "canton-node.fullname" . }}-sequencer-envmap
+            {{- end }}
+            {{- if or .Values.common.environmentSecrets .Values.sequencer.environmentSecrets }}
+            - secretRef:
+                name: {{ include "canton-node.fullname" . }}-sequencer-secretmap
+            {{- end }}
+          env:
+          {{- if .Values.sequencer.storage.existingSecret.name }}
+            - name: CANTON_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sequencer.storage.existingSecret.name }}
+                  key: {{ .Values.sequencer.storage.existingSecret.key }}
+          {{- end }}
+          ports:
+            - name: public
+              containerPort: {{ .Values.sequencer.ports.public }}
+            - name: admin
+              containerPort: {{ .Values.sequencer.ports.admin }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.sequencer.ports.metrics }}
+            {{- end }}
+          {{- with .Values.sequencer.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+          {{- if .Values.sequencer.livenessProbe }}
+            {{- toYaml .Values.sequencer.livenessProbe | nindent 12 }}
+          {{- else }}
+            grpc:
+              port: {{ .Values.sequencer.ports.health }}
+              service: "liveness"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+            timeoutSeconds: 3
+          {{- end }}
+          readinessProbe:
+          {{- if .Values.sequencer.readinessProbe }}
+            {{- toYaml .Values.sequencer.readinessProbe | nindent 12 }}
+          {{- else }}
+            grpc:
+              port: {{ .Values.sequencer.ports.health }}
+              service: ""
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 1
+            timeoutSeconds: 3
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /canton/sequencer.conf
+              subPath: sequencer.conf
+              readOnly: true
+            {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled }}
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
+            - name: mtls
+              mountPath: "/mtls"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.storage.certificatesSecret }}
+            - name: pgtls
+              mountPath: "/pgtls"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.sequencer.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "canton-node.fullname" . }}-sequencer
+        {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled }}
+        - name: tls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-sequencer-tls"
+              csi.cert-manager.io/dns-names: "{{ include "sequencer.tlsCertManagerDnsNames" . }}"
+              csi.cert-manager.io/ip-sans: "0.0.0.0"
+        - name: mtls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-sequencer-mtls"
+              csi.cert-manager.io/dns-names: "{{ template "canton-node.fullname" . }}-sequencer.{{ .Release.Namespace }}.svc.cluster.local"
+        {{- end }}
+        {{- if .Values.storage.certificatesSecret }}
+        - name: pgtls
+          secret:
+            secretName: {{ .Values.storage.certificatesSecret }}
+        {{- end }}
+        {{- with .Values.sequencer.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.sequencer.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sequencer.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sequencer.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,13 @@
+*
+  _____            _
+ / ____|          | |
+| |     __ _ _ __ | |_ ___  _ __
+| |    / _` | '_ \| __/ _ \| '_ \
+| |___| (_| | | | | || (_) | | | |
+ \_____\__,_|_| |_|\__\___/|_| |_|
+
+Participant {{ .Values.image.tag | default .Chart.AppVersion }} has been deployed successfully!
+
+More information on how to configure Canton can be found in our documentation:
+
+https://docs.daml.com/

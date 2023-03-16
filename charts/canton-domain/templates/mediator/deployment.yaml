@@ -1,0 +1,181 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "canton-node.fullname" . }}-mediator
+  {{- with .Values.mediator.deployment.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-node.labels" (list . "mediator") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.mediator.deployment.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.mediator.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "canton-node.selectorLabels" (list . "mediator") | nindent 6 }}
+  strategy:
+    type: "Recreate"
+  template:
+    metadata:
+      annotations:
+        "checksum/config": {{ include (print $.Template.BasePath "/mediator/configmap.yaml") . | sha256sum | quote }}
+        "checksum/env": {{ include (print $.Template.BasePath "/mediator/configmap-env.yaml") . | sha256sum | quote }}
+        "checksum/secret": {{ include (print $.Template.BasePath "/mediator/secret-env.yaml") . | sha256sum | quote }}
+        {{- with .Values.mediator.pod.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels: {{- include "canton-node.labels" (list . "mediator") | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.mediator.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.common.serviceAccount.create }}
+      serviceAccountName: {{ template "canton-node.fullname" . }}
+      {{- end }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: canton
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "daemon"
+            - "--log-profile=container"
+            - "--log-encoder={{ .Values.common.logEncoder }}"
+            - "--log-level-root={{ .Values.common.logLevel.root }}"
+            - "--log-level-canton={{ .Values.common.logLevel.canton }}"
+            - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
+            - "--config=/canton/mediator.conf"
+          envFrom:
+            {{- if or .Values.common.environment .Values.mediator.environment }}
+            - configMapRef:
+                name: {{ include "canton-node.fullname" . }}-mediator-envmap
+            {{- end }}
+            {{- if or .Values.common.environmentSecrets .Values.mediator.environmentSecrets }}
+            - secretRef:
+                name: {{ include "canton-node.fullname" . }}-mediator-secretmap
+            {{- end }}
+          env:
+          {{- if .Values.mediator.storage.existingSecret.name }}
+            - name: CANTON_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mediator.storage.existingSecret.name }}
+                  key: {{ .Values.mediator.storage.existingSecret.key }}
+          {{- end }}
+          ports:
+            - name: admin
+              containerPort: {{ .Values.mediator.ports.admin }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.mediator.ports.metrics }}
+            {{- end }}
+          {{- with .Values.mediator.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+          {{- if .Values.mediator.livenessProbe }}
+            {{- toYaml .Values.mediator.livenessProbe | nindent 12 }}
+          {{- else }}
+            grpc:
+              port: {{ .Values.mediator.ports.health }}
+              service: "liveness"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+            timeoutSeconds: 3
+          {{- end }}
+          readinessProbe:
+          {{- if .Values.mediator.readinessProbe }}
+            {{- toYaml .Values.mediator.readinessProbe | nindent 12 }}
+          {{- else }}
+            grpc:
+              port: {{ .Values.mediator.ports.health }}
+              service: ""
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 1
+            timeoutSeconds: 3
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /canton/mediator.conf
+              subPath: mediator.conf
+              readOnly: true
+            {{- if .Values.common.tls.admin.enabled }}
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
+            - name: mtls
+              mountPath: "/mtls"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.storage.certificatesSecret }}
+            - name: pgtls
+              mountPath: "/pgtls"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.mediator.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "canton-node.fullname" . }}-mediator
+        {{- if .Values.common.tls.admin.enabled }}
+        - name: tls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-mediator-tls"
+              csi.cert-manager.io/dns-names: "localhost,{{ template "canton-node.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
+              csi.cert-manager.io/ip-sans: "0.0.0.0"
+        - name: mtls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-mediator-mtls"
+              csi.cert-manager.io/dns-names: "{{ template "canton-node.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
+        {{- end }}
+        {{- if .Values.storage.certificatesSecret }}
+        - name: pgtls
+          secret:
+            secretName: {{ .Values.storage.certificatesSecret }}
+        {{- end }}
+        {{- with .Values.mediator.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.mediator.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mediator.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mediator.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}

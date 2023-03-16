@@ -1,0 +1,35 @@
+{{- if .Values.sequencer.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "canton-node.fullname" . }}-sequencer
+  {{- with .Values.sequencer.ingress.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-node.labels" (list . "sequencer") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.sequencer.ingress.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.sequencer.ingress.className }}
+  ingressClassName: {{ .Values.sequencer.ingress.className | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.sequencer.ingress.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.sequencer.ingress.path }}
+            pathType: {{ .Values.sequencer.ingress.pathType }}
+            backend:
+              service:
+                name: {{ template "canton-node.fullname" . }}-sequencer
+                port:
+                  name: public
+  {{- with .Values.sequencer.ingress.tls }}
+  tls: {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,138 @@
+{{- if .Values.bootstrap.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "canton-node.fullname" . }}-bootstrap
+  annotations:
+    "helm.sh/hook": {{ .Values.bootstrap.job.helmHook | quote }}
+    "helm.sh/hook-weight": {{ .Values.bootstrap.job.helmHookWeight | quote }}
+    "helm.sh/hook-delete-policy": {{ .Values.bootstrap.job.helmHookDeletePolicy | quote }}
+    {{- with .Values.bootstrap.job.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels: {{- include "canton-node.labels" (list . "bootstrap") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.bootstrap.job.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  backoffLimit: {{ .Values.bootstrap.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.bootstrap.activeDeadlineSeconds }}
+  template:
+    metadata:
+      annotations:
+        "checksum/config": {{ include (print $.Template.BasePath "/configmap-remote.yaml") . | sha256sum | quote }}
+        "checksum/env": {{ include (print $.Template.BasePath "/bootstrap/configmap-env.yaml") . | sha256sum | quote }}
+        "checksum/secret": {{ include (print $.Template.BasePath "/bootstrap/secret-env.yaml") . | sha256sum | quote }}
+        "checksum/script": {{ include (print $.Template.BasePath "/bootstrap/configmap.yaml") . | sha256sum | quote }}
+        {{- with .Values.bootstrap.pod.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels: {{- include "canton-node.labels" (list . "bootstrap") | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.bootstrap.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: canton
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "run"
+            - "--log-profile=container"
+            - "--log-encoder={{ .Values.common.logEncoder }}"
+            - "--log-level-root={{ .Values.bootstrap.logLevel.root }}"
+            - "--log-level-canton={{ .Values.bootstrap.logLevel.canton }}"
+            - "--log-level-stdout={{ .Values.bootstrap.logLevel.stdout }}"
+            - "--config=/canton/remote.conf"
+            - "/canton/bootstrap.canton"
+          envFrom:
+            {{- if .Values.bootstrap.environment }}
+            - configMapRef:
+                name: {{ include "canton-node.fullname" . }}-bootstrap-envmap
+            {{- end }}
+            {{- if .Values.bootstrap.environmentSecrets }}
+            - secretRef:
+                name: {{ include "canton-node.fullname" . }}-bootstrap-secretmap
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.bootstrap.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: bootstrap
+              mountPath: /canton/bootstrap.canton
+              subPath: bootstrap.canton
+              readOnly: true
+            - name: config
+              mountPath: /canton/remote.conf
+              subPath: remote.conf
+              readOnly: true
+            {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "isParticipantTLS" .) }}
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
+            - name: mtls
+              mountPath: "/mtls"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.bootstrap.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: bootstrap
+          configMap:
+            name: {{ include "canton-node.fullname" . }}-bootstrap
+        - name: config
+          configMap:
+            name: {{ include "canton-node.fullname" . }}-remote
+        {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "isParticipantTLS" .) }}
+        - name: tls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-bootstrap-tls"
+              csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
+        - name: mtls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-bootstrap-mtls"
+              csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
+        {{- end }}
+        {{- with .Values.bootstrap.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.bootstrap.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bootstrap.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bootstrap.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
