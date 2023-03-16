@@ -1,0 +1,207 @@
+---
+## @section Common parameters
+
+## @param nameOverride String to partially override `canton-json.name` template (will maintain the release name)
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override `canton-json.fullname` template
+##
+fullnameOverride: ""
+
+## @param replicaCount Number of Participant pods to deploy
+replicaCount: 1
+
+## @param image.repository Docker image repository
+## @param image.tag Docker image tag (immutable tags are recommended)
+## @param image.digest Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
+## @param image.pullPolicy Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
+## @param image.pullSecrets Specify Docker registry secret names as an array
+##
+image:
+  ## Private Docker image
+  repository: digitalasset-docker.jfrog.io/http-json
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## Secrets must be manually created in the namespace
+  ## You can also patch targeted namespace 'default' ServiceAccount with 'imagePullSecrets' instead of using pullSecrets
+  pullSecrets: []
+
+## @param commonLabels Add labels to all the deployed resources
+##
+commonLabels: {}
+
+## @param metrics.enabled Enable Prometheus metrics endpoint
+## @param metrics.reportingInterval Metrics reporting interval
+##
+metrics:
+  enabled: false
+  reportingInterval: "30s"
+
+## @section HTTP JSON API configuration
+
+## @extra storage PostgreSQL configuration
+## @param storage.host Server hostname
+## @param storage.port Server port
+## @param storage.database Database name
+## @param storage.user User name
+## @param storage.existingSecret.name Name of existing secret with user credentials
+## @param storage.existingSecret.key Name of key in existing secret with user password
+##
+storage:
+  host: "postgres"
+  port: 5432
+  database: "json"
+  user: "json"
+  ## Secret must be manually created in the namespace
+  ## If existingSecret.name is set: environment variable JSON_API_DB_PASSWORD will be mounted from the scepcified secret/key
+  ## Alternatively you can set key JSON_API_DB_PASSWORD directly in environmentSecrets
+  existingSecret:
+    name: ""
+    key: ""
+  ## @param storage.connectionProperties PostgreSQL JDBC driver connection URI properties (everything after `?`)
+  ## @param storage.tablePrefix Prefix for DB table names (to avoid collisions)
+  ## @param storage.poolSize DB connection pool maximum connections
+  ## @param storage.minIdle DB connection pool minimum idle connections
+  ## @param storage.idleTimeout DB connection pool idle timeout
+  ## @param storage.connectionTimeout  DB connection pool timeout
+  ## @param storage.startMode How the DB schema should be handled. Allowed values: `start-only`, `create-only`, `create-if-needed-and-start`, `create-and-start`
+  ## @param storage.certificatesSecret Name of an existing secret containing certificates, mounted to `/pgtls`
+  ##
+  connectionProperties: "ssl=true&sslmode=require"
+  tablePrefix: ""
+  poolSize: 10
+  minIdle: 4
+  idleTimeout: "10s"
+  connectionTimeout: "60s"
+  startMode: "create-and-start"
+  certificatesSecret: ""
+
+## @param ledgerAPI.host Ledger API hostname
+## @param ledgerAPI.port Ledger API port
+##
+ledgerAPI:
+  host: "participant"
+  port: 4001
+
+## @param allowInsecureTokens Allow connections without a reverse proxy providing HTTPS<br />**DO NOT ALLOW INSECURE TOKENS IN PRODUCTION**
+##
+allowInsecureTokens: false
+
+## @section mTLS configuration
+
+tls:
+  ## @param tls.enabled Enable mTLS to Ledger API (gRPC)
+  ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled)
+  ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+  ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+  ## @param tls.certManager.issuerName Cert-manager issuer name
+  ##
+  enabled: false
+  certManager:
+    issuerGroup: "cert-manager.io"
+    issuerKind: "Issuer"
+    issuerName: "my-cert-manager-issuer"
+  ## @param tls.trustCollectionFile Trusted certificate(s), if omitted JVM default trust store is used
+  ## @param tls.certChainFile Certificate
+  ## @param tls.privateKeyFile Private key
+  ## @param tls.minimumServerProtocolVersion Minimum TLS version allowed
+  ## @param tls.ciphers Specify ciphers allowed, if set to `null` JVM defaults are used
+  ##
+  trustCollectionFile: "/tls/ca.crt"
+  certChainFile: "/tls/tls.crt"
+  privateKeyFile: "/tls/tls.key"
+  ## Note that up until at least Daml 2.6.0 these two parameters are not being picked up.
+  minimumServerProtocolVersion: "TLSv1.3"
+  ciphers: "null"
+
+## @section Logging
+
+## @param logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+## @param logEncoder Logging encoder. Allowed values: `plain`, `json`
+##
+logLevel: "INFO"
+logEncoder: "plain"
+
+## @section Container ports
+
+## @param ports.http JSON API container port (HTTP)
+## @param ports.metrics Promotheus exporter container port (HTTP)
+##
+ports:
+  http: 3000
+  metrics: 8081
+
+## @section Deployment configuration
+
+## @param environment Container environment variables
+## @param environmentSecrets Container secret environment variables
+##
+environment: {}
+environmentSecrets: {}
+
+## @param deployment.annotations Deployment extra annotations
+## @param deployment.labels Deployment extra labels
+## @param deployment.strategy Deployment strategy
+##
+deployment:
+  annotations: {}
+  labels: {}
+  strategy: {}
+## @param pod.annotations Extra annotations for Deployment pods
+## @param pod.labels Extra labels for Deployment pods
+##
+pod:
+  annotations: {}
+  labels: {}
+## @param affinity Affinity for pods assignment
+## @param nodeSelector Node labels for pods assignment
+## @param resources Resources requests/limits for HTTP JSON API container
+## @param tolerations Tolerations for pods assignment
+##
+affinity: {}
+nodeSelector: {}
+resources: {}
+tolerations: []
+## @param extraVolumeMounts Specify extra list of additional volumeMounts for HTTP JSON API container
+## @param extraVolumes Specify extra list of additional volumes for HTTP JSON API pod
+##
+extraVolumeMounts: []
+extraVolumes: []
+
+## @section Service configuration
+
+## @param service.type Service type. Allowed values: `ExternalName`, `ClusterIP`, `NodePort`, `LoadBalance`
+## @param service.annotations Service extra annotations
+## @param service.labels Service extra labels
+## @param service.ports.http JSON API port (HTTP)
+## @param service.ports.metrics Promotheus exporter service port (HTTP)
+##
+service:
+  type: ClusterIP
+  annotations: {}
+  labels: {}
+  ports:
+    http: 7575
+    metrics: 8081
+
+## @section Ingress configuration
+
+## @param ingress.enabled Enable ingress to HTTP JSON API service port `http` (HTTP)
+## @param ingress.annotations Ingress extra annotations
+## @param ingress.labels Ingress extra labels
+## @param ingress.className Set `ingressClassName` on the ingress record
+## @param ingress.hostname Default host for the ingress resource
+## @param ingress.path Path to HTTP JSON API
+## @param ingress.pathType Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific`
+## @param ingress.tls Enable TLS configuration for `hostname`
+##
+ingress:
+  enabled: false
+  annotations: {}
+  labels: {}
+  className: ""
+  hostname: "http-json.domain.com"
+  path: "/"
+  pathType: "Prefix"
+  tls: []

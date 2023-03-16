@@ -1,0 +1,15 @@
+{{- if or .Values.common.environment .Values.mediator.environment }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "canton-node.fullname" . }}-mediator-envmap
+  labels: {{- include "canton-node.labels" (list . "mediator") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+{{- range $key,$value := mustMergeOverwrite .Values.common.environment .Values.mediator.environment }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}

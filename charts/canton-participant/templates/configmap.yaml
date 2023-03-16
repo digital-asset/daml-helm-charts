@@ -1,0 +1,96 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "canton-node.fullname" . }}
+  labels: {{- include "canton-node.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  participant.conf: |
+    canton {
+      participants {
+        {{ .Values.participantName }} {
+          {{- include "canton-node.storage" . | indent 10 }}
+
+          ledger-api {
+            address = "0.0.0.0"
+            port = {{ .Values.ports.public }}
+            {{- if .Values.tls.public.enabled }}
+            tls {
+              {{- if ne .Values.tls.public.trustCollectionFile "" }}
+              trust-collection-file = {{ .Values.tls.public.trustCollectionFile | quote }}
+              {{- end }}
+              cert-chain-file = {{ .Values.tls.public.certChainFile | quote }}
+              private-key-file = {{ .Values.tls.public.privateKeyFile | quote }}
+              client-auth = {
+                type = {{ .Values.tls.public.clientAuth.type }}
+                admin-client {
+                  cert-chain-file = {{ .Values.tls.public.clientAuth.certChainFile | quote }}
+                  private-key-file = {{ .Values.tls.public.clientAuth.privateKeyFile | quote }}
+                }
+              }
+              minimum-server-protocol-version = {{ include "canton-node.tlsMinimumServerProtocolVersion" .Values.tls.public.minimumServerProtocolVersion }}
+              ciphers = {{ include "canton-node.tlsCiphers" .Values.tls.public.ciphers }}
+            }
+            {{- end }}
+
+            {{- if .Values.authServices.enabled }}
+            auth-services = [{
+              type = {{ .Values.authServices.type | quote }}
+              {{- if .Values.authServices.url }}
+              url = {{ .Values.authServices.url | quote }}
+              {{- end }}
+              {{- if .Values.authServices.certificate }}
+              certificate = {{ .Values.authServices.certificate | quote }}
+              {{- end }}
+              {{- if .Values.authServices.secret }}
+              secret = {{ .Values.authServices.secret | quote }}
+              {{- end }}
+            }]
+            {{- end }}
+          }
+
+          admin-api {
+            address = "0.0.0.0"
+            port = {{ .Values.ports.admin }}
+            {{- if .Values.tls.admin.enabled }}
+            tls {
+              {{- if ne .Values.tls.admin.trustCollectionFile "" }}
+              trust-collection-file = {{ .Values.tls.admin.trustCollectionFile | quote }}
+              {{- end }}
+              cert-chain-file = {{ .Values.tls.admin.certChainFile | quote }}
+              private-key-file = {{ .Values.tls.admin.privateKeyFile | quote }}
+              client-auth = {
+                type = {{ .Values.tls.admin.clientAuth.type }}
+                admin-client {
+                  cert-chain-file = {{ .Values.tls.admin.clientAuth.certChainFile | quote }}
+                  private-key-file = {{ .Values.tls.admin.clientAuth.privateKeyFile | quote }}
+                }
+              }
+              minimum-server-protocol-version = {{ include "canton-node.tlsMinimumServerProtocolVersion" .Values.tls.admin.minimumServerProtocolVersion }}
+              ciphers = {{ include "canton-node.tlsCiphers" .Values.tls.admin.ciphers }}
+            }
+            {{- end }}
+          }
+
+          replication {
+            enabled = true
+          }
+
+          monitoring.grpc-health-server {
+            address = "0.0.0.0"
+            port = {{ .Values.ports.health }}
+          }
+        }
+      }
+
+      {{ if .Values.metrics.enabled -}}
+      monitoring.metrics.reporters = [{
+        type = prometheus
+        address = "0.0.0.0"
+        port = {{ .Values.ports.metrics }}
+      }]
+      {{- end }}
+    }

@@ -1,0 +1,59 @@
+{{/*
+PostgreSQL JDBC driver connection URI
+Syntax: postgresql://[userspec@][hostspec][/dbname][?paramspec]
+Docs: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+*/}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "canton-trigger.fullname" . }}
+  labels: {{- include "canton-trigger.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  trigger.conf: |
+    {
+      address = "0.0.0.0"
+      port = {{ .Values.ports.http }}
+
+      ledger-api {
+        address = {{ .Values.ledgerAPI.host | quote }}
+        port = {{ .Values.ledgerAPI.port }}
+
+        {{- if .Values.tls.enabled }}
+        tls {
+          enabled = {{ .Values.tls.enabled }}
+          {{- if ne .Values.tls.trustCollectionFile "" }}
+          trust-collection-file = {{ .Values.tls.trustCollectionFile | quote }}
+          {{- end }}
+          cert-chain-file = {{ .Values.tls.certChainFile | quote }}
+          private-key-file = {{ .Values.tls.privateKeyFile | quote }}
+          minimum-server-protocol-version = {{ .Values.tls.minimumServerProtocolVersion }}
+          ciphers = {{ .Values.tls.ciphers }}
+        }
+        {{- end }}
+      }
+
+      trigger-store {
+        user = {{ .Values.storage.user | quote }}
+        password = ${?TRIGGER_DB_PASSWORD}
+        driver = "org.postgresql.Driver"
+        url = "jdbc:postgresql://{{ .Values.storage.host }}:{{ .Values.storage.port }}/{{ .Values.storage.database }}{{ with .Values.storage.connectionProperties }}?{{ . }}{{ end }}"
+        {{- with .Values.storage.tablePrefix }}
+        tablePrefix = {{ . | quote }}
+        {{- end }}
+        pool-size = {{ .Values.storage.poolSize }}
+        min-idle = {{ .Values.storage.minIdle }}
+        idle-timeout = {{ .Values.storage.idleTimeout | quote }}
+        connection-timeout = {{ .Values.storage.connectionTimeout | quote }}
+      }
+
+      {{- if .Values.metrics.enabled }}
+      metrics {
+        reporter = "prometheus://0.0.0.0:{{ .Values.ports.metrics }}"
+        reporting-interval = {{ .Values.metrics.reportingInterval }}
+      }
+      {{- end }}
+    }

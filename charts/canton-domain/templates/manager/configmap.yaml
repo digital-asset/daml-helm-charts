@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "canton-node.fullname" . }}-manager
+  labels: {{- include "canton-node.labels" (list . "common") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  manager.conf: |
+    canton {
+      domain-managers {
+        {{ .Values.common.domainName }} {
+          {{- include "canton-node.storage" (list . "manager") | indent 10 }}
+
+          admin-api {
+            address = "0.0.0.0"
+            port = {{ .Values.manager.ports.admin }}
+            {{- include "canton-node.adminTLS" (list .Values.common.tls.admin) | indent 12 }}
+          }
+
+          replication {
+            enabled = true
+          }
+
+          monitoring.grpc-health-server {
+            address = "0.0.0.0"
+            port = {{ .Values.manager.ports.health }}
+          }
+
+          topology {
+            open = {{ .Values.manager.topology.open }}
+            require-participant-certificate = {{ .Values.manager.topology.requireParticipantCertificate }}
+          }
+        }
+      }
+
+      {{ include "canton-node.remote-mediators" . | nindent 6 | trim }}
+
+      {{ include "canton-node.remote-sequencers" . | nindent 6 | trim }}
+
+      {{- include "canton-node.monitoring" (list . "manager") | nindent 6 }}
+    }

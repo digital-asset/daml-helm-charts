@@ -1,0 +1,37 @@
+{{/* Used in deployment-console.yaml, bootstrap/job.yaml */}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "canton-node.fullname" . }}-remote
+  labels: {{- include "canton-node.labels" (list . "common") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  remote.conf: |
+    canton {
+      {{- with .Values.common.features }}
+      features {
+        enable-preview-commands = {{ .enablePreviewCommands }}
+        enable-testing-commands = {{ .enableTestingCommands }}
+        enable-repair-commands = {{ .enableRepairCommands }}
+      }
+      {{- end }}
+
+      remote-domain-managers {
+        {{ .Values.common.domainName }} {
+          admin-api {
+            address = "{{ template "canton-node.fullname" . }}-manager.{{ .Release.Namespace }}.svc.cluster.local"
+            port = {{ .Values.manager.service.ports.admin }}
+            {{- include "canton-node.remoteTLS" (list .Values.common.tls.admin) | indent 12 }}
+          }
+        }
+      }
+
+      {{ include "canton-node.remote-mediators" . | nindent 6 | trim }}
+
+      {{ include "canton-node.remote-sequencers" . | nindent 6 | trim }}
+
+      {{ include "canton-node.remote-participants" . | nindent 6 | trim }}
+    }

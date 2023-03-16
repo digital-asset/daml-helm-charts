@@ -1,0 +1,638 @@
+---
+## @section Global parameters
+
+## @param nameOverride String to partially override `canton-node.name` template (will maintain the release name)
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override `canton-node.fullname` template
+##
+fullnameOverride: ""
+
+## @param image.repository Canton Docker image repository
+## @param image.tag Canton Docker image tag (immutable tags are recommended)
+## @param image.digest Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
+## @param image.pullPolicy Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
+## @param image.pullSecrets Specify Canton Docker registry secret names as an array
+##
+image:
+  ## Private Docker image
+  repository: digitalasset-docker.jfrog.io/digitalasset/canton-enterprise
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## Secrets must be manually created in the namespace
+  ## You can also patch targeted namespace 'default' ServiceAccount with 'imagePullSecrets' instead of using pullSecrets
+  pullSecrets: []
+
+## @param commonLabels Add labels to all the deployed resources
+##
+commonLabels: {}
+
+## @param metrics.enabled Enable Prometheus metrics endpoint on Domain Topology Manager, Mediator and Sequencer
+##
+metrics:
+  enabled: false
+
+## @section Global PostgreSQL configuration
+##
+storage:
+  ## @param storage.host Server hostname
+  ## @param storage.port Server port
+  ## @param storage.database Database name
+  ## @param storage.user User name
+  host: "postgres"
+  port: 5432
+  database: "participant1"
+  user: "canton"
+  ## @param storage.existingSecret.name Name of existing secret with user credentials
+  ## @param storage.existingSecret.key Name of key in existing secret with user password
+  ## Secret must be manually created in the namespace
+  ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
+  ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+  ##
+  existingSecret:
+    name: ""
+    key: ""
+  ## @param storage.maxConnections Database connection pool maximum connections
+  ## @param storage.ssl Enable TLS connection
+  ## @param storage.sslMode TLS mode. Allowed values: `disable`, `allow`, `prefer`, `require`, `verify-ca`, `verify-full`
+  ## @param storage.certificatesSecret Name of an existing K8s secret that contains certificate files, mounted to `/pgtls`, provide K8s secret key names as cert filenames. If empty `""`, provide the full path to cert files like `/path/to/file`.
+  ## @param storage.certCAFilename CA certificate file (PEM encoded X509v3). Intermediate certificate(s) that chain up to this root certificate can also appear in this file.
+  ## @param storage.certFilename Client certificate file (PEM encoded X509v3)
+  ## @param storage.certKeyFilename Client certificate key file (PKCS-12 or PKCS-8 DER)
+  ##
+  maxConnections: 10
+  ssl: true
+  sslMode: "require"
+  certificatesSecret: ""
+  certCAFilename: "ca.crt"
+  certFilename: "tls.crt"
+  certKeyFilename: "key.der"
+
+## @section Bootstrap configuration (not merged with `common` parameters)
+
+## @extra bootstrap Initialize your domain and remote participant(s) listed in `common.remoteParticipants`
+## @param bootstrap.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
+## @param bootstrap.backoffLimit Specifies the number of retries before marking this job failed
+## @param bootstrap.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
+##
+bootstrap:
+  enabled: false
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  ## @extra bootstrap.participants Participant(s) specific settings
+  ## @extra bootstrap.participants.resourceLimits Set Participant(s) resource limits
+  ## @param bootstrap.participants.resourceLimits.maxRate The maximum rate of command submissions through the Ledger API. Negative value = no limit.
+  ## @param bootstrap.participants.resourceLimits.maxDirtyRequests The maximum number of dirty requests. Negative value = no limit.
+  ## ref: https://docs.daml.com/canton/usermanual/performance.html
+  ##
+  participants:
+    resourceLimits:
+      maxRate: 10000
+      maxDirtyRequests: 1000
+  ## @extra bootstrap.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+  ## @param bootstrap.logLevel.root Canton and external libraries, but not `stdout`
+  ## @param bootstrap.logLevel.canton Only the Canton logger
+  ## @param bootstrap.logLevel.stdout Usually the text displayed in the Canton console
+  ##
+  logLevel:
+    root: "INFO"
+    canton: "INFO"
+    stdout: "INFO"
+  ## @param bootstrap.environment Environment variables (not merged with `common.environment`)
+  ## @param bootstrap.environmentSecrets Secret environment variables (not merged with `common.environmentSecrets`)
+  ##
+  environment: {}
+  environmentSecrets: {}
+  ## @extra bootstrap.job Job and Helm hook configuration
+  ## @param bootstrap.job.annotations Job extra annotations
+  ## @param bootstrap.job.labels Job extra labels
+  ## @param bootstrap.job.helmHook Annotation `helm.sh/hook` value
+  ## @param bootstrap.job.helmHookWeight Annotation `helm.sh/hook-weight` value
+  ## @param bootstrap.job.helmHookDeletePolicy Annotation `helm.sh/hook-delete-policy` value
+  ## ref: https://helm.sh/docs/topics/charts_hooks/
+  ##
+  job:
+    annotations: {}
+    labels: {}
+    helmHook: "post-install,post-upgrade"
+    helmHookWeight: "5"
+    helmHookDeletePolicy: "before-hook-creation"
+
+  ## @param bootstrap.pod.annotations Extra annotations for Job pods
+  ## @param bootstrap.pod.labels Extra labels for Job pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param bootstrap.affinity Affinity for pods assignment
+  ## @param bootstrap.nodeSelector Node labels for pods assignment
+  ## @param bootstrap.resources Resources requests/limits for bootstrap container
+  ## @param bootstrap.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param bootstrap.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param bootstrap.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+
+## @section Console configuration (not merged with `common` parameters)
+
+## @extra console Single console pod for administration/debug of all the other components
+## @param console.enabled Enable Deployment
+##
+console:
+  enabled: false
+  ## @param console.terminationGracePeriodSeconds Stop the pod immediately by default, tailing `/dev/null` to stay up
+  ##
+  terminationGracePeriodSeconds: 0
+  ## @param console.deployment.annotations Deployment extra annotations
+  ## @param console.deployment.labels Deployment extra labels
+  ## @param console.deployment.strategy Deployment strategy
+  ##
+  deployment:
+    annotations: {}
+    labels: {}
+    strategy: {}
+  ## @param console.pod.annotations Extra annotations for Deployment pods
+  ## @param console.pod.labels Extra labels for Deployment pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param console.affinity Affinity for pods assignment
+  ## @param console.nodeSelector Node labels for pods assignment
+  ## @param console.resources Resources requests/limits for console container
+  ## @param console.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param console.extraVolumeMounts Specify extra list of additional volumeMounts for console container
+  ## @param console.extraVolumes Specify extra list of additional volumes for console pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+
+common:
+  ## @section Common parameters for all components
+  ##
+  ## @param common.domainName Mandatory Canton Domain name
+  ## @param common.mediatorName Mandatory Canton Mediator name
+  ## @param common.sequencerName Mandatory Canton Sequencer name
+  ##
+  domainName: "mydomain"
+  mediatorName: "mymediator"
+  sequencerName: "mysequencer"
+  ## @extra common.remoteParticipants List of remote Canton participants, only the `bootstrap` and `console`  will connect to them.<br />`name` and `host` are mandatory for each of them, otherwise the default is used
+  ## @param common.remoteParticipants[0].name Participant name
+  ## @param common.remoteParticipants[0].host Participant hostname
+  ## @param common.remoteParticipants[0].ports.public Participant Ledger API port (gRPC)
+  ## @param common.remoteParticipants[0].ports.admin Participant admin port (gRPC)
+  ## @extra common.remoteParticipants[0].tls Participant TLS configuration
+  ## @param common.remoteParticipants[0].tls.public.enabled Enabled mTLS for Ledger API traffic
+  ## @param common.remoteParticipants[0].tls.public.trustCollectionFile CA certificate
+  ## @param common.remoteParticipants[0].tls.public.certChainFile Certificate
+  ## @param common.remoteParticipants[0].tls.public.privateKeyFile Certificate key (PKCS-8)
+  ## @param common.remoteParticipants[0].tls.admin.enabled Enabled mTLS for admin API traffic
+  ## @param common.remoteParticipants[0].tls.admin.trustCollectionFile CA certificate
+  ## @param common.remoteParticipants[0].tls.admin.certChainFile Certificate
+  ## @param common.remoteParticipants[0].tls.admin.privateKeyFile Certificate key (PKCS-8)
+  ##
+  remoteParticipants:
+    - name: "participant1"
+      host: "participant1"
+      ports:
+        public: 4001
+        admin: 4002
+      tls:
+        public:
+          enabled: false
+          trustCollectionFile: "/mtls/ca.crt"
+          certChainFile: "/mtls/tls.crt"
+          privateKeyFile: "/mtls/tls.key"
+        admin:
+          enabled: false
+          trustCollectionFile: "/mtls/ca.crt"
+          certChainFile: "/mtls/tls.crt"
+          privateKeyFile: "/mtls/tls.key"
+  ## @param common.logEncoder Logging encoder. Allowed values: `plain`, `json`
+  ##
+  logEncoder: "plain"
+  ## @extra common.tls TLS configuration
+  ##
+  tls:
+    ## @extra common.tls.certManager Cert-manager CSI driver configuration (onyly used when TLS is enabled)
+    ## @param common.tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+    ## @param common.tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+    ## @param common.tls.certManager.issuerName Cert-manager issuer name
+    ##
+    certManager:
+      ## Issuer group
+      ## External issuers: "cas-issuer.jetstack.io", "cert-manager.k8s.cloudflare.com", etc.
+      issuerGroup: "cert-manager.io"
+      ## Issuer kind: "Issuer" or "ClusterIssuer"
+      ## External issuers: "GoogleCASIssuer", "OriginIssuer", etc.
+      issuerKind: "Issuer"
+      ## Issuer K8s resource name
+      issuerName: "my-cert-manager-issuer"
+    ## @extra common.tls.public Only for `sequencer`
+    ## @param common.tls.public.enabled Enable TLS on Ledger API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
+    ## @param common.tls.public.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
+    ## @param common.tls.public.certChainFile Certificate
+    ## @param common.tls.public.privateKeyFile Certificate key (PKCS-8)
+    ## @extra common.tls.public.clientAuth mTLS configuration
+    ## @param common.tls.public.clientAuth.type Define whether clients need to authenticate as well. Allowed values: `none`, `optional` or `require`
+    ## @param common.tls.public.clientAuth.certChainFile Certificate
+    ## @param common.tls.public.clientAuth.privateKeyFile Certificate key (PKCS-8)
+    ## @param common.tls.public.minimumServerProtocolVersion Minimum TLS version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[docs]]https://www.java.com/en/configure_crypto.html)
+    ## @param common.tls.public.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[docs]]https://www.java.com/en/configure_crypto.html)
+    ##
+    public:
+      enabled: false
+      trustCollectionFile: "/tls/ca.crt"
+      certChainFile: "/tls/tls.crt"
+      privateKeyFile: "/tls/tls.key"
+      clientAuth:
+        type: "require"
+        certChainFile: "/mtls/tls.crt"
+        privateKeyFile: "/mtls/tls.key"
+      ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+      minimumServerProtocolVersion: "TLSv1.3"
+      ciphers:
+        - "TLS_AES_128_GCM_SHA256"
+        - "TLS_AES_256_GCM_SHA384"
+        - "TLS_CHACHA20_POLY1305_SHA256"
+    ## @extra common.tls.admin For `manager`, `mediator` and `sequencer`
+    ## @param common.tls.admin.enabled Enable TLS on admin API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
+    ## @param common.tls.admin.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
+    ## @param common.tls.admin.certChainFile Certificate
+    ## @param common.tls.admin.privateKeyFile Certificate key
+    ## @extra common.tls.admin.clientAuth mTLS configuration
+    ## @param common.tls.admin.clientAuth.type Define whether clients need to authenticate as well (mTLS). Allowed values: `none`, `optional` or `require`
+    ## @param common.tls.admin.clientAuth.certChainFile Certificate
+    ## @param common.tls.admin.clientAuth.privateKeyFile Certificate key
+    ## @param common.tls.admin.minimumServerProtocolVersion Minimum TLS version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[docs]]https://www.java.com/en/configure_crypto.html)
+    ## @param common.tls.admin.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[docs]]https://www.java.com/en/configure_crypto.html)
+    ##
+    admin:
+      enabled: false
+      trustCollectionFile: "/tls/ca.crt"
+      certChainFile: "/tls/tls.crt"
+      privateKeyFile: "/tls/tls.key"
+      clientAuth:
+        type: "require"
+        certChainFile: "/mtls/tls.crt"
+        privateKeyFile: "/mtls/tls.key"
+      ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+      minimumServerProtocolVersion: "TLSv1.3"
+      ciphers:
+        - "TLS_AES_128_GCM_SHA256"
+        - "TLS_AES_256_GCM_SHA384"
+        - "TLS_CHACHA20_POLY1305_SHA256"
+  ## @extra common.Service Account for pods
+  ## @param common.serviceAccount.create Enable creation of ServiceAccount for participant pod(s)
+  ## @param common.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+  ## @param common.serviceAccount.annotations Service Account extra annotations
+  ## @param common.serviceAccount.labels Service Account extra labels
+  ## @param common.serviceAccount.imagePullSecrets List of references to secrets in the same namespace to use for pulling any images in pods using this ServiceAccount
+  ## @param common.serviceAccount.secrets List of secrets allowed to be used by pods running using this ServiceAccount
+  ##
+  serviceAccount:
+    create: false
+    annotations: {}
+    labels: {}
+    automountServiceAccountToken: true
+    imagePullSecrets: {}
+    secrets: {}
+
+  ## @section Common parameters for the `boostrap` and `console` only
+  ##
+  ## @extra common.features Enable additional commands
+  ## @param common.features.enablePreviewCommands Enable preview commands (unstable)
+  ## @param common.features.enableTestingCommands Enable testing commands (for developers)
+  ## @param common.features.enableRepairCommands Enable manual repair commands
+  ##
+  features:
+    enablePreviewCommands: false
+    enableTestingCommands: false
+    enableRepairCommands: false
+
+  ## @section Common parameters for the `manager`, `mediator` and `sequencer` only
+  ##
+  ## @extra common.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+  ## @param common.logLevel.root Canton and external libraries, but not `stdout`
+  ## @param common.logLevel.canton Only the Canton logger
+  ## @param common.logLevel.stdout Usually the text displayed in the Canton console
+  ##
+  logLevel:
+    root: "INFO"
+    canton: "INFO"
+    stdout: "INFO"
+  ## @param common.environment Environment variables
+  ## @param common.environmentSecrets Secret environment variables
+  ##
+  environment: {}
+  environmentSecrets: {}
+
+## @section Domain Topology Manager configuration
+
+manager:
+  storage:
+    ## @param manager.storage.database Manager database name
+    ## @param manager.storage.user Manager user name
+    ## @param manager.storage.existingSecret.name Name of existing secret with user credentials
+    ## @param manager.storage.existingSecret.key Name of key in existing secret with user password
+    ## @param manager.storage.maxConnections Database connection pool maximum connections
+    ##
+    database: "mydomain"
+    user: "canton"
+    ## Secret must be manually created in the namespace
+    ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
+    ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+    existingSecret:
+      name: ""
+      key: ""
+    maxConnections: 10
+  ## @param manager.ports.admin Admin API container port (gRPC)
+  ## @param manager.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
+  ## @param manager.ports.metrics Promotheus exporter container port (HTTP)
+  ##
+  ports:
+    admin: 4801
+    health: 4803
+    metrics: 8081
+  ## @param manager.replicaCount Number of Domain Topology Manager pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work)
+  ## Domain Topology Manager is using active/passive HA which is incompatible with Kubernetes => run only one pod at a time
+  ##
+  replicaCount: 1
+  ## @param manager.environment Environment variables,merged with `common.environment`
+  ## @param manager.environmentSecrets Secret environment variables,merged with `common.environmentSecrets`
+  ##
+  environment: {}
+  environmentSecrets: {}
+  ## @param manager.deployment.annotations Deployment extra annotations
+  ## @param manager.deployment.labels Deployment extra labels
+  ## Deployment strategy is locked to "Recreate", Domain Topology Manager is using active/passive HA
+  ## which is incompatible with Kubernetes => we run only one pod at a time
+  ##
+  deployment:
+    annotations: {}
+    labels: {}
+  ## @param manager.pod.annotations Extra annotations for Deployment pods
+  ## @param manager.pod.labels Extra labels for Deployment pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param manager.affinity Affinity for pods assignment
+  ## @param manager.nodeSelector Node labels for pods assignment
+  ## @param manager.resources Resources requests/limits for manager container
+  ## @param manager.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param manager.livenessProbe Override `livenessProbe` default configuration
+  ## @param manager.readinessProbe Override `readinessProbe` default configuration
+  ##
+  livenessProbe: {}
+  readinessProbe: {}
+  ## @param manager.service.type Service type. Allowed values: `ExternalName`, `ClusterIP`, `NodePort`, `LoadBalance`
+  ## @param manager.service.annotations Service extra annotations
+  ## @param manager.service.labels Service extra labels
+  ## @param manager.service.ports.admin Admin API service port (gRPC)
+  ## @param manager.service.ports.metrics Promotheus exporter service port (HTTP)
+  ##
+  service:
+    type: ClusterIP
+    annotations: {}
+    labels: {}
+    ports:
+      admin: 4801
+      metrics: 8081
+  ## @param manager.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param manager.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+  ## @param manager.topology.open `true`: domain is open, anyone who can connect to the sequencer can join<br />`false`: new participants are only accepted if their `ParticipantState` has already been registered
+  ## @param manager.topology.requireParticipantCertificate Participant must provide a certificate of its identity before being added to the domain
+  ##
+  topology:
+    open: false
+    requireParticipantCertificate: false
+
+## @section Mediator configuration
+
+mediator:
+  storage:
+    ## @param mediator.storage.database Mediator database name
+    ## @param mediator.storage.user Mediator user name
+    ## @param mediator.storage.existingSecret.name Name of existing secret with user credentials
+    ## @param mediator.storage.existingSecret.key Name of key in existing secret with user password
+    ## @param mediator.storage.maxConnections Database connection pool maximum connections
+    ##
+    database: "mymediator"
+    user: "canton"
+    ## Secret must be manually created in the namespace
+    ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
+    ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+    existingSecret:
+      name: ""
+      key: ""
+    maxConnections: 10
+  ## @param mediator.ports.admin Admin API container port (gRPC)
+  ## @param mediator.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
+  ## @param mediator.ports.metrics Promotheus exporter container port (HTTP)
+  ##
+  ports:
+    admin: 4602
+    health: 4603
+    metrics: 8081
+  ## @param mediator.replicaCount Number of Mediator pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work)
+  ## Mediator is using active/passive HA which is incompatible with Kubernetes => run only one pod at a time
+  ##
+  replicaCount: 1
+  ## @param mediator.environment Environment variables,merged with `common.environment`
+  ## @param mediator.environmentSecrets Secret environment variables,merged with `common.environmentSecrets`
+  ##
+  environment: {}
+  environmentSecrets: {}
+  ## @param mediator.deployment.annotations Deployment extra annotations
+  ## @param mediator.deployment.labels Deployment extra labels
+  ## Deployment strategy is locked to "Recreate", Mediator is using active/passive HA
+  ## which is incompatible with Kubernetes => we run only one pod at a time
+  ##
+  deployment:
+    annotations: {}
+    labels: {}
+  ## @param mediator.pod.annotations Extra annotations for Deployment pods
+  ## @param mediator.pod.labels Extra labels for Deployment pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param mediator.affinity Affinity for pods assignment
+  ## @param mediator.nodeSelector Node labels for pods assignment
+  ## @param mediator.resources Resources requests/limits for manager container
+  ## @param mediator.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param mediator.livenessProbe Override `livenessProbe` default configuration
+  ## @param mediator.readinessProbe Override `readinessProbe` default configuration
+  ##
+  livenessProbe: {}
+  readinessProbe: {}
+  ## @param mediator.service.type Service type. Allowed values: `ExternalName`, `ClusterIP`, `NodePort`, `LoadBalance`
+  ## @param mediator.service.annotations Service extra annotations
+  ## @param mediator.service.labels Service extra labels
+  ## @param mediator.service.ports.admin Admin API service port (gRPC)
+  ## @param mediator.service.ports.metrics Promotheus exporter service port (HTTP)
+  ##
+  service:
+    type: ClusterIP
+    annotations: {}
+    labels: {}
+    ports:
+      admin: 4602
+      metrics: 8081
+  ## @param mediator.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param mediator.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+
+## @section Sequencer configuration
+
+sequencer:
+  storage:
+    ## @param sequencer.storage.database Sequencer database name
+    ## @param sequencer.storage.user Sequencer user name
+    ## @param sequencer.storage.existingSecret.name Name of existing secret with user credentials
+    ## @param sequencer.storage.existingSecret.key Name of key in existing secret with user password
+    ## @param sequencer.storage.maxConnections Database connection pool maximum connections
+    ##
+    database: "mymediator"
+    user: "canton"
+    ## Secret must be manually created in the namespace
+    ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
+    ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+    existingSecret:
+      name: ""
+      key: ""
+    maxConnections: 10
+  ## @param sequencer.ports.public Ledger API container port (gRPC)
+  ## @param sequencer.ports.admin Admin API container port (gRPC)
+  ## @param sequencer.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
+  ## @param sequencer.ports.metrics Promotheus exporter container port (HTTP)
+  ##
+  ports:
+    public: 4401
+    admin: 4402
+    health: 4403
+    metrics: 8081
+  ## @param sequencer.replicaCount Number of Sequencer pods to deploy
+  ##
+  replicaCount: 2
+  ## @param sequencer.environment Environment variables,merged with `common.environment`
+  ## @param sequencer.environmentSecrets Secret environment variables,merged with `common.environmentSecrets`
+  ##
+  environment: {}
+  environmentSecrets: {}
+  ## @param sequencer.deployment.annotations Deployment extra annotations
+  ## @param sequencer.deployment.labels Deployment extra labels
+  ## @param sequencer.deployment.strategy Deployment strategy
+  ##
+  deployment:
+    annotations: {}
+    labels: {}
+    strategy: {}
+  ## @param sequencer.pod.annotations Extra annotations for Deployment pods
+  ## @param sequencer.pod.labels Extra labels for Deployment pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param sequencer.affinity Affinity for pods assignment
+  ## @param sequencer.nodeSelector Node labels for pods assignment
+  ## @param sequencer.resources Resources requests/limits for manager container
+  ## @param sequencer.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param sequencer.livenessProbe Override `livenessProbe` default configuration
+  ## @param sequencer.readinessProbe Override `readinessProbe` default configuration
+  ##
+  livenessProbe: {}
+  readinessProbe: {}
+  ## @param sequencer.service.type Service type. Allowed values: `ExternalName`, `ClusterIP`, `NodePort`, `LoadBalance`
+  ## @param sequencer.service.annotations Service extra annotations
+  ## @param sequencer.service.labels Service extra labels
+  ## @param sequencer.service.ports.public Ledger API service port (gRPC)
+  ## @param sequencer.service.ports.admin Admin API service port (gRPC)
+  ## @param sequencer.service.ports.metrics Promotheus exporter service port (HTTP)
+  ##
+  service:
+    type: ClusterIP
+    annotations: {}
+    labels: {}
+    ports:
+      public: 4401
+      admin: 4402
+      metrics: 8081
+    ## @param sequencer.service.sessionAffinity.enabled Enable `ClientIP` based session affinity
+    ## @param sequencer.service.sessionAffinity.timeout Session timeout in seconds. Between `1` and `86400`
+    ##
+    sessionAffinity:
+      enabled: true
+      timeout: 3600
+  ## @param sequencer.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param sequencer.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+  ## @param sequencer.ingress.enabled Enable ingress to sequencer service port `public` (gRPC)
+  ## @param sequencer.ingress.annotations Ingress extra annotations
+  ## @param sequencer.ingress.labels Ingress extra labels
+  ## @param sequencer.ingress.className Set `ingressClassName` on the ingress record
+  ## @param sequencer.ingress.host Default host for the ingress resource (DNS record to cluster load balancer)
+  ## @param sequencer.ingress.path Path to sequencer **public API**
+  ## @param sequencer.ingress.pathType Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific`
+  ## @param sequencer.ingress.tls Enable TLS configuration for `hostname`
+  ##
+  ingress:
+    enabled: false
+    annotations: {}
+    labels: {}
+    className: ""
+    host: ""
+    path: "/"
+    pathType: "Prefix"
+    tls: []
+  ## @param sequencer.ingressRouteTCP.enabled Enable Traefik `IngressRouteTCP` (CRD) to sequencer service port `public` (gRPC)
+  ## @param sequencer.ingressRouteTCP.annotations IngressRouteTCP extra annotations
+  ## @param sequencer.ingressRouteTCP.labels IngressRouteTCP extra labels
+  ## @param sequencer.ingressRouteTCP.entryPoints Traefik entrypoints for this IngressRouteTCP. Available by default: `web` (port 80), `websecure` (port 443)
+  ## @param sequencer.ingressRouteTCP.hostSNI DNS record to cluster load balancer
+  ## @param sequencer.ingressRouteTCP.tls Define TLS certificate configuration
+  ##
+  ingressRouteTCP:
+    enabled: false
+    annotations: {}
+    labels: {}
+    entryPoints:
+      - websecure
+    hostSNI: ""
+    tls: {}

@@ -1,0 +1,5 @@
+Trigger {{ .Values.image.tag | default .Chart.AppVersion }} has been deployed successfully!
+
+More information on how to configure the Trigger service can be found in our documentation:
+
+https://docs.daml.com/tools/trigger-service/
