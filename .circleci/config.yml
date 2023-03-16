@@ -9,7 +9,7 @@ executors:
        - image: quay.io/helmpack/chart-releaser:v1.5.0
     environment:
       LC_ALL: "C.UTF-8"
-    resource_class: medium
+    resource_class: small
 
 commands:
   build-cr:
