@@ -15,12 +15,12 @@ commands:
   build-cr:
     steps:
       - run:
-          command: apk add helm yq github-cli git jq openssh
+          command: apk add helm yq github-cli git jq openssh bash
           name: Install dependencies for the chart publish image
   deploy-cr:
     steps:
       - run:
-          command: ./scripts/chart_publish.sh $APIKey
+          command: ./scripts/chart_publish.sh $GH_TOKEN
           name: Run the release script
 
 jobs:
