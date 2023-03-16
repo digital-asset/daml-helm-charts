@@ -10,6 +10,6 @@ help:
 .PHONY: refresh
 ## refresh: Makefile: (Re)generate markdown documentation for all helm charts
 refresh:
-	ls -d */ | xargs -t -I {} readme-generator-for-helm -v {}values.yaml -r {}README.md
-	find */ -name README.md | xargs sed -i -ne '/^### TLS$$/ {p; r TLS.md'        -e ':a; n; /^##.*$$/ {p; b}; ba}; p;'
-	find */ -name README.md | xargs sed -i -ne '/^## License$$/ {p; r LICENSE.md' -e ':a; n; /^##.*$$/ {p; b}; ba}; p;'
+	ls -d charts/* | xargs -t -I {} readme-generator-for-helm -v {}/values.yaml -r {}/README.md
+	find */ -name README.md | xargs sed -i -ne '/^### TLS$$/ {p; r templates/TLS.md'        -e ':a; n; /^##.*$$/ {p; b}; ba}; p;'
+	find */ -name README.md | xargs sed -i -ne '/^## License$$/ {p; r templates/LICENSE.md' -e ':a; n; /^##.*$$/ {p; b}; ba}; p;'
