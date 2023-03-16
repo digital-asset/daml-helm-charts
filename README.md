@@ -7,7 +7,7 @@
 
 Daml Enterprise deployment with high availability, ready to install in Kubernetes using [Helm](https://github.com/helm/helm).
 
-## Documentation
+## Updating `README.md` for each chart
 
 ### TL;DR
 
@@ -15,10 +15,10 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 * Verify the changes: `git diff`
 * Create a fork, create a new branch, commit your changes and open a pull request
 
-### Auto-generated sections
+### Auto-generated 'Parameters' section
 
-Markdown `## Parameters` section of each Helm chart `README.md` is automatically generated using the latest
-version of Bitnami Labs' [Readme Generator For Helm](https://github.com/bitnami-labs/readme-generator-for-helm)
+Markdown `## Parameters` section of each Helm chart `README.md` is automatically generated based on comments in `values.yaml`
+using the latest version of Bitnami Labs' [Readme Generator For Helm](https://github.com/bitnami-labs/readme-generator-for-helm)
 and no specific configuration file (defaults).
 
 ```console
