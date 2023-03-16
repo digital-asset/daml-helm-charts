@@ -1,0 +1,120 @@
+{{/*
+Basic console pod with Canton configuration to reach all remote components
+Mostly used for troubleshooting and to run Canton scripts manually
+*/}}
+{{- if .Values.console.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "canton-node.fullname" . }}-console
+  {{- with .Values.console.deployment.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-node.labels" (list . "console") | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.console.deployment.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "canton-node.selectorLabels" (list . "console") | nindent 6 }}
+  {{- with .Values.console.deployment.strategy }}
+  strategy: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      annotations:
+        "checksum/config": {{ include (print $.Template.BasePath "/configmap-remote.yaml") . | sha256sum | quote }}
+        {{- with .Values.console.pod.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels: {{- include "canton-node.labels" (list . "console") | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.console.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.common.serviceAccount.create }}
+      serviceAccountName: {{ template "canton-node.fullname" . }}
+      {{- end }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.console.terminationGracePeriodSeconds }}
+      containers:
+        - name: canton
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["tail", "-f", "/dev/null"]
+          {{- with .Values.console.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /canton/remote.conf
+              readOnly: true
+              subPath: remote.conf
+            {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "isParticipantTLS" .) }}
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
+            - name: mtls
+              mountPath: "/mtls"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.console.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "canton-node.fullname" . }}-remote
+        {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "isParticipantTLS" .) }}
+        - name: tls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-console-tls"
+              csi.cert-manager.io/dns-names: "{{ template "canton-node.fullname" . }}-console.{{ .Release.Namespace }}.svc.cluster.local"
+        - name: mtls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-console-mtls"
+              csi.cert-manager.io/dns-names: "{{ template "canton-node.fullname" . }}-console.{{ .Release.Namespace }}.svc.cluster.local"
+        {{- end }}
+        {{- with .Values.console.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.console.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.console.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.console.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

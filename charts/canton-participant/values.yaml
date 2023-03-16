@@ -1,0 +1,307 @@
+---
+## @section Common parameters
+
+## @param nameOverride String to partially override `canton-node.name` template (will maintain the release name)
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override `canton-node.fullname` template
+##
+fullnameOverride: ""
+
+## @param replicaCount Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work)
+## Participant is using active/passive HA which is incompatible with Kubernetes => run only one pod at a time
+replicaCount: 1
+
+## @param image.repository Canton Docker image repository
+## @param image.tag Canton Docker image tag (immutable tags are recommended)
+## @param image.digest Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
+## @param image.pullPolicy Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
+## @param image.pullSecrets Specify Canton Docker registry secret names as an array
+##
+image:
+  ## Private Docker image
+  repository: digitalasset-docker.jfrog.io/digitalasset/canton-enterprise
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## Secrets must be manually created in the namespace
+  ## You can also patch targeted namespace 'default' ServiceAccount with 'imagePullSecrets' instead of using pullSecrets
+  pullSecrets: []
+
+## @param commonLabels Add labels to all the deployed resources
+##
+commonLabels: {}
+
+## @param metrics.enabled Enable Prometheus metrics endpoint
+##
+metrics:
+  enabled: false
+
+## @section Participant configuration
+
+## @param participantName Mandatory Canton Participant name
+##
+participantName: "participant1"
+
+## @extra storage PostgreSQL configuration
+
+storage:
+  ## @param storage.host Server hostname
+  ## @param storage.port Server port
+  ## @param storage.database Database name
+  ## @param storage.user User name
+  host: "postgres"
+  port: 5432
+  database: "participant1"
+  user: "canton"
+  ## @param storage.existingSecret.name Name of existing secret with user credentials
+  ## @param storage.existingSecret.key Name of key in existing secret with user password
+  ## Secret must be manually created in the namespace
+  ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
+  ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+  ##
+  existingSecret:
+    name: ""
+    key: ""
+  ## @param storage.maxConnections Database connection pool maximum connections
+  ## @param storage.ssl Enable TLS connection
+  ## @param storage.sslMode TLS mode. Allowed values: `disable`, `allow`, `prefer`, `require`, `verify-ca`, `verify-full`
+  ## @param storage.certificatesSecret Name of an existing K8s secret that contains certificate files, mounted to `/pgtls`, provide K8s secret key names as cert filenames. If empty `""`, provide the full path to cert files like `/path/to/file`.
+  ## @param storage.certCAFilename CA certificate file (PEM encoded X509v3). Intermediate certificate(s) that chain up to this root certificate can also appear in this file.
+  ## @param storage.certFilename Client certificate file (PEM encoded X509v3)
+  ## @param storage.certKeyFilename Client certificate key file (PKCS-12 or PKCS-8 DER)
+  ##
+  maxConnections: 10
+  ssl: true
+  sslMode: "require"
+  certificatesSecret: ""
+  certCAFilename: "ca.crt"
+  certFilename: "tls.crt"
+  certKeyFilename: "key.der"
+
+## @section Logging
+
+## @extra logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+## @param logLevel.root Canton and external libraries, but not `stdout`
+## @param logLevel.canton Only the Canton logger
+## @param logLevel.stdout Usually the text displayed in the Canton console
+## @param logEncoder Logging encoder. Allowed values: `plain`, `json`
+##
+logLevel:
+  root: "INFO"
+  canton: "INFO"
+  stdout: "INFO"
+logEncoder: "plain"
+
+## @section TLS configuration
+
+tls:
+  ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled)
+  ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+  ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+  ## @param tls.certManager.issuerName Cert-manager issuer name
+  ##
+  certManager:
+    issuerGroup: "cert-manager.io"
+    issuerKind: "Issuer"
+    issuerName: "my-cert-manager-issuer"
+  ## @param tls.public.enabled Enable TLS on Ledger API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
+  ## @param tls.public.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
+  ## @param tls.public.certChainFile Certificate
+  ## @param tls.public.privateKeyFile Certificate key (PKCS-8)
+  ## @extra tls.public.clientAuth mTLS configuration
+  ## @param tls.public.clientAuth.type Define whether clients need to authenticate as well. Allowed values: `none`, `optional` or `require`
+  ## @param tls.public.clientAuth.certChainFile Certificate
+  ## @param tls.public.clientAuth.privateKeyFile Certificate key (PKCS-8)
+  ## @param tls.public.minimumServerProtocolVersion Minimum TLS version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+  ## @param tls.public.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+  ##
+  public:
+    enabled: false
+    trustCollectionFile: "/tls/ca.crt"
+    certChainFile: "/tls/tls.crt"
+    privateKeyFile: "/tls/tls.key"
+    clientAuth:
+      type: "require"
+      certChainFile: "/mtls/tls.crt"
+      privateKeyFile: "/mtls/tls.key"
+    ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+    minimumServerProtocolVersion: "TLSv1.3"
+    ciphers:
+      - "TLS_AES_128_GCM_SHA256"
+      - "TLS_AES_256_GCM_SHA384"
+      - "TLS_CHACHA20_POLY1305_SHA256"
+  ## @param tls.admin.enabled Enable TLS on admin API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
+  ## @param tls.admin.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
+  ## @param tls.admin.certChainFile Certificate
+  ## @param tls.admin.privateKeyFile Certificate key (PKCS-8)
+  ## @extra tls.admin.clientAuth mTLS configuration
+  ## @param tls.admin.clientAuth.type Define whether clients need to authenticate as well (mTLS). Allowed values: `none`, `optional` or `require`
+  ## @param tls.admin.clientAuth.certChainFile Certificate
+  ## @param tls.admin.clientAuth.privateKeyFile Certificate key (PKCS-8)
+  ## @param tls.admin.minimumServerProtocolVersion Minimum TLS version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+  ## @param tls.admin.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+  ##
+  admin:
+    enabled: false
+    trustCollectionFile: "/tls/ca.crt"
+    certChainFile: "/tls/tls.crt"
+    privateKeyFile: "/tls/tls.key"
+    clientAuth:
+      type: "require"
+      certChainFile: "/mtls/tls.crt"
+      privateKeyFile: "/mtls/tls.key"
+    ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+    minimumServerProtocolVersion: "TLSv1.3"
+    ciphers:
+      - "TLS_AES_128_GCM_SHA256"
+      - "TLS_AES_256_GCM_SHA384"
+      - "TLS_CHACHA20_POLY1305_SHA256"
+
+## @section Authentication configuration
+
+## @param authServices.enabled Enabled JWT authentication
+## @param authServices.type Certificate type of authorizations. Allowed values: `jwt-rs-256-crt`, `jwt-es-256-crt`, `jwt-es-512-crt`
+## @extra authServices `url`, `certificate` and `secret` are mutually exclusive, set only one and comment out the others
+## @param authServices.url URL to JWKS (only for type `jwt-rs-256-jwks`)
+## @extra authServices.certificate Path to RS256 certificate used to sign JWTs (only for type `jwt-rs-256-crt`)
+## @extra authServices.secret Plaintext secret (only for type `unsafe-jwt-hmac-256`)<br />**DO NOT USE IN PRODUCTION**
+##
+authServices:
+  enabled: false
+  type: "jwt-rs-256-jwks"
+  url: "https://mydomain.com/auth/jwks.json"
+  # certificate: "/path/to/jwt.crt"
+  # secret: "not-safe-for-production"
+
+## @section Container ports
+
+## @param ports.public Ledger API container port (gRPC)
+## @param ports.admin Admin API container port (gRPC)
+## @param ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
+## @param ports.metrics Promotheus exporter container port (HTTP)
+##
+ports:
+  public: 4001
+  admin: 4002
+  health: 4003
+  metrics: 8081
+
+## @section Deployment configuration
+
+## @param environment Container environment variables
+## @param environmentSecrets Container secret environment variables
+##
+environment: {}
+environmentSecrets: {}
+
+## @param deployment.annotations Deployment extra annotations
+## @param deployment.labels Deployment extra labels
+## Deployment strategy is locked to "Recreate", Participant is using active/passive HA
+## which is incompatible with Kubernetes => we run only one pod at a time
+##
+deployment:
+  annotations: {}
+  labels: {}
+
+## @param pod.annotations Extra annotations for Deployment pods
+## @param pod.labels Extra labels for Deployment pods
+pod:
+  annotations: {}
+  labels: {}
+
+## @param affinity Affinity for pods assignment
+## @param nodeSelector Node labels for pods assignment
+## @param resources Resources requests/limits for Canton container
+## @param tolerations Tolerations for pods assignment
+##
+affinity: {}
+nodeSelector: {}
+resources: {}
+tolerations: []
+
+## @param livenessProbe Override `livenessProbe` default configuration
+## @param readinessProbe Override `readinessProbe` default configuration
+##
+livenessProbe: {}
+readinessProbe: {}
+
+## @param extraVolumeMounts Specify extra list of additional volumeMounts for participant container
+## @param extraVolumes Specify extra list of additional volumes for participant pod
+##
+extraVolumeMounts: []
+extraVolumes: []
+
+## @section Service configuration
+
+## @param service.type Service type. Allowed values: `ExternalName`, `ClusterIP`, `NodePort`, `LoadBalance`
+## @param service.annotations Service extra annotations
+## @param service.labels Service extra labels
+## @param service.ports.public Ledger API service port (gRPC)
+## @param service.ports.admin Admin API service port (gRPC)
+## @param service.ports.metrics Promotheus exporter service port (HTTP)
+##
+service:
+  type: ClusterIP
+  annotations: {}
+  labels: {}
+  ports:
+    public: 4001
+    admin: 4002
+    metrics: 8081
+
+## @section Ingress configuration
+
+## @param ingress.enabled Enable ingress to participant service port `public`, aka the Ledger API (gRPC)
+## @param ingress.annotations Ingress extra annotations
+## @param ingress.labels Ingress extra labels
+## @param ingress.className Set `ingressClassName` on the ingress record
+## @param ingress.host Default host for the ingress resource (DNS record to cluster load balancer)
+## @param ingress.path Path to participant Ledger API
+## @param ingress.pathType Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific`
+## @param ingress.tls Enable TLS configuration for `hostname`
+##
+ingress:
+  enabled: false
+  annotations: {}
+  labels: {}
+  className: ""
+  host: ""
+  path: "/"
+  pathType: "Prefix"
+  tls: []
+
+## @section Traefik IngressRouteTCP configuration
+
+## @param ingressRouteTCP.enabled Enable Traefik `IngressRouteTCP` (CRD) to participant service port `public`, aka the Ledger API (gRPC)
+## @param ingressRouteTCP.annotations IngressRouteTCP extra annotations
+## @param ingressRouteTCP.labels IngressRouteTCP extra labels
+## @param ingressRouteTCP.entryPoints Traefik entrypoints for this IngressRouteTCP. Available by default: `web` (port 80), `websecure` (port 443)
+## @param ingressRouteTCP.hostSNI DNS record to cluster load balancer
+## @param ingressRouteTCP.tls Define TLS certificate configuration
+##
+ingressRouteTCP:
+  enabled: false
+  annotations: {}
+  labels: {}
+  entryPoints:
+    - websecure
+  hostSNI: ""
+  tls: {}
+
+## @section Service Account
+
+## @param serviceAccount.create Enable creation of ServiceAccount for participant pod(s)
+## @param serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+## @param serviceAccount.annotations Service Account extra annotations
+## @param serviceAccount.labels Service Account extra labels
+## @param serviceAccount.imagePullSecrets List of references to secrets in the same namespace to use for pulling any images in pods using this ServiceAccount
+## @param serviceAccount.secrets List of secrets allowed to be used by pods running using this ServiceAccount
+##
+serviceAccount:
+  create: false
+  annotations: {}
+  labels: {}
+  automountServiceAccountToken: true
+  imagePullSecrets: {}
+  secrets: {}

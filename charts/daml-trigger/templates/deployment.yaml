@@ -1,0 +1,152 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "canton-trigger.fullname" . }}
+  {{- with .Values.deployment.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-trigger.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.deployment.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "canton-trigger.selectorLabels" . | nindent 6 }}
+  {{- with .Values.deployment.strategy }}
+  strategy: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      annotations:
+        "checksum/config": {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum | quote }}
+        "checksum/env": {{ include (print $.Template.BasePath "/configmap-env.yaml") . | sha256sum | quote }}
+        "checksum/secret": {{ include (print $.Template.BasePath "/secret-env.yaml") . | sha256sum | quote }}
+        {{- with .Values.pod.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels: {{- include "canton-trigger.labels" . | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: trigger
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--config=/etc/trigger-service/trigger.conf"
+            - "--log-level-root={{ .Values.logLevel }}"
+            - "--log-encoder={{ .Values.logEncoder }}"
+          envFrom:
+            {{- if .Values.environment }}
+            - configMapRef:
+                name: {{ include "canton-trigger.fullname" . }}-envmap
+            {{- end }}
+            {{- if .Values.environmentSecrets }}
+            - secretRef:
+                name: {{ include "canton-trigger.fullname" . }}-secretmap
+            {{- end }}
+          {{- if .Values.storage.existingSecret.name }}
+          env:
+            - name: TRIGGER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.storage.existingSecret.name }}
+                  key: {{ .Values.storage.existingSecret.key }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ports.http }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.ports.metrics }}
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: {{ .Values.ports.http }}
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.ports.http }}
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          volumeMounts:
+            - name: config
+              mountPath: /etc/trigger-service/trigger.conf
+              subPath: trigger.conf
+              readOnly: true
+            {{- if .Values.tls.enabled }}
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.storage.certificatesSecret }}
+            - name: pgtls
+              mountPath: "/pgtls"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "canton-trigger.fullname" . }}
+        {{- if .Values.tls.enabled }}
+        - name: tls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-trigger.fullname" . }}"
+              csi.cert-manager.io/dns-names: "{{ template "canton-trigger.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+        {{- end }}
+        {{- if .Values.storage.certificatesSecret }}
+        - name: pgtls
+          secret:
+            secretName: {{ .Values.storage.certificatesSecret }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,29 @@
+{{- if .Values.ingressRouteTCP.enabled }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: {{ template "canton-node.fullname" . }}
+  {{- with .Values.ingressRouteTCP.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-node.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ingressRouteTCP.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- with .Values.ingressRouteTCP.entryPoints }}
+  entryPoints: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  routes:
+    - match: HostSNI(`{{ .Values.ingressRouteTCP.hostSNI }}`)
+      services:
+        - name: {{ template "canton-node.fullname" . }}
+          port: public
+  {{- with .Values.ingressRouteTCP.tls }}
+  tls: {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

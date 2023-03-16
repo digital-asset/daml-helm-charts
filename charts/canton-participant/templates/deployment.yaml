@@ -1,0 +1,183 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "canton-node.fullname" . }}
+  {{- with .Values.deployment.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels: {{- include "canton-node.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.deployment.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "canton-node.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: "Recreate"
+  template:
+    metadata:
+      annotations:
+        "checksum/config": {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum | quote }}
+        "checksum/env": {{ include (print $.Template.BasePath "/configmap-env.yaml") . | sha256sum | quote }}
+        "checksum/secret": {{ include (print $.Template.BasePath "/secret-env.yaml") . | sha256sum | quote }}
+        {{- with .Values.pod.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels: {{- include "canton-node.labels" . | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ template "canton-node.fullname" . }}
+      {{- end }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: canton
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "daemon"
+            - "--log-encoder={{ .Values.logEncoder }}"
+            - "--log-profile=container"
+            - "--log-level-root={{ .Values.logLevel.root }}"
+            - "--log-level-canton={{ .Values.logLevel.canton }}"
+            - "--log-level-stdout={{ .Values.logLevel.stdout }}"
+            - "--config=/canton/participant.conf"
+          envFrom:
+            {{- if .Values.environment }}
+            - configMapRef:
+                name: {{ include "canton-node.fullname" . }}-envmap
+            {{- end }}
+            {{- if .Values.environmentSecrets }}
+            - secretRef:
+                name: {{ include "canton-node.fullname" . }}-secretmap
+            {{- end }}
+          {{- if .Values.storage.existingSecret.name }}
+          env:
+            - name: CANTON_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.storage.existingSecret.name }}
+                  key: {{ .Values.storage.existingSecret.key }}
+          {{- end }}
+          ports:
+            - name: public
+              containerPort: {{ .Values.ports.public }}
+            - name: admin
+              containerPort: {{ .Values.ports.admin }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.ports.metrics }}
+            {{- end }}
+          {{- with .Values.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+          {{- if .Values.livenessProbe }}
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- else }}
+            grpc:
+              port: {{ .Values.ports.health }}
+              service: "liveness"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+            timeoutSeconds: 3
+          {{- end }}
+          readinessProbe:
+          {{- if .Values.readinessProbe }}
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- else }}
+            grpc:
+              port: {{ .Values.ports.health }}
+              service: ""
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 1
+            timeoutSeconds: 3
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /canton/participant.conf
+              subPath: participant.conf
+              readOnly: true
+            {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
+            - name: mtls
+              mountPath: "/mtls"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.storage.certificatesSecret }}
+            - name: pgtls
+              mountPath: "/pgtls"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "canton-node.fullname" . }}
+        {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
+        - name: tls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-tls"
+              csi.cert-manager.io/dns-names: "{{ include "participant.tlsCertManagerDnsNames" . }}"
+              csi.cert-manager.io/ip-sans: "0.0.0.0"
+        - name: mtls
+          csi:
+            driver: csi.cert-manager.io
+            readOnly: true
+            volumeAttributes:
+              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
+              csi.cert-manager.io/key-encoding: "PKCS8"
+              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-mtls"
+              csi.cert-manager.io/dns-names: "{{ template "canton-node.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+        {{- end }}
+        {{- if .Values.storage.certificatesSecret }}
+        - name: pgtls
+          secret:
+            secretName: {{ .Values.storage.certificatesSecret }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}

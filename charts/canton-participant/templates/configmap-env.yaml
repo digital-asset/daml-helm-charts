@@ -1,0 +1,15 @@
+{{- if .Values.environment }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "canton-node.fullname" . }}-envmap
+  labels: {{- include "canton-node.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+{{- range $key,$value := .Values.environment }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
