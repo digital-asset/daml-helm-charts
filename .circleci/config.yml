@@ -54,6 +54,9 @@ workflows:
       - build
       - approve_release_helm_charts:
           type: approval
+          filters:
+            branches:
+              only: main
       - release-chart:
           requires: 
            - approve_release_helm_charts
