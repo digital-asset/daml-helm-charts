@@ -1,0 +1,1 @@
+This folder hosts an index.yaml file next to this readme document. It functions as a helm repository index so that our released helm charts can be accessed using helm.

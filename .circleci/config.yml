@@ -8,6 +8,26 @@ env: &env
   CI: "true"
   USER: circleci
 
+executors:
+  chart-releaser:
+    docker:
+       - image: quay.io/helmpack/chart-releaser:v1.5.0
+    environment:
+      LC_ALL: "C.UTF-8"
+    resource_class: small
+
+commands:
+  build-cr:
+    steps:
+      - run:
+          command: apk add helm yq github-cli git jq openssh bash
+          name: Install dependencies for the chart publish image
+  deploy-cr:
+    steps:
+      - run:
+          command: ./scripts/chart_publish.sh $GH_TOKEN
+          name: Run the release script
+
 jobs:
   build:
     docker:
@@ -20,11 +40,23 @@ jobs:
          name: build
          command: |
            set -euo pipefail
-
            echo "Success!"
+  release-chart:
+    executor: chart-releaser
+    steps:
+      - build-cr
+      - checkout
+      - deploy-cr
 
 workflows:
-  version: 2
-  build:
+  releaser:
     jobs:
-    - build
+      - build
+      - approve_release_helm_charts:
+          type: approval
+      - release-chart:
+          requires: 
+           - approve_release_helm_charts
+          filters:
+            branches:
+              only: main
