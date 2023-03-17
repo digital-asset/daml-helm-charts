@@ -3,6 +3,11 @@
 
 version: 2.1
 
+env: &env
+  TERM: dumb
+  CI: "true"
+  USER: circleci
+
 executors:
   chart-releaser:
     docker:
@@ -24,6 +29,18 @@ commands:
           name: Run the release script
 
 jobs:
+  build:
+    docker:
+    - image: cimg/base:2021.04
+    environment:
+      <<: *env
+    steps:
+      - checkout
+      - run:
+         name: build
+         command: |
+           set -euo pipefail
+           echo "Success!"
   release-chart:
     executor: chart-releaser
     steps:
@@ -34,6 +51,7 @@ jobs:
 workflows:
   releaser:
     jobs:
+      - build
       - approve_release_helm_charts:
           type: approval
       - release-chart:
