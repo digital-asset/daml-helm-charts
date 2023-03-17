@@ -34,7 +34,11 @@ jobs:
 workflows:
   releaser:
     jobs:
+      - hold:
+          type: approval
       - release-chart:
+          requires: 
+           - hold
           filters:
             branches:
               only: main
