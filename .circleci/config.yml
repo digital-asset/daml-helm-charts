@@ -34,11 +34,11 @@ jobs:
 workflows:
   releaser:
     jobs:
-      - hold:
+      - approve_release_helm_charts:
           type: approval
       - release-chart:
           requires: 
-           - hold
+           - approve_release_helm_charts
           filters:
             branches:
               only: main
