@@ -25,7 +25,7 @@ commands:
   deploy-cr:
     steps:
       - run:
-          command: ./scripts/chart_publish.sh $GH_ACCESS_TOKEN
+          command: ./scripts/chart_publish.sh $GH_TOKEN
           name: Run the release script
 
 jobs:
