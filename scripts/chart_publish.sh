@@ -32,7 +32,6 @@ for chart in $CHARTS_DIR/*; do
         echo "Chart $chart_name version $chart_version has been pushed to repository $GITREPO_NAME"
         helm repo index $PUBLISH_FOLDER --url https://github.com/$GITREPO_OWNER/$GITREPO_NAME/releases/download/$chart_name-$chart_version --merge docs/index.yaml
         rm -rf $PUBLISH_FOLDER/$chart_name-$chart_version.tgz
-
     fi
 done
 
