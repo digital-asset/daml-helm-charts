@@ -27,11 +27,11 @@ for chart in $CHARTS_DIR/*; do
         echo "Chart $chart_name version $chart_version already exists in repository $GITREPO_NAME"
     else
         # Packaging the updated chart and uploading it as a release
-        helm package $chart -d $PUBLISH_FOLDER
+        helm package $chart -d $PUBLISH_FOLDER/
         cr upload -b https://api.github.com/ -u https://uploads.github.com --skip-existing -c $PUBLISH_BRANCH -r $GITREPO_NAME  -p $PUBLISH_FOLDER --owner $GITREPO_OWNER --token $1
         echo "Chart $chart_name version $chart_version has been pushed to repository $GITREPO_NAME"
-        helm repo index publish --url https://github.com/adamma-da/test-chart-releaser/releases/download/$chart_name-$chart_version/  --merge docs/index.yaml
-
+        helm repo index $PUBLISH_FOLDER --url https://github.com/$GITREPO_OWNER/$GITREPO_NAME/releases/download/$chart_name-$chart_version --merge docs/index.yaml
+        rm -rf $PUBLISH_FOLDER/$chart_name-$chart_version.tgz
     fi
 done
 
