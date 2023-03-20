@@ -25,7 +25,7 @@ entries:
     sources:
     - https://docs.daml.com/canton/about.html
     urls:
-    - https://github.com/adamma-da/test-chart-releaser/releases/download/daml-trigger-0.1.0/canton-domain-0.1.0.tgz
+    - https://github.com/digital-asset/test-chart-releaser/releases/download/daml-trigger-0.1.0/canton-domain-0.1.0.tgz
     version: 0.1.0
   canton-participant:
   - annotations:
@@ -52,7 +52,7 @@ entries:
     sources:
     - https://docs.daml.com/canton/about.html
     urls:
-    - https://github.com/adamma-da/test-chart-releaser/releases/download/daml-trigger-0.1.0/canton-participant-0.1.0.tgz
+    - https://github.com/digital-asset/test-chart-releaser/releases/download/daml-trigger-0.1.0/canton-participant-0.1.0.tgz
     version: 0.1.0
   daml-http-json:
   - annotations:
@@ -79,7 +79,7 @@ entries:
     sources:
     - https://docs.daml.com/json-api/index.html
     urls:
-    - https://github.com/adamma-da/test-chart-releaser/releases/download/daml-trigger-0.1.0/daml-http-json-0.1.0.tgz
+    - https://github.com/digital-asset/test-chart-releaser/releases/download/daml-trigger-0.1.0/daml-http-json-0.1.0.tgz
     version: 0.1.0
   daml-trigger:
   - annotations:
@@ -104,6 +104,6 @@ entries:
     sources:
     - https://docs.daml.com/tools/trigger-service/index.html
     urls:
-    - https://github.com/adamma-da/test-chart-releaser/releases/download/daml-trigger-0.1.0/daml-trigger-0.1.0.tgz
+    - https://github.com/digital-asset/test-chart-releaser/releases/download/daml-trigger-0.1.0/daml-trigger-0.1.0.tgz
     version: 0.1.0
 generated: "2023-03-17T14:50:02.314275571Z"
