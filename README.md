@@ -1,4 +1,4 @@
-[![Daml Enterprise logo](./images/daml-enterprise-logo.svg)](https://www.digitalasset.com/products/daml-enterprise)
+<img src="./images/daml-enterprise-logo.svg" width="400px">
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/digital-asset)](https://artifacthub.io/packages/search?repo=digital-asset)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
