@@ -6,7 +6,7 @@ Any type of contribution is welcome; from new features, bug fixes, documentation
 
 ## How to contribute?
 
-1. Fork this repository, develop, and test your changes on a new branch.
+1. Fork this repository, develop and test your changes on a new branch.
 2. Submit a pull request, the title of the PR starts with the chart name (e.g. `[canton/participant]`).
 3. If your PR corresponds to an issue, add `Fixes #XXX` to your pull request description.
 
@@ -26,7 +26,6 @@ When submitting a PR make sure that it:
 
 * Run script: `make refresh`
 * Verify the changes: `git diff`
-* Create a fork, create a new branch, commit your changes and open a pull request
 
 #### Auto-generated `Parameters` section
 
@@ -34,7 +33,7 @@ Markdown `## Parameters` section of each Helm chart `README.md` is automatically
 using the latest version of Bitnami Labs' [Readme Generator For Helm](https://github.com/bitnami-labs/readme-generator-for-helm)
 and no specific configuration file (defaults).
 
-```console
+```sh
 cd path/to/chart/
 readme-generator -v values.yaml -r README.md
 ```

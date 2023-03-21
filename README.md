@@ -30,11 +30,11 @@ default configuration options. You can override any of these default settings wi
 
 Helm can do the following:
 
-* Create new charts from scratch
-* Package charts into chart archive (`tgz`) files
-* Interact with chart repositories where charts are stored
-* Install and uninstall charts into an existing Kubernetes cluster
-* Manage the release cycle of charts that have been installed with Helm
+* Create new charts from scratch.
+* Package charts into chart archive (`tgz`) files.
+* Interact with chart repositories where charts are stored.
+* Install and uninstall charts into an existing Kubernetes cluster.
+* Manage the release cycle of charts that have been installed with Helm.
 
 For Helm, there are three important concepts:
 
@@ -44,7 +44,7 @@ For Helm, there are three important concepts:
 
 ### Install Helm
 
-Please Refer to the [Installing Helm Guide](https://helm.sh/docs/intro/install/).
+Please refer to the [Installing Helm Guide](https://helm.sh/docs/intro/install/).
 
 ### Using Helm
 
@@ -52,7 +52,7 @@ Once you have installed the Helm client, you can deploy a Daml Enterprise Helm C
 
 Please refer to the [Quickstart Guide](https://helm.sh/docs/intro/quickstart/) if you wish to get running
 in just a few commands, otherwise the [Using Helm Guide](https://helm.sh/docs/intro/using_helm/) provides
-detailed instructionson how to use the Helm client to manage packages on your Kubernetes cluster.
+detailed instructions on how to use the Helm client to manage packages on your Kubernetes cluster.
 
 ## License
 
