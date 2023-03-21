@@ -46,13 +46,13 @@ You can use `yamllint` to verify the file if you do not already have syntax/form
 * Starting `### TLS` with the content of [`TLS.md`](./TLS.md):
 
 ```sh
-find */ -name README.md | xargs sed -i -ne '/^### TLS$/ {p; r TLS.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
+find */ -name README.md | xargs sed -i -ne '/^### TLS$/ {p; r templates/TLS.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
 ```
 
 * Starting `## License` with the content of [`LICENSE.md`](./LICENSE.md):
 
 ```sh
-find */ -name README.md | xargs sed -i -ne '/^## License$/ {p; r LICENSE.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
+find */ -name README.md | xargs sed -i -ne '/^## License$/ {p; r templates/LICENSE.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
 ```
 
 ⚠️ These amazing `sed` one-liners might break in edge cases, check the diff

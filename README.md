@@ -54,6 +54,8 @@ Please refer to the [Quickstart Guide](https://helm.sh/docs/intro/quickstart/) i
 in just a few commands, otherwise the [Using Helm Guide](https://helm.sh/docs/intro/using_helm/) provides
 detailed instructions on how to use the Helm client to manage packages on your Kubernetes cluster.
 
+## [Contributing guidelines](./CONTRIBUTING.md)
+
 ## License
 
 Copyright &copy; 2023 Digital Asset (Switzerland) GmbH and/or its affiliates
