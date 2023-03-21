@@ -22,7 +22,7 @@ helm install myrelease digitalasset/<chart>
 - Kubernetes `1.24+`
 - Helm `3.9.0+`
 
-### The Purpose of Helm
+### The purpose of Helm
 
 Helm is a powerful tool for managing Kubernetes packages called charts, they contain Kubernetes resource templates with a
 default configuration options. You can override any of these default settings with a YAML formatted

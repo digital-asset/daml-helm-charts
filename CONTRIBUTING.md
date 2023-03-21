@@ -1,79 +1,65 @@
-# Contributing Guidelines
+# Contributing guidelines
 
 Contributions are welcome via GitHub Pull Requests. This document outlines the process to help get your contribution accepted.
 
-Any type of contribution is welcome; from new features, bug fixes, [tests](#testing), documentation improvements or even [adding charts to the repository](#adding-a-new-chart-to-the-repository) (if it's viable once evaluated the feasibility).
+Any type of contribution is welcome; from new features, bug fixes, documentation improvements.
 
-## How to Contribute
+## How to contribute?
 
-1. Fork this repository, develop, and test your changes.
-2. Submit a pull request.
+1. Fork this repository, develop, and test your changes on a new branch.
+2. Submit a pull request, the title of the PR starts with the chart name (e.g. `[canton/participant]`).
+3. If your PR corresponds to an issue, add `Fixes #XXX` to your pull request description.
 
-***NOTE***: To make the Pull Requests' (PRs) testing and merging process easier, please submit changes to multiple charts in separate PRs.
+***NOTE***: To make the Pull Requests' (PRs) testing and merging process easier, please submit
+changes to multiple charts in separate PRs. If there is too many changes to the same helm chart,
+try also to break it down into separate PRs.
 
-### Technical Requirements
+### Technical requirements
 
 When submitting a PR make sure that it:
-
-- Must pass CI jobs for linting and test the changes on top of different k8s platforms. (Automatically done by the Bitnami CI/CD pipeline).
 - Must follow [Helm best practices](https://helm.sh/docs/chart_best_practices/).
-- Any change to a chart requires a version bump following [semver](https://semver.org/) principles. This is the version that is going to be merged in the GitHub repository, then our CI/CD system is going to publish in the Helm registry a new patch version including your changes and the latest images and dependencies.
+- Any change to a chart requires a version bump following [semver](https://semver.org/) principles.
 
-#### Sign Your Work
+### Documentation requirements
 
-The sign-off is a simple line at the end of the explanation for a commit. All commits needs to be signed. Your signature certifies that you wrote the patch or otherwise have the right to contribute the material. The rules are pretty simple, you only need to certify the guidelines from [developercertificate.org](https://developercertificate.org/).
+#### TL;DR
 
-Then you just add a line to every git commit message:
+* Run script: `make refresh`
+* Verify the changes: `git diff`
+* Create a fork, create a new branch, commit your changes and open a pull request
 
-```text
-Signed-off-by: Joe Smith <joe.smith@example.com>
+#### Auto-generated `Parameters` section
+
+Markdown `## Parameters` section of each Helm chart `README.md` is automatically generated based on formatted comments in `values.yaml`
+using the latest version of Bitnami Labs' [Readme Generator For Helm](https://github.com/bitnami-labs/readme-generator-for-helm)
+and no specific configuration file (defaults).
+
+```console
+cd path/to/chart/
+readme-generator -v values.yaml -r README.md
 ```
 
-Use your real name (sorry, no pseudonyms or anonymous contributions.)
+⚠️ `values.yaml` must be a valid YAML file before you run the `readme-generator` tool, otherwise you will get cryptic errors.
+You can use `yamllint` to verify the file if you do not already have syntax/formatting validation in your favorite IDE.
 
-If you set your `user.name` and `user.email` git configs, you can sign your commit automatically with `git commit -s`.
+#### Propagate identical blocks everywhere
 
-Note: If your git config information is set properly then viewing the `git log` information for your commit will look something like this:
+* Starting `### TLS` with the content of [`TLS.md`](./TLS.md):
 
-```text
-Author: Joe Smith <joe.smith@example.com>
-Date:   Thu Feb 2 11:41:15 2018 -0800
-
-    Update README
-
-    Signed-off-by: Joe Smith <joe.smith@example.com>
+```sh
+find */ -name README.md | xargs sed -i -ne '/^### TLS$/ {p; r TLS.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
 ```
 
-Notice the `Author` and `Signed-off-by` lines match. If they don't your PR will be rejected by the automated DCO check.
+* Starting `## License` with the content of [`LICENSE.md`](./LICENSE.md):
 
-### Documentation Requirements
+```sh
+find */ -name README.md | xargs sed -i -ne '/^## License$/ {p; r LICENSE.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
+```
 
-- A chart's `README.md` must include configuration options. The tables of parameters are generated based on the metadata information from the `values.yaml` file, by using [this tool](https://github.com/bitnami-labs/readme-generator-for-helm).
-- A chart's `NOTES.txt` must include relevant post-installation information.
-- The title of the PR starts with chart name (e.g. `[bitnami/chart]`)
+⚠️ These amazing `sed` one-liners might break in edge cases, check the diff
 
-### PR Approval and Release Process
+### PR approval and release process
 
-1. Changes are manually reviewed by Bitnami team members.
-2. Once the changes are accepted, the PR is verified with a [Static analysis](https://github.com/bitnami/charts/blob/main/TESTING.md#Static-analysis) that includes the lint and the vulnerability checks. If that passes, the Bitnami team will review the changes and trigger the verification and functional tests.
-3. When the PR passes all tests, the PR is merged by the reviewer(s) in the GitHub `main` branch.
-4. Then our CI/CD system is going to push the chart to the Helm registry including the recently merged changes and also the latest images and dependencies used by the chart. The changes in the images will be also committed by the CI/CD to the GitHub repository, bumping the chart version again.
-
-***NOTE***: Please note that, in terms of time, may be a slight difference between the appearance of the code in GitHub and the chart in the registry.
-
-### Testing
-
-1. Read the [Test Strategy](https://github.com/bitnami/charts/blob/main/TESTING.md) guide.
-2. Determine the types of tests you will need based on the chart you are testing and the information in the test strategy.
-3. Before you create a pull request, make sure you achieved the [Test Acceptance Criteria](https://github.com/bitnami/charts/blob/main/TESTING.md#Test-acceptance-criteria).
-4. If you were able to achieve them, congrats! Create a PR and wait for the approval. You should then be able to see the result of the test execution for multiple cloud platforms (AKS, TKG, GKE) after the approval.
-
-### Adding a new chart to the repository
-
-There are three major technical requirements to add a new Helm chart to our catalog:
-
-- The chart should use Bitnami based container images. If they don't exist, you can [open a GitHub issue](https://github.com/bitnami/charts/issues/new/choose) and we will work together to create them.
-- Follow the same structure/patterns that the rest of the Bitnami charts (you can find a basic scaffolding in the [`template` directory](https://github.com/bitnami/charts/tree/main/template)) and the [Best Practices for Creating Production-Ready Helm charts](https://docs.bitnami.com/tutorials/production-ready-charts/) guide.
-- Use an [OSI approved license](https://opensource.org/licenses) for all the software.
-
-Please, note we will need to check internally and evaluate the feasibility of adding the new solution to the catalog. Due to limited resources this step could take some time.
+1. Changes are manually reviewed and tested by Digital Asset.
+1. When the PR passes all tests, the PR is merged by the reviewer(s) in the GitHub `main` branch.
+1. We will release a new Helm chart version with our CI/CD system and make it available in the repository and refresh ArtifactHub.
