@@ -1,4 +1,4 @@
-[![Daml Enterprise logo](./images/daml-enterprise-logo.svg)](https://www.digitalasset.com/products/daml-enterprise)
+<img src="./images/daml-enterprise-logo.svg" width="400px">
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/digital-asset)](https://artifacthub.io/packages/search?repo=digital-asset)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
@@ -7,43 +7,54 @@
 
 Daml Enterprise deployment with high availability, ready to install in Kubernetes using [Helm](https://github.com/helm/helm).
 
-## Updating `README.md` for each chart
+## TL;DR
 
-### TL;DR
-
-* Run script: `make refresh`
-* Verify the changes: `git diff`
-* Create a fork, create a new branch, commit your changes and open a pull request
-
-### Auto-generated 'Parameters' section
-
-Markdown `## Parameters` section of each Helm chart `README.md` is automatically generated based on comments in `values.yaml`
-using the latest version of Bitnami Labs' [Readme Generator For Helm](https://github.com/bitnami-labs/readme-generator-for-helm)
-and no specific configuration file (defaults).
-
-```console
-cd path/to/chart/
-readme-generator -v values.yaml -r README.md
+```bash
+helm repo add digitalasset https://digital-asset.github.io/daml-helm-charts/
+helm search repo digitalasset
+helm install myrelease digitalasset/<chart>
 ```
 
-⚠️ `values.yaml` must be a valid YAML file before you run the `readme-generator` tool, otherwise you will get cryptic errors.
-You can use `yamllint` to verify the file if you do not already have syntax/formatting validation in your favorite IDE.
+## Before you begin
 
-### Propagate identical blocks everywhere
+### Prerequisites
 
-* Starting `### TLS` with the content of [`TLS.md`](./TLS.md):
+- Kubernetes `1.24+`
+- Helm `3.9.0+`
 
-```sh
-find */ -name README.md | xargs sed -i -ne '/^### TLS$/ {p; r TLS.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
-```
+### The purpose of Helm
 
-* Starting `## License` with the content of [`LICENSE.md`](./LICENSE.md):
+Helm is a powerful tool for managing Kubernetes packages called charts, they contain Kubernetes resource templates with a
+default configuration options. You can override any of these default settings with a YAML formatted
+`values` file that you pass during installation.
 
-```sh
-find */ -name README.md | xargs sed -i -ne '/^## License$/ {p; r LICENSE.md' -e ':a; n; /^##.*$/ {p; b}; ba}; p;'
-```
+Helm can do the following:
 
-⚠️ These amazing `sed` one-liners might break in edge cases, check the diff
+* Create new charts from scratch.
+* Package charts into chart archive (`tgz`) files.
+* Interact with chart repositories where charts are stored.
+* Install and uninstall charts into an existing Kubernetes cluster.
+* Manage the release cycle of charts that have been installed with Helm.
+
+For Helm, there are three important concepts:
+
+* The `chart` is a bundle of information necessary to create an instance of a Kubernetes application.
+* The `config` contains configuration information that can be merged into a packaged chart to create a releasable object.
+* A `release` is a running instance of a chart, combined with a specific `config`.
+
+### Install Helm
+
+Please refer to the [Installing Helm Guide](https://helm.sh/docs/intro/install/).
+
+### Using Helm
+
+Once you have installed the Helm client, you can deploy a Daml Enterprise Helm Chart into a Kubernetes cluster.
+
+Please refer to the [Quickstart Guide](https://helm.sh/docs/intro/quickstart/) if you wish to get running
+in just a few commands, otherwise the [Using Helm Guide](https://helm.sh/docs/intro/using_helm/) provides
+detailed instructions on how to use the Helm client to manage packages on your Kubernetes cluster.
+
+## [Contributing guidelines](./CONTRIBUTING.md)
 
 ## License
 
