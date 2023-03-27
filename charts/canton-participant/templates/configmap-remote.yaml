@@ -1,0 +1,55 @@
+{{/* Used in deployment-console.yaml, bootstrap/job.yaml */}}
+{{- if or .Values.bootstrap.enabled .Values.console.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-remote
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: common
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  remote.conf: |
+    canton {
+      {{- with .Values.common.features }}
+      features {
+        enable-preview-commands = {{ .enablePreviewCommands }}
+        enable-testing-commands = {{ .enableTestingCommands }}
+        enable-repair-commands = {{ .enableRepairCommands }}
+      }
+      {{- end }}
+
+      remote-participants {
+        {{ .Values.participantName }} {
+          ledger-api {
+            address = "{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+            port = {{ .Values.service.ports.public }}
+            {{- if .Values.tls.public.enabled }}
+            tls {
+              trust-collection-file = {{ .Values.tls.public.trustCollectionFile | quote }}
+              client-cert = {
+                cert-chain-file = {{ .Values.tls.public.certChainFile | quote }}
+                private-key-file = {{ .Values.tls.public.privateKeyFile | quote }}
+              }
+            }
+            {{- end }}
+          }
+          admin-api {
+            address = "{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+            port = {{ .Values.service.ports.admin }}
+            {{- if .Values.tls.admin.enabled }}
+            tls {
+              trust-collection-file = {{ .Values.tls.admin.trustCollectionFile | quote }}
+              client-cert = {
+                cert-chain-file = {{ .Values.tls.admin.certChainFile | quote }}
+                private-key-file = {{ .Values.tls.admin.privateKeyFile | quote }}
+              }
+            }
+            {{- end }}
+          }
+        }
+      }
+    }
+{{- end }}

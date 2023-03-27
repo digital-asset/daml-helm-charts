@@ -2,8 +2,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "canton-node.fullname" . }}
-  labels: {{- include "canton-node.labels" . | nindent 4 }}
+  name: {{ include "common.fullname" . }}
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: participant
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -12,7 +13,7 @@ data:
     canton {
       participants {
         {{ .Values.participantName }} {
-          {{- include "canton-node.storage" . | indent 10 }}
+          {{- include "canton.storage" . | indent 10 }}
 
           ledger-api {
             address = "0.0.0.0"
@@ -31,8 +32,8 @@ data:
                   private-key-file = {{ .Values.tls.public.clientAuth.privateKeyFile | quote }}
                 }
               }
-              minimum-server-protocol-version = {{ include "canton-node.tlsMinimumServerProtocolVersion" .Values.tls.public.minimumServerProtocolVersion }}
-              ciphers = {{ include "canton-node.tlsCiphers" .Values.tls.public.ciphers }}
+              minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" .Values.tls.public.minimumServerProtocolVersion }}
+              ciphers = {{ include "canton.tls.ciphers" .Values.tls.public.ciphers }}
             }
             {{- end }}
 
@@ -69,8 +70,8 @@ data:
                   private-key-file = {{ .Values.tls.admin.clientAuth.privateKeyFile | quote }}
                 }
               }
-              minimum-server-protocol-version = {{ include "canton-node.tlsMinimumServerProtocolVersion" .Values.tls.admin.minimumServerProtocolVersion }}
-              ciphers = {{ include "canton-node.tlsCiphers" .Values.tls.admin.ciphers }}
+              minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" .Values.tls.admin.minimumServerProtocolVersion }}
+              ciphers = {{ include "canton.tls.ciphers" .Values.tls.admin.ciphers }}
             }
             {{- end }}
           }

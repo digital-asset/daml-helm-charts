@@ -1,10 +1,12 @@
 {{/* Used in deployment-console.yaml, bootstrap/job.yaml */}}
+{{- if or .Values.bootstrap.enabled .Values.console.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "canton-node.fullname" . }}-remote
-  labels: {{- include "canton-node.labels" (list . "common") | nindent 4 }}
+  name: {{ include "common.fullname" . }}-remote
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: common
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -22,16 +24,17 @@ data:
       remote-domain-managers {
         {{ .Values.common.domainName }} {
           admin-api {
-            address = "{{ template "canton-node.fullname" . }}-manager.{{ .Release.Namespace }}.svc.cluster.local"
+            address = "{{ template "common.fullname" . }}-manager.{{ .Release.Namespace }}.svc.cluster.local"
             port = {{ .Values.manager.service.ports.admin }}
-            {{- include "canton-node.remoteTLS" (list .Values.common.tls.admin) | indent 12 }}
+            {{- include "canton.tls.remote" (list .Values.common.tls.admin) | indent 12 }}
           }
         }
       }
 
-      {{ include "canton-node.remote-mediators" . | nindent 6 | trim }}
+      {{ include "canton.remoteMediators" . | nindent 6 | trim }}
 
-      {{ include "canton-node.remote-sequencers" . | nindent 6 | trim }}
+      {{ include "canton.remoteSequencers" . | nindent 6 | trim }}
 
-      {{ include "canton-node.remote-participants" . | nindent 6 | trim }}
+      {{ include "canton.remoteParticipants" . | nindent 6 | trim }}
     }
+{{- end }}

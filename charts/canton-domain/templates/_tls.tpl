@@ -1,8 +1,11 @@
 {{/* vim: set filetype=mustache: */}}
 {{/*
 Generic TLS block.
+
+Params:
+  - Admin API TLS configuration - String - Required. Common sub key "common.tls.admin".
 */}}
-{{- define "canton-node.adminTLS" -}}
+{{- define "canton.tls.admin" -}}
 {{- $top  := index . 0 -}}
 {{- if $top.enabled }}
 tls {
@@ -18,16 +21,19 @@ tls {
       private-key-file = {{ $top.clientAuth.privateKeyFile | quote }}
     }
   }
-  minimum-server-protocol-version = {{ include "canton-node.tlsMinimumServerProtocolVersion" $top.minimumServerProtocolVersion }}
-  ciphers = {{ include "canton-node.tlsCiphers" $top.ciphers }}
+  minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" $top.minimumServerProtocolVersion }}
+  ciphers = {{ include "canton.tls.ciphers" $top.ciphers }}
 }
 {{- end }}
 {{- end -}}
 
 {{/*
 Generic remote TLS block.
+
+Params:
+  - Remote admin or public API TLS configuration - String - Required. Canton node sub key "tls.admin" or "tls.public".
 */}}
-{{- define "canton-node.remoteTLS" -}}
+{{- define "canton.tls.remote" -}}
 {{- $top  := index . 0 -}}
 {{- if $top.enabled }}
 tls {
@@ -42,23 +48,29 @@ tls {
 
 {{/*
 Sequencer public API TLS block (does not support mTLS).
+
+Params:
+  - Public API TLS configuration - String - Required. Common sub key "common.tls.public".
 */}}
-{{- define "canton-node.sequencerPublicTLS" -}}
+{{- define "canton.sequencer.tls.public" -}}
 {{- $top  := index . 0 -}}
 {{- if $top.enabled }}
 tls {
   cert-chain-file = {{ $top.certChainFile | quote }}
   private-key-file = {{ $top.privateKeyFile | quote }}
-  minimum-server-protocol-version = {{ include "canton-node.tlsMinimumServerProtocolVersion" $top.minimumServerProtocolVersion }}
-  ciphers = {{ include "canton-node.tlsCiphers" $top.ciphers }}
+  minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" $top.minimumServerProtocolVersion }}
+  ciphers = {{ include "canton.tls.ciphers" $top.ciphers }}
 }
 {{- end }}
 {{- end -}}
 
 {{/*
 Remote sequencer public API TLS block (does not support mTLS).
+
+Params:
+  - Remote public API TLS configuration - String - Required. Common sub key "common.tls.public".
 */}}
-{{- define "canton-node.remoteSequencerPublicTLS" -}}
+{{- define "canton.remoteSequencer.tls.public" -}}
 {{- $top  := index . 0 -}}
 {{- if $top.enabled }}
 transport-security = true
@@ -73,13 +85,10 @@ custom-trust-certificates = {
 {{/*
 Generate minimum TLS protocol version value for configuration.
 
-Usage:
-{{ include "canton-node.tlsMinimumServerProtocolVersion" .path.to.minimumServerProtocolVersion }}
-
 Params:
-  - Ciphers - Dict - Optional. TLS version string, if omitted or empty set value to null (use JVM defaults)
+  - Ciphers - Dict - Optional. TLS version string, if omitted or empty set value to null (use JVM defaults).
 */}}
-{{- define "canton-node.tlsMinimumServerProtocolVersion" -}}
+{{- define "canton.tls.minimumServerProtocolVersion" -}}
 {{- $local := dict "first" true -}}
 {{- if . -}}
 {{ . | quote }}
@@ -91,13 +100,12 @@ null
 {{/*
 Generate ciphers value for configuration.
 
-Usage:
-{{ include "canton-node.tlsCiphers" .path.to.ciphers }}
+Format: ["cipher1","cipher2"]
 
 Params:
-  - Ciphers - Dict - Optional. Ciphers list, if omitted or empty set value to null (JVM defaults)
+  - Ciphers - Dict - Optional. Ciphers list, if omitted or empty set value to null (use JVM defaults).
 */}}
-{{- define "canton-node.tlsCiphers" -}}
+{{- define "canton.tls.ciphers" -}}
 {{- $local := dict "first" true -}}
 {{- if . -}}
 [
@@ -116,18 +124,24 @@ null
 
 
 {{/*
-Sequencer Kuberneres service full DNS name
+Sequencer Kubernetes service full DNS name.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{- define "sequencer.serviceDNS" -}}
-{{ template "canton-node.fullname" . }}-sequencer.{{ .Release.Namespace }}.svc.cluster.local
+{{- define "canton.sequencer.serviceDNS" -}}
+{{ template "common.fullname" . }}-sequencer.{{ .Release.Namespace }}.svc.cluster.local
 {{- end -}}
 
 {{/*
-Generate sequencer TLS certificate DNS names
+Generate sequencer TLS certificate DNS names.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{- define "sequencer.tlsCertManagerDnsNames" -}}
+{{- define "canton.sequencer.tlsCertManagerDnsNames" -}}
 {{- $local := dict "first" true -}}
-{{- range $dns := list "localhost" (include "sequencer.serviceDNS" .) .Values.sequencer.ingress.host .Values.sequencer.ingressRouteTCP.hostSNI -}}
+{{- range $dns := list "localhost" (include "canton.sequencer.serviceDNS" .) .Values.sequencer.ingress.host .Values.sequencer.ingressRouteTCP.hostSNI -}}
 {{- if $dns -}}
 {{- if not $local.first -}}
 ,

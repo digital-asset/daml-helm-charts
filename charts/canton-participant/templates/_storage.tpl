@@ -1,8 +1,11 @@
 {{/* vim: set filetype=mustache: */}}
 {{/*
 Generate storage configuration block.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{ define "canton-node.storage" }}
+{{ define "canton.storage" }}
 storage {
   type = postgres
   config {
@@ -39,10 +42,10 @@ Usage:
 {{ include "postgresql.certPath" (list . "key") }}
 
 Params (List):
-  - Context - Dict - Required. The context for the template evaluation.
+  - Context - Dict - Required. Current context for the template evaluation.
   - Filename - String - Required. Cert file sub key of "storage" in values: "certCAFilename", "certFilename" or "certKeyFilename".
-    If an existing secret is used, everything is mounted into /pgtls,
-    provide a secret key name like "tls.cert". Otherwise provide the full path like "/path/to/file".
+    If an existing certificatesSecret is used, everything is mounted into /pgtls,
+    provide a secret key name like "tls.crt". Otherwise provide the full path like "/path/to/file".
 */}}
 {{- define "postgresql.certPath" -}}
 {{- $top  := index . 0 -}}

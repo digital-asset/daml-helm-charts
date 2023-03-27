@@ -2,11 +2,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "canton-node.fullname" . }}-mediator
+  name: {{ template "common.fullname" . }}-mediator
   {{- with .Values.mediator.deployment.annotations }}
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
-  labels: {{- include "canton-node.labels" (list . "mediator") | nindent 4 }}
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mediator
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -16,8 +17,8 @@ metadata:
 spec:
   replicas: {{ .Values.mediator.replicaCount }}
   selector:
-    matchLabels:
-      {{- include "canton-node.selectorLabels" (list . "mediator") | nindent 6 }}
+    matchLabels: {{- include "common.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mediator
   strategy:
     type: "Recreate"
   template:
@@ -29,7 +30,8 @@ spec:
         {{- with .Values.mediator.pod.annotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      labels: {{- include "canton-node.labels" (list . "mediator") | nindent 8 }}
+      labels: {{- include "common.labels" . | nindent 8 }}
+        app.kubernetes.io/component: mediator
         {{- with .Values.commonLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -38,19 +40,15 @@ spec:
         {{- end }}
     spec:
       {{- if .Values.common.serviceAccount.create }}
-      serviceAccountName: {{ template "canton-node.fullname" . }}
+      serviceAccountName: {{ template "common.fullname" . }}
       {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: canton
-          {{- if .Values.image.digest }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
-          {{- else }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          {{- end }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ include "common.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           args:
             - "daemon"
             - "--log-profile=container"
@@ -62,11 +60,11 @@ spec:
           envFrom:
             {{- if or .Values.common.environment .Values.mediator.environment }}
             - configMapRef:
-                name: {{ include "canton-node.fullname" . }}-mediator-envmap
+                name: {{ include "common.fullname" . }}-mediator-envmap
             {{- end }}
             {{- if or .Values.common.environmentSecrets .Values.mediator.environmentSecrets }}
             - secretRef:
-                name: {{ include "canton-node.fullname" . }}-mediator-secretmap
+                name: {{ include "common.fullname" . }}-mediator-secretmap
             {{- end }}
           env:
           {{- if .Values.mediator.storage.existingSecret.name }}
@@ -136,7 +134,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "canton-node.fullname" . }}-mediator
+            name: {{ include "common.fullname" . }}-mediator
         {{- if .Values.common.tls.admin.enabled }}
         - name: tls
           csi:
@@ -147,8 +145,8 @@ spec:
               csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
               csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
               csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-mediator-tls"
-              csi.cert-manager.io/dns-names: "localhost,{{ template "canton-node.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
+              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-mediator-tls"
+              csi.cert-manager.io/dns-names: "localhost,{{ template "common.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
               csi.cert-manager.io/ip-sans: "0.0.0.0"
         - name: mtls
           csi:
@@ -159,8 +157,8 @@ spec:
               csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
               csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
               csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "canton-node.fullname" . }}-mediator-mtls"
-              csi.cert-manager.io/dns-names: "{{ template "canton-node.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
+              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-mediator-mtls"
+              csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
         {{- end }}
         {{- if .Values.storage.certificatesSecret }}
         - name: pgtls

@@ -3,8 +3,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "canton-json.fullname" . }}-envmap
-  labels: {{- include "canton-json.labels" . | nindent 4 }}
+  name: {{ include "common.fullname" . }}-envmap
+  labels: {{- include "common.labels" . | nindent 4 }}
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

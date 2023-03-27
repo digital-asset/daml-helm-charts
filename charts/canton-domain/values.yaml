@@ -1,13 +1,14 @@
 ---
 ## @section Global parameters
 
-## @param nameOverride String to partially override `canton-node.name` template (will maintain the release name)
+## @param nameOverride String to partially override `common.name` template (will maintain the release name)
 ##
 nameOverride: ""
-## @param fullnameOverride String to fully override `canton-node.fullname` template
+## @param fullnameOverride String to fully override `common.fullname` template
 ##
 fullnameOverride: ""
 
+## @param image.registry Canton Docker image registry
 ## @param image.repository Canton Docker image repository
 ## @param image.tag Canton Docker image tag (immutable tags are recommended)
 ## @param image.digest Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
@@ -16,7 +17,8 @@ fullnameOverride: ""
 ##
 image:
   ## Private Docker image
-  repository: digitalasset-docker.jfrog.io/digitalasset/canton-enterprise
+  registry: digitalasset-docker.jfrog.io/digitalasset
+  repository: canton-enterprise
   tag: ""
   digest: ""
   pullPolicy: IfNotPresent
@@ -78,7 +80,7 @@ storage:
 ##
 bootstrap:
   enabled: false
-  backoffLimit: 3
+  backoffLimit: 2
   activeDeadlineSeconds: 600
   ## @extra bootstrap.participants Participant(s) specific settings
   ## @extra bootstrap.participants.resourceLimits Set Participant(s) resource limits
@@ -189,38 +191,38 @@ common:
   domainName: "mydomain"
   mediatorName: "mymediator"
   sequencerName: "mysequencer"
-  ## @extra common.remoteParticipants List of remote Canton participants, only the `bootstrap` and `console`  will connect to them.<br />`name` and `host` are mandatory for each of them, otherwise the default is used
-  ## @param common.remoteParticipants[0].name Participant name
-  ## @param common.remoteParticipants[0].host Participant hostname
-  ## @param common.remoteParticipants[0].ports.public Participant Ledger API port (gRPC)
-  ## @param common.remoteParticipants[0].ports.admin Participant admin port (gRPC)
-  ## @extra common.remoteParticipants[0].tls Participant TLS configuration
-  ## @param common.remoteParticipants[0].tls.public.enabled Enabled mTLS for Ledger API traffic
-  ## @param common.remoteParticipants[0].tls.public.trustCollectionFile CA certificate
-  ## @param common.remoteParticipants[0].tls.public.certChainFile Certificate
-  ## @param common.remoteParticipants[0].tls.public.privateKeyFile Certificate key (PKCS-8)
-  ## @param common.remoteParticipants[0].tls.admin.enabled Enabled mTLS for admin API traffic
-  ## @param common.remoteParticipants[0].tls.admin.trustCollectionFile CA certificate
-  ## @param common.remoteParticipants[0].tls.admin.certChainFile Certificate
-  ## @param common.remoteParticipants[0].tls.admin.privateKeyFile Certificate key (PKCS-8)
+  ## @param common.remoteParticipants List of remote Canton participants, only the `bootstrap` and `console`  will connect to them.<br />`name` and `host` are mandatory for each of them, otherwise the default is used
+  ## @extra common.remoteParticipants[*].name Participant name
+  ## @extra common.remoteParticipants[*].host Participant hostname
+  ## @extra common.remoteParticipants[*].ports.public Participant Ledger API port (gRPC)
+  ## @extra common.remoteParticipants[*].ports.admin Participant admin port (gRPC)
+  ## @extra common.remoteParticipants[*].tls Participant TLS configuration
+  ## @extra common.remoteParticipants[*].tls.public.enabled Enabled mTLS for Ledger API traffic
+  ## @extra common.remoteParticipants[*].tls.public.trustCollectionFile CA certificate
+  ## @extra common.remoteParticipants[*].tls.public.certChainFile Certificate
+  ## @extra common.remoteParticipants[*].tls.public.privateKeyFile Certificate key (PKCS-8)
+  ## @extra common.remoteParticipants[*].tls.admin.enabled Enabled mTLS for admin API traffic
+  ## @extra common.remoteParticipants[*].tls.admin.trustCollectionFile CA certificate
+  ## @extra common.remoteParticipants[*].tls.admin.certChainFile Certificate
+  ## @extra common.remoteParticipants[*].tls.admin.privateKeyFile Certificate key (PKCS-8)
   ##
-  remoteParticipants:
-    - name: "participant1"
-      host: "participant1"
-      ports:
-        public: 4001
-        admin: 4002
-      tls:
-        public:
-          enabled: false
-          trustCollectionFile: "/mtls/ca.crt"
-          certChainFile: "/mtls/tls.crt"
-          privateKeyFile: "/mtls/tls.key"
-        admin:
-          enabled: false
-          trustCollectionFile: "/mtls/ca.crt"
-          certChainFile: "/mtls/tls.crt"
-          privateKeyFile: "/mtls/tls.key"
+  remoteParticipants: []
+    # - name: "participant1"
+    #   host: "participant1"
+    #   ports:
+    #     public: 4001
+    #     admin: 4002
+    #   tls:
+    #     public:
+    #       enabled: false
+    #       trustCollectionFile: "/mtls/ca.crt"
+    #       certChainFile: "/mtls/tls.crt"
+    #       privateKeyFile: "/mtls/tls.key"
+    #     admin:
+    #       enabled: false
+    #       trustCollectionFile: "/mtls/ca.crt"
+    #       certChainFile: "/mtls/tls.crt"
+    #       privateKeyFile: "/mtls/tls.key"
   ## @param common.logEncoder Logging encoder. Allowed values: `plain`, `json`
   ##
   logEncoder: "plain"

@@ -3,11 +3,12 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRouteTCP
 metadata:
-  name: {{ template "canton-node.fullname" . }}-sequencer
+  name: {{ template "common.fullname" . }}-sequencer
   {{- with .Values.sequencer.ingressRouteTCP.annotations }}
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
-  labels: {{- include "canton-node.labels" (list . "sequencer") | nindent 4 }}
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sequencer
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -21,7 +22,7 @@ spec:
   routes:
     - match: HostSNI(`{{ .Values.sequencer.ingressRouteTCP.hostSNI }}`)
       services:
-        - name: {{ template "canton-node.fullname" . }}-sequencer
+        - name: {{ template "common.fullname" . }}-sequencer
           port: public
   {{- with .Values.sequencer.ingressRouteTCP.tls }}
   tls: {{- toYaml . | nindent 4 }}

@@ -2,8 +2,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "canton-node.fullname" . }}-mediator
-  labels: {{- include "canton-node.labels" (list . "common") | nindent 4 }}
+  name: {{ include "common.fullname" . }}-mediator
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mediator
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -12,12 +13,12 @@ data:
     canton {
       mediators {
         {{ .Values.common.mediatorName }} {
-          {{- include "canton-node.storage" (list . "mediator") | indent 10 }}
+          {{- include "canton.storage" (list . "mediator") | indent 10 }}
 
           admin-api {
             address = "0.0.0.0"
             port = {{ .Values.mediator.ports.admin }}
-            {{- include "canton-node.adminTLS" (list .Values.common.tls.admin) | indent 12 }}
+            {{- include "canton.tls.admin" (list .Values.common.tls.admin) | indent 12 }}
           }
 
           replication {
@@ -31,7 +32,7 @@ data:
         }
       }
 
-      {{ include "canton-node.remote-sequencers" . | nindent 6 | trim }}
+      {{ include "canton.remoteSequencers" . | nindent 6 | trim }}
 
-      {{- include "canton-node.monitoring" (list . "mediator") | nindent 6 }}
+      {{- include "canton.monitoring" (list . "mediator") | nindent 6 }}
     }

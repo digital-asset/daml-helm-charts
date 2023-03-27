@@ -3,11 +3,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "canton-json.fullname" . }}
+  name: {{ template "common.fullname" . }}
   {{- with .Values.ingress.annotations }}
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
-  labels: {{- include "canton-json.labels" . | nindent 4 }}
+  labels: {{- include "common.labels" . | nindent 4 }}
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -26,7 +26,7 @@ spec:
             pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
-                name: {{ template "canton-json.fullname" . }}
+                name: {{ template "common.fullname" . }}
                 port:
                   name: http
   {{- with .Values.ingress.tls }}
