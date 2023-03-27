@@ -4,7 +4,7 @@
 
 ```console
 helm repo add digitalasset https://digital-asset.github.io/daml-helm-charts/
-helm install mytrigger digitalasset/daml/trigger
+helm install mytrigger digitalasset/daml-trigger
 ```
 
 #### Minimum viable configuration
@@ -67,19 +67,20 @@ certManager:
 
 ### Common parameters
 
-| Name                        | Description                                                                                    | Value                                          |
-| --------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `nameOverride`              | String to partially override `canton-trigger.name` template (will maintain the release name)   | `""`                                           |
-| `fullnameOverride`          | String to fully override `canton-trigger.fullname` template                                    | `""`                                           |
-| `replicaCount`              | Number of Participant pods to deploy                                                           | `1`                                            |
-| `image.repository`          | Docker image repository                                                                        | `digitalasset-docker.jfrog.io/trigger-service` |
-| `image.tag`                 | Docker image tag (immutable tags are recommended)                                              | `""`                                           |
-| `image.digest`              | Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag` | `""`                                           |
-| `image.pullPolicy`          | Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                    | `IfNotPresent`                                 |
-| `image.pullSecrets`         | Specify Docker registry secret names as an array                                               | `[]`                                           |
-| `commonLabels`              | Add labels to all the deployed resources                                                       | `{}`                                           |
-| `metrics.enabled`           | Enable Prometheus metrics endpoint                                                             | `false`                                        |
-| `metrics.reportingInterval` | Metrics reporting interval                                                                     | `30s`                                          |
+| Name                        | Description                                                                                    | Value                          |
+| --------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------ |
+| `nameOverride`              | String to partially override `common.name` template (will maintain the release name)           | `""`                           |
+| `fullnameOverride`          | String to fully override `common.fullname` template                                            | `""`                           |
+| `replicaCount`              | Number of Participant pods to deploy                                                           | `1`                            |
+| `image.registry`            | Docker image registry                                                                          | `digitalasset-docker.jfrog.io` |
+| `image.repository`          | Docker image repository                                                                        | `trigger-service`              |
+| `image.tag`                 | Docker image tag (immutable tags are recommended)                                              | `""`                           |
+| `image.digest`              | Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag` | `""`                           |
+| `image.pullPolicy`          | Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                    | `IfNotPresent`                 |
+| `image.pullSecrets`         | Specify Docker registry secret names as an array                                               | `[]`                           |
+| `commonLabels`              | Add labels to all the deployed resources                                                       | `{}`                           |
+| `metrics.enabled`           | Enable Prometheus metrics endpoint                                                             | `false`                        |
+| `metrics.reportingInterval` | Metrics reporting interval                                                                     | `30s`                          |
 
 ### Trigger configuration
 

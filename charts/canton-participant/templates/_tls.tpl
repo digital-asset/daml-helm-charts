@@ -2,13 +2,10 @@
 {{/*
 Generate minimum TLS protocol version value for configuration.
 
-Usage:
-{{ include "canton-node.tlsMinimumServerProtocolVersion" .path.to.minimumServerProtocolVersion }}
-
 Params:
-  - Ciphers - Dict - Optional. TLS version string, if omitted or empty set value to null (use JVM defaults)
+  - Ciphers - Dict - Optional. TLS version string, if omitted or empty set value to null (use JVM defaults).
 */}}
-{{- define "canton-node.tlsMinimumServerProtocolVersion" -}}
+{{- define "canton.tls.minimumServerProtocolVersion" -}}
 {{- $local := dict "first" true -}}
 {{- if . -}}
 {{ . | quote }}
@@ -20,13 +17,12 @@ null
 {{/*
 Generate ciphers value for configuration.
 
-Usage:
-{{ include "canton-node.tlsCiphers" .path.to.ciphers }}
+Format: ["cipher1","cipher2"]
 
 Params:
-  - Ciphers - Dict - Optional. Ciphers list, if omitted or empty set value to null (JVM defaults)
+  - Ciphers - Dict - Optional. Ciphers list, if omitted or empty set value to null (use JVM defaults).
 */}}
-{{- define "canton-node.tlsCiphers" -}}
+{{- define "canton.tls.ciphers" -}}
 {{- $local := dict "first" true -}}
 {{- if . -}}
 [
@@ -43,15 +39,22 @@ null
 {{- end -}}
 {{- end -}}
 
+
 {{/*
-Participant Kuberneres service full DNS name
+Participant Kubernetes service full DNS name.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{- define "participant.serviceDNS" -}}
-{{ template "canton-node.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
 {{- end -}}
 
 {{/*
-Generate participant TLS certificate DNS names
+Generate participant TLS certificate DNS names.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{- define "participant.tlsCertManagerDnsNames" -}}
 {{- $local := dict "first" true -}}

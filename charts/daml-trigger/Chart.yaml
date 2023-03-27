@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
 name: "daml-trigger"
-version: 0.1.0
+version: 0.0.7
 appVersion: 2.6.0
 kubeVersion: ">= 1.21.0-0"
 description: "A Helm chart for Daml Trigger service"

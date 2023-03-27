@@ -2,8 +2,15 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "canton-node.name" -}}
+{{- define "common.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "common.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -11,7 +18,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "canton-node.fullname" -}}
+{{- define "common.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -25,38 +32,39 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Common labels (required in Helm 3.2+)
+Kubernetes and Helm standard labels.
 */}}
-{{- define "canton-node.labels" -}}
-app.kubernetes.io/component: participant
+{{- define "common.labels" -}}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/name: {{ include "canton-node.name" . }}
+app.kubernetes.io/name: {{ include "common.name" . }}
+app.kubernetes.io/part-of: canton
 app.kubernetes.io/version: {{ .Chart.AppVersion }}
-helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-helm.sh/release-namespace: {{ .Release.Namespace }}
 canton.io/participant: {{ .Values.participantName }}
-{{- end }}
+helm.sh/chart: {{ include "common.chart" . }}
+{{- end -}}
 
 {{/*
-Selector labels
+Labels to use in matchLabels and selector.
 */}}
-{{- define "canton-node.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "canton-node.name" . }}
+{{- define "common.selectorLabels" -}}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
+app.kubernetes.io/name: {{ include "common.name" . }}
+{{- end -}}
 
 {{/*
-Define imageCredentials name.
+Return image for containers.
 */}}
-{{- define "canton-node.imagePullSecretName" -}}
-{{- if .Values.imageCredentials.create -}}
-  {{ printf "%s-%s" (include "canton-node.fullname" .) "registry" | trunc 63 | trimSuffix "-" }}
+{{- define "common.image" -}}
+{{- $separator := ":" -}}
+{{- $termination := .Values.image.tag | default .Chart.AppVersion -}}
+{{- if .Values.image.digest }}
+    {{- $separator = "@" -}}
+    {{- $termination = .Values.image.digest -}}
+{{- end -}}
+{{- if .Values.image.registry }}
+    {{- printf "%s/%s%s%s" .Values.image.registry .Values.image.repository $separator $termination -}}
 {{- else -}}
-  {{ .Values.imageCredentials.name }}
+    {{- printf "%s%s%s"  .Values.image.repository $separator $termination -}}
 {{- end -}}
 {{- end -}}
-
-{{- define "canton-node.imagePullSecret" }}
-{{- printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.imageCredentials.registry (printf "%s:%s" .Values.imageCredentials.username .Values.imageCredentials.password | b64enc) | b64enc }}
-{{- end }}

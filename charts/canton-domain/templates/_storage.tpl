@@ -3,13 +3,13 @@
 Generate storage configuration block.
 
 Usage:
-{{ include "canton-node.storage" (list . "manager") }}
+{{ include "canton.storage" (list . "manager") }}
 
 Params (List):
-  - Context - Dict - Required. The context for the template evaluation.
+  - Context - Dict - Required. Current context for the template evaluation.
   - Component name - String - Required. Components with a sub key "storage" in values: "manager", "mediator" or "sequencer".
 */}}
-{{ define "canton-node.storage" }}
+{{ define "canton.storage" }}
 {{- $top       := index . 0 -}}
 {{- $component := index $top.Values (index . 1) }}
 storage {
@@ -48,10 +48,10 @@ Usage:
 {{ include "postgresql.certPath" (list . "key") }}
 
 Params (List):
-  - Context - Dict - Required. The context for the template evaluation.
+  - Context - Dict - Required. Current context for the template evaluation.
   - Filename - String - Required. Cert file sub key of "storage" in values: "certCAFilename", "certFilename" or "certKeyFilename".
-    If an existing secret is used, everything is mounted into /pgtls,
-    provide a secret key name like "tls.cert". Otherwise provide the full path like "/path/to/file".
+    If an existing certificatesSecret is used, everything is mounted into /pgtls,
+    provide a secret key name like "tls.crt". Otherwise provide the full path like "/path/to/file".
 */}}
 {{- define "postgresql.certPath" -}}
 {{- $top  := index . 0 -}}

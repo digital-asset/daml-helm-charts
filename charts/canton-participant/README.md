@@ -4,7 +4,7 @@
 
 ```console
 helm repo add digitalasset https://digital-asset.github.io/daml-helm-charts/
-helm install participant1 digitalasset/canton/participant
+helm install participant1 digitalasset/canton-participant
 ```
 
 ### Minimum viable configuration
@@ -88,18 +88,19 @@ ingressRouteTCP:
 
 ### Common parameters
 
-| Name                | Description                                                                                             | Value                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `nameOverride`      | String to partially override `canton-node.name` template (will maintain the release name)               | `""`                                                          |
-| `fullnameOverride`  | String to fully override `canton-node.fullname` template                                                | `""`                                                          |
-| `replicaCount`      | Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work) | `1`                                                           |
-| `image.repository`  | Canton Docker image repository                                                                          | `digitalasset-docker.jfrog.io/digitalasset/canton-enterprise` |
-| `image.tag`         | Canton Docker image tag (immutable tags are recommended)                                                | `""`                                                          |
-| `image.digest`      | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`   | `""`                                                          |
-| `image.pullPolicy`  | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                      | `IfNotPresent`                                                |
-| `image.pullSecrets` | Specify Canton Docker registry secret names as an array                                                 | `[]`                                                          |
-| `commonLabels`      | Add labels to all the deployed resources                                                                | `{}`                                                          |
-| `metrics.enabled`   | Enable Prometheus metrics endpoint                                                                      | `false`                                                       |
+| Name                | Description                                                                                             | Value                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `nameOverride`      | String to partially override `common.name` template (will maintain the release name)                    | `""`                             |
+| `fullnameOverride`  | String to fully override `common.fullname` template                                                     | `""`                             |
+| `replicaCount`      | Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work) | `1`                              |
+| `image.registry`    | Canton Docker image registry                                                                            | `digitalasset-docker.jfrog.io`   |
+| `image.repository`  | Canton Docker image repository                                                                          | `digitalasset/canton-enterprise` |
+| `image.tag`         | Canton Docker image tag (immutable tags are recommended)                                                | `""`                             |
+| `image.digest`      | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`   | `""`                             |
+| `image.pullPolicy`  | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                      | `IfNotPresent`                   |
+| `image.pullSecrets` | Specify Canton Docker registry secret names as an array                                                 | `[]`                             |
+| `commonLabels`      | Add labels to all the deployed resources                                                                | `{}`                             |
+| `metrics.enabled`   | Enable Prometheus metrics endpoint                                                                      | `false`                          |
 
 ### Participant configuration
 
@@ -120,6 +121,70 @@ ingressRouteTCP:
 | `storage.certCAFilename`      | CA certificate file (PEM encoded X509v3). Intermediate certificate(s) that chain up to this root certificate can also appear in this file.                                                                    | `ca.crt`       |
 | `storage.certFilename`        | Client certificate file (PEM encoded X509v3)                                                                                                                                                                  | `tls.crt`      |
 | `storage.certKeyFilename`     | Client certificate key file (PKCS-12 or PKCS-8 DER)                                                                                                                                                           | `key.der`      |
+
+### Bootstrap configuration
+
+| Name                                          | Description                                                                                                                                 | Value                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `bootstrap`                                   | Initialize your participant, connecting to a remote sequencer                                                                               |                                       |
+| `bootstrap.enabled`                           | Enable Job (Helm chart hook), will create one or more ephemeral Pods                                                                        | `false`                               |
+| `bootstrap.backoffLimit`                      | Specifies the number of retries before marking this job failed                                                                              | `2`                                   |
+| `bootstrap.activeDeadlineSeconds`             | Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it | `600`                                 |
+| `bootstrap.remoteSequencer`                   | Remote sequencer                                                                                                                            |                                       |
+| `bootstrap.remoteSequencer.domainAlias`       | Domain alias                                                                                                                                | `mydomain`                            |
+| `bootstrap.remoteSequencer.domainId`          | Domain ID                                                                                                                                   | `""`                                  |
+| `bootstrap.remoteSequencer.url`               | Sequencer URL                                                                                                                               | `https://mysequencer.domain.com:4401` |
+| `bootstrap.remoteSequencer.certFile`          | Path to sequencer CA certificate                                                                                                            | `/tls/ca.crt`                         |
+| `bootstrap.remoteSequencer.initialRetryDelay` | Initial retry delay. Example values: `10s`, `10m' or `10h`                                                                                  | `30s`                                 |
+| `bootstrap.remoteSequencer.maxRetryDelay`     | Maximum retry delay. Example values: `10s`, `10m' or `10h`                                                                                  | `10m`                                 |
+| `bootstrap.logLevel`                          | Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`                                                           |                                       |
+| `bootstrap.logLevel.root`                     | Canton and external libraries, but not `stdout`                                                                                             | `INFO`                                |
+| `bootstrap.logLevel.canton`                   | Only the Canton logger                                                                                                                      | `INFO`                                |
+| `bootstrap.logLevel.stdout`                   | Usually the text displayed in the Canton console                                                                                            | `INFO`                                |
+| `bootstrap.environment`                       | Environment variables                                                                                                                       | `{}`                                  |
+| `bootstrap.environmentSecrets`                | Secret environment variables                                                                                                                | `{}`                                  |
+| `bootstrap.job`                               | Job and Helm hook configuration                                                                                                             |                                       |
+| `bootstrap.job.annotations`                   | Job extra annotations                                                                                                                       | `{}`                                  |
+| `bootstrap.job.labels`                        | Job extra labels                                                                                                                            | `{}`                                  |
+| `bootstrap.job.helmHook`                      | Annotation `helm.sh/hook` value                                                                                                             | `post-install,post-upgrade`           |
+| `bootstrap.job.helmHookWeight`                | Annotation `helm.sh/hook-weight` value                                                                                                      | `5`                                   |
+| `bootstrap.job.helmHookDeletePolicy`          | Annotation `helm.sh/hook-delete-policy` value                                                                                               | `before-hook-creation`                |
+| `bootstrap.pod.annotations`                   | Extra annotations for Job pods                                                                                                              | `{}`                                  |
+| `bootstrap.pod.labels`                        | Extra labels for Job pods                                                                                                                   | `{}`                                  |
+| `bootstrap.affinity`                          | Affinity for pods assignment                                                                                                                | `{}`                                  |
+| `bootstrap.nodeSelector`                      | Node labels for pods assignment                                                                                                             | `{}`                                  |
+| `bootstrap.resources`                         | Resources requests/limits for bootstrap container                                                                                           | `{}`                                  |
+| `bootstrap.tolerations`                       | Tolerations for pods assignment                                                                                                             | `[]`                                  |
+| `bootstrap.extraVolumeMounts`                 | Specify extra list of additional volumeMounts for bootstrap container                                                                       | `[]`                                  |
+| `bootstrap.extraVolumes`                      | Specify extra list of additional volumes for bootstrap pod                                                                                  | `[]`                                  |
+
+### Console configuration
+
+| Name                                    | Description                                                             | Value   |
+| --------------------------------------- | ----------------------------------------------------------------------- | ------- |
+| `console`                               | Single console pod for administration/debug of all the other components |         |
+| `console.enabled`                       | Enable Deployment                                                       | `false` |
+| `console.terminationGracePeriodSeconds` | Stop the pod immediately by default, tailing `/dev/null` to stay up     | `0`     |
+| `console.deployment.annotations`        | Deployment extra annotations                                            | `{}`    |
+| `console.deployment.labels`             | Deployment extra labels                                                 | `{}`    |
+| `console.deployment.strategy`           | Deployment strategy                                                     | `{}`    |
+| `console.pod.annotations`               | Extra annotations for Deployment pods                                   | `{}`    |
+| `console.pod.labels`                    | Extra labels for Deployment pods                                        | `{}`    |
+| `console.affinity`                      | Affinity for pods assignment                                            | `{}`    |
+| `console.nodeSelector`                  | Node labels for pods assignment                                         | `{}`    |
+| `console.resources`                     | Resources requests/limits for console container                         | `{}`    |
+| `console.tolerations`                   | Tolerations for pods assignment                                         | `[]`    |
+| `console.extraVolumeMounts`             | Specify extra list of additional volumeMounts for console container     | `[]`    |
+| `console.extraVolumes`                  | Specify extra list of additional volumes for console pod                | `[]`    |
+
+### Common parameters for the `boostrap` and `console` only
+
+| Name                                    | Description                              | Value   |
+| --------------------------------------- | ---------------------------------------- | ------- |
+| `common.features`                       | Enable additional commands               |         |
+| `common.features.enablePreviewCommands` | Enable preview commands (unstable)       | `false` |
+| `common.features.enableTestingCommands` | Enable testing commands (for developers) | `false` |
+| `common.features.enableRepairCommands`  | Enable manual repair commands            | `false` |
 
 ### Logging
 
