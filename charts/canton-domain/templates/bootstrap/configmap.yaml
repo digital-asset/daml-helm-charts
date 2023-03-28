@@ -1,69 +1,55 @@
-{{/*
-/!\ canton run <script> always exits with return code zero by default
-Does not catch syntax/compilation errors
-https://github.com/DACH-NY/canton/issues/11306
-*/}}
+{{/* This script must be idempotent, it can run again even if domain and participant(s) are already initialized */}}
 {{- if .Values.bootstrap.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "canton-node.fullname" . }}-bootstrap
-  labels: {{- include "canton-node.labels" (list . "bootstrap") | nindent 4 }}
+  name: {{ include "common.fullname" . }}-bootstrap
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bootstrap
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-  {{/* This script is meant to be idempotent, it can run again even if domain and participant(s) are already initialized */}}
   bootstrap.canton: |
-    import com.digitalasset.canton.console.InstanceReference
-    import com.digitalasset.canton.health.admin.data.NodeStatus
-    import com.digitalasset.canton.sequencing.SequencerConnection
-    import com.digitalasset.canton.participant.domain.DomainConnectionConfig
+    logger.info("Bootstrap start")
 
-    try {
-      logger.info("Waiting for all nodes to be running")
-      nodes.remote.foreach { node =>
-        logger.debug(s"Node ${node.name}")
-        node.health.wait_for_running()
+    nodes.remote.foreach { node =>
+      logger.info(s"Waiting for ${node.name} to be running")
+      node.health.wait_for_running()
+    }
+
+    logger.info(s"Bootstrapping domain ${domainManagers.remote.head.name}")
+    domainManagers.remote.head.setup.bootstrap_domain(sequencers.all, Seq(mediators.remote.head))
+
+    participants.remote.foreach { participant =>
+      logger.info(s"Waiting for participant ${participant.name} to be initialized")
+      participant.health.wait_for_initialized()
+
+      {{- if .Values.manager.topology.open }}
+      logger.warn(s"Your domain ${domainManagers.remote.head.name} is open, any participant can join ⚠️")
+      {{- else }}
+      if (domainManagers.remote.head.participants.list.forall(_.item.participant != participant.id)) {
+        logger.info(s"Registering participant ${participant.name} to domain ${domainManagers.remote.head.name}")
+        domainManagers.remote.head.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
+      } else {
+        logger.info(s"Participant already registered in domain ${domainManagers.remote.head.name}")
       }
+      {{- end }}
 
-      logger.info(s"Bootstrapping domain ${domainManagers.remote.head.name}")
-      domainManagers.remote.head.setup.bootstrap_domain(sequencers.all, Seq(mediators.remote.head))
+      logger.info(s"Connecting participant ${participant.name} to domain ${domainManagers.remote.head.name} and sequencer(s) ${sequencers.remote.head.name}")
+      participant.domains.connect_multi(domainManagers.remote.head.name, Seq(sequencers.remote.head))
 
-      participants.remote.foreach { participant =>
-        logger.info(s"Bootstrapping participant ${participant.name}")
+      logger.info(s"Pinging participant ${participant.name} to make sure everything is alright")
+      participant.health.ping(participant)
 
-        logger.info("Waiting for participant to be initialized")
-        participant.health.wait_for_initialized()
-
-        {{- if .Values.manager.topology.open }}
-        logger.warn("Your domain is open, any participant can join ⚠️")
-        {{- else }}
-        if (domainManagers.remote.head.participants.list.forall(_.item.participant != participant.id)) {
-          logger.info("Registering participant to domain")
-          domainManagers.remote.head.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
-        } else {
-          logger.info("Participant already registered in domain")
-        }
-        {{- end }}
-
-        logger.info("Connecting participant to domain and sequencer(s)")
-        participant.domains.connect_multi(domainManagers.remote.head.name, Seq(sequencers.remote.head))
-
-        logger.info("Pinging participant to make sure everything is alright")
-        participant.health.ping(participant)
-
-        logger.info("Setting participant resource limits")
-        participant.resources.set_resource_limits(
-          ResourceLimits(
-            maxRate = Some({{ .Values.bootstrap.participants.resourceLimits.maxRate }}),
-            maxDirtyRequests = Some({{ .Values.bootstrap.participants.resourceLimits.maxDirtyRequests }})
-          )
+      logger.info(s"Setting participant ${participant.name} resource limits")
+      participant.resources.set_resource_limits(
+        ResourceLimits(
+          maxRate = Some({{ .Values.bootstrap.participants.resourceLimits.maxRate }}),
+          maxDirtyRequests = Some({{ .Values.bootstrap.participants.resourceLimits.maxDirtyRequests }})
         )
-      }
-    } catch {
-      case _: Throwable => sys.exit(1)
+      )
     }
 
     logger.info("Bootstrap succeeded")

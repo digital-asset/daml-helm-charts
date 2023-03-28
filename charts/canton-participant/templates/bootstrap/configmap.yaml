@@ -1,0 +1,44 @@
+{{/* This script must be idempotent, it can run again even if this participant are already initialized */}}
+{{- if .Values.bootstrap.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-bootstrap
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bootstrap
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  bootstrap.canton: |
+    logger.info("Bootstrap start")
+
+    import com.digitalasset.canton.participant.domain.DomainConnectionConfig
+    import com.digitalasset.canton.sequencing.GrpcSequencerConnection
+    import com.digitalasset.canton.time.NonNegativeFiniteDuration
+    import com.digitalasset.canton.util.BinaryFileUtil
+
+    val domainAlias = {{ .Values.bootstrap.remoteSequencer.domainAlias | quote }}
+    val domainId = DomainId.tryFromString({{ .Values.bootstrap.remoteSequencer.domainId | quote }})
+    val sequencerURL = {{ .Values.bootstrap.remoteSequencer.url | quote }}
+
+    logger.info(s"Loading sequencer CA certificate file")
+    val certificate = BinaryFileUtil.tryReadByteStringFromFile({{ .Values.bootstrap.remoteSequencer.certFile | quote }})
+
+    logger.info(s"Connecting to domain ${domainAlias} with ID ${domainId} at ${sequencerURL}")
+    val connection = GrpcSequencerConnection.tryCreate(sequencerURL, Some(certificate))
+    val config = DomainConnectionConfig(
+      domainAlias,
+      connection,
+      false,
+      Some(domainId),
+      100,
+      Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.initialRetryDelay | quote }}).toSeconds)),
+      Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
+    )
+    {{ .Values.participantName }}.domains.register(config)
+    {{ .Values.participantName }}.domains.reconnect(domainAlias)
+
+    logger.info("Bootstrap succeeded")
+{{- end }}

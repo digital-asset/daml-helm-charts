@@ -1,16 +1,17 @@
 ---
 ## @section Common parameters
 
-## @param nameOverride String to partially override `canton-trigger.name` template (will maintain the release name)
+## @param nameOverride String to partially override `common.name` template (will maintain the release name)
 ##
 nameOverride: ""
-## @param fullnameOverride String to fully override `canton-trigger.fullname` template
+## @param fullnameOverride String to fully override `common.fullname` template
 ##
 fullnameOverride: ""
 
 ## @param replicaCount Number of Participant pods to deploy
 replicaCount: 1
 
+## @param image.registry Docker image registry
 ## @param image.repository Docker image repository
 ## @param image.tag Docker image tag (immutable tags are recommended)
 ## @param image.digest Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
@@ -18,8 +19,9 @@ replicaCount: 1
 ## @param image.pullSecrets Specify Docker registry secret names as an array
 ##
 image:
-  # Private Docker image
-  repository: digitalasset-docker.jfrog.io/trigger-service
+  ## Private Docker image
+  registry: digitalasset-docker.jfrog.io
+  repository: trigger-service
   tag: ""
   digest: ""
   pullPolicy: IfNotPresent

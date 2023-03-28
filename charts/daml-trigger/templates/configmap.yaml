@@ -7,8 +7,8 @@ Docs: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRIN
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "canton-trigger.fullname" . }}
-  labels: {{- include "canton-trigger.labels" . | nindent 4 }}
+  name: {{ include "common.fullname" . }}
+  labels: {{- include "common.labels" . | nindent 4 }}
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

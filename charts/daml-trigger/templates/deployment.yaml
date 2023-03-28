@@ -2,11 +2,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "canton-trigger.fullname" . }}
+  name: {{ template "common.fullname" . }}
   {{- with .Values.deployment.annotations }}
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
-  labels: {{- include "canton-trigger.labels" . | nindent 4 }}
+  labels: {{- include "common.labels" . | nindent 4 }}
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -16,8 +16,7 @@ metadata:
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
-    matchLabels:
-      {{- include "canton-trigger.selectorLabels" . | nindent 6 }}
+    matchLabels: {{- include "common.selectorLabels" . | nindent 6 }}
   {{- with .Values.deployment.strategy }}
   strategy: {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -30,7 +29,7 @@ spec:
         {{- with .Values.pod.annotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      labels: {{- include "canton-trigger.labels" . | nindent 8 }}
+      labels: {{- include "common.labels" . | nindent 8 }}
         {{- with .Values.commonLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -43,12 +42,8 @@ spec:
       {{- end }}
       containers:
         - name: trigger
-          {{- if .Values.image.digest }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}@sha256:{{ .Values.image.digest }}"
-          {{- else }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          {{- end }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ include "common.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           args:
             - "--config=/etc/trigger-service/trigger.conf"
             - "--log-level-root={{ .Values.logLevel }}"
@@ -56,11 +51,11 @@ spec:
           envFrom:
             {{- if .Values.environment }}
             - configMapRef:
-                name: {{ include "canton-trigger.fullname" . }}-envmap
+                name: {{ include "common.fullname" . }}-envmap
             {{- end }}
             {{- if .Values.environmentSecrets }}
             - secretRef:
-                name: {{ include "canton-trigger.fullname" . }}-secretmap
+                name: {{ include "common.fullname" . }}-secretmap
             {{- end }}
           {{- if .Values.storage.existingSecret.name }}
           env:
@@ -119,7 +114,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "canton-trigger.fullname" . }}
+            name: {{ include "common.fullname" . }}
         {{- if .Values.tls.enabled }}
         - name: tls
           csi:
@@ -130,8 +125,8 @@ spec:
               csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
               csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
               csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "canton-trigger.fullname" . }}"
-              csi.cert-manager.io/dns-names: "{{ template "canton-trigger.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}"
+              csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
         {{- end }}
         {{- if .Values.storage.certificatesSecret }}
         - name: pgtls

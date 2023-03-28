@@ -1,10 +1,10 @@
 ---
 ## @section Common parameters
 
-## @param nameOverride String to partially override `canton-node.name` template (will maintain the release name)
+## @param nameOverride String to partially override `common.name` template (will maintain the release name)
 ##
 nameOverride: ""
-## @param fullnameOverride String to fully override `canton-node.fullname` template
+## @param fullnameOverride String to fully override `common.fullname` template
 ##
 fullnameOverride: ""
 
@@ -12,6 +12,7 @@ fullnameOverride: ""
 ## Participant is using active/passive HA which is incompatible with Kubernetes => run only one pod at a time
 replicaCount: 1
 
+## @param image.registry Canton Docker image registry
 ## @param image.repository Canton Docker image repository
 ## @param image.tag Canton Docker image tag (immutable tags are recommended)
 ## @param image.digest Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
@@ -20,7 +21,8 @@ replicaCount: 1
 ##
 image:
   ## Private Docker image
-  repository: digitalasset-docker.jfrog.io/digitalasset/canton-enterprise
+  registry: digitalasset-docker.jfrog.io/digitalasset
+  repository: canton-enterprise
   tag: ""
   digest: ""
   pullPolicy: IfNotPresent
@@ -78,6 +80,135 @@ storage:
   certCAFilename: "ca.crt"
   certFilename: "tls.crt"
   certKeyFilename: "key.der"
+
+## @section Bootstrap configuration
+
+## @extra bootstrap Initialize your participant, connecting to a remote sequencer
+## @param bootstrap.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
+## @param bootstrap.backoffLimit Specifies the number of retries before marking this job failed
+## @param bootstrap.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
+##
+bootstrap:
+  enabled: false
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ## @extra bootstrap.remoteSequencer Remote sequencer
+  ## @param bootstrap.remoteSequencer.domainAlias Domain alias
+  ## @param bootstrap.remoteSequencer.domainId Domain ID
+  ## @param bootstrap.remoteSequencer.url Sequencer URL
+  ## @param bootstrap.remoteSequencer.certFile Path to sequencer CA certificate
+  ## @param bootstrap.remoteSequencer.initialRetryDelay Initial retry delay. Example values: `10s`, `10m' or `10h`
+  ## @param bootstrap.remoteSequencer.maxRetryDelay Maximum retry delay. Example values: `10s`, `10m' or `10h`
+  ##
+  remoteSequencer:
+    domainAlias: "mydomain"
+    domainId: ""
+    url: "https://mysequencer.domain.com:4401"
+    certFile: "/tls/ca.crt"
+    initialRetryDelay: "30s"
+    maxRetryDelay: "10m"
+
+  ## @extra bootstrap.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+  ## @param bootstrap.logLevel.root Canton and external libraries, but not `stdout`
+  ## @param bootstrap.logLevel.canton Only the Canton logger
+  ## @param bootstrap.logLevel.stdout Usually the text displayed in the Canton console
+  ##
+  logLevel:
+    root: "INFO"
+    canton: "INFO"
+    stdout: "INFO"
+  ## @param bootstrap.environment Environment variables
+  ## @param bootstrap.environmentSecrets Secret environment variables
+  ##
+  environment: {}
+  environmentSecrets: {}
+  ## @extra bootstrap.job Job and Helm hook configuration
+  ## @param bootstrap.job.annotations Job extra annotations
+  ## @param bootstrap.job.labels Job extra labels
+  ## @param bootstrap.job.helmHook Annotation `helm.sh/hook` value
+  ## @param bootstrap.job.helmHookWeight Annotation `helm.sh/hook-weight` value
+  ## @param bootstrap.job.helmHookDeletePolicy Annotation `helm.sh/hook-delete-policy` value
+  ## ref: https://helm.sh/docs/topics/charts_hooks/
+  ##
+  job:
+    annotations: {}
+    labels: {}
+    helmHook: "post-install,post-upgrade"
+    helmHookWeight: "5"
+    helmHookDeletePolicy: "before-hook-creation"
+
+  ## @param bootstrap.pod.annotations Extra annotations for Job pods
+  ## @param bootstrap.pod.labels Extra labels for Job pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param bootstrap.affinity Affinity for pods assignment
+  ## @param bootstrap.nodeSelector Node labels for pods assignment
+  ## @param bootstrap.resources Resources requests/limits for bootstrap container
+  ## @param bootstrap.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param bootstrap.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param bootstrap.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+
+## @section Console configuration
+
+## @extra console Single console pod for administration/debug of all the other components
+## @param console.enabled Enable Deployment
+##
+console:
+  enabled: false
+  ## @param console.terminationGracePeriodSeconds Stop the pod immediately by default, tailing `/dev/null` to stay up
+  ##
+  terminationGracePeriodSeconds: 0
+  ## @param console.deployment.annotations Deployment extra annotations
+  ## @param console.deployment.labels Deployment extra labels
+  ## @param console.deployment.strategy Deployment strategy
+  ##
+  deployment:
+    annotations: {}
+    labels: {}
+    strategy: {}
+  ## @param console.pod.annotations Extra annotations for Deployment pods
+  ## @param console.pod.labels Extra labels for Deployment pods
+  ##
+  pod:
+    annotations: {}
+    labels: {}
+  ## @param console.affinity Affinity for pods assignment
+  ## @param console.nodeSelector Node labels for pods assignment
+  ## @param console.resources Resources requests/limits for console container
+  ## @param console.tolerations Tolerations for pods assignment
+  ##
+  affinity: {}
+  nodeSelector: {}
+  resources: {}
+  tolerations: []
+  ## @param console.extraVolumeMounts Specify extra list of additional volumeMounts for console container
+  ## @param console.extraVolumes Specify extra list of additional volumes for console pod
+  ##
+  extraVolumeMounts: []
+  extraVolumes: []
+
+common:
+  ## @section Common parameters for the `boostrap` and `console` only
+  ##
+  ## @extra common.features Enable additional commands
+  ## @param common.features.enablePreviewCommands Enable preview commands (unstable)
+  ## @param common.features.enableTestingCommands Enable testing commands (for developers)
+  ## @param common.features.enableRepairCommands Enable manual repair commands
+  ##
+  features:
+    enablePreviewCommands: false
+    enableTestingCommands: false
+    enableRepairCommands: false
 
 ## @section Logging
 

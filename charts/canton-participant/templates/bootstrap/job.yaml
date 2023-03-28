@@ -52,7 +52,7 @@ spec:
           args:
             - "run"
             - "--log-profile=container"
-            - "--log-encoder={{ .Values.common.logEncoder }}"
+            - "--log-encoder={{ .Values.logEncoder }}"
             - "--log-level-root={{ .Values.bootstrap.logLevel.root }}"
             - "--log-level-canton={{ .Values.bootstrap.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.bootstrap.logLevel.stdout }}"
@@ -79,12 +79,9 @@ spec:
               mountPath: /canton/remote.conf
               subPath: remote.conf
               readOnly: true
-            {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "canton.participant.isTLS" .) }}
-            - name: tls
-              mountPath: "/tls"
-              readOnly: true
+            {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
             - name: mtls
-              mountPath: "/mtls"
+              mountPath: "/tls"
               readOnly: true
             {{- end }}
             {{- with .Values.bootstrap.extraVolumeMounts }}
@@ -97,26 +94,15 @@ spec:
         - name: config
           configMap:
             name: {{ include "common.fullname" . }}-remote
-        {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "canton.participant.isTLS" .) }}
-        - name: tls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-bootstrap-tls"
-              csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
+        {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
         - name: mtls
           csi:
             driver: csi.cert-manager.io
             readOnly: true
             volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
+              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
+              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
+              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
               csi.cert-manager.io/key-encoding: "PKCS8"
               csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-bootstrap-mtls"
               csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
