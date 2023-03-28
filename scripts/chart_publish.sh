@@ -31,12 +31,12 @@ for chart in $CHARTS_DIR/*; do
         cr upload -b https://api.github.com/ -u https://uploads.github.com --skip-existing -c $PUBLISH_BRANCH -r $GITREPO_NAME  -p $PUBLISH_FOLDER --owner $GITREPO_OWNER --token $1
         echo "Chart $chart_name version $chart_version has been pushed to repository $GITREPO_NAME"
         helm repo index $PUBLISH_FOLDER --url https://github.com/$GITREPO_OWNER/$GITREPO_NAME/releases/download/$chart_name-$chart_version --merge docs/index.yaml
+        echo $chart_name-$chart_version.tgz
         rm -rf $PUBLISH_FOLDER/$chart_name-$chart_version.tgz
+        mv $PUBLISH_FOLDER/index.yaml docs/index.yaml
     fi
 done
 
-# Overwrite the old index file with the merged index file.
-mv publish/index.yaml docs/index.yaml
 
 # CR index doesnt work for multiple reasons. One being it uses a folder to create an index and it has no file merge capabilities therefore only the files present in the folder would be added to the index. In our case, we store the already published helm charts as github releases, cr index do not take these into account.
 #cr index --pr --pages-branch $PUBLISH_BRANCH -b https://api.github.com/ -u https://uploads.github.com -i docs/index.yaml -r $GITREPO_NAME  -p $PUBLISH_FOLDER --owner $GITREPO_OWNER --token $1
