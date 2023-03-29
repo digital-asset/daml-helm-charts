@@ -1,5 +1,37 @@
 # HTTP JSON API service packed by Digital Asset
 
+
+- [Introduction](#introduction)
+- [Prerequisites](#-prerequisites-)
+- [TL;DR](#tldr)
+- [Configuration and installation details](#configuration-and-installation-details)
+- [Limitations](#limitations)
+- [Parameters](#parameters)
+- [License](#license)
+
+
+---
+
+## Introduction
+
+HTTP JSON API service HA deployment
+
+⚠️ Only PostgreSQL is supported as storage backend 🐘
+
+---
+
+## 🚦 Prerequisites 🚦
+
+- Kubernetes 1.23+
+- Helm 3.2+
+- Preconfigured PostgreSQL for the HTTP JSON API
+  - User
+  - Password
+  - Database
+- Ledger API (exposed by a Canton Participant connected to a Domain)
+- Cert-manager + CSI driver (only if TLS is required by the Ledger API)
+
+---
 ## TL;DR
 
 ```console
@@ -27,23 +59,7 @@ ledgerAPI:
   host: "participant1-canton-participant.canton.svc.cluster.local"
 ```
 
-## Introduction
-
-HTTP JSON API service HA deployment
-
-⚠️ Only PostgreSQL is supported as storage backend 🐘
-
-## Prerequisites
-
-- Kubernetes 1.23+
-- Helm 3.2+
-- Preconfigured PostgreSQL for the HTTP JSON API
-  - User
-  - Password
-  - Database
-- Ledger API (exposed by a Canton Participant connected to a Domain)
-- Cert-manager + CSI driver (only if TLS is required by the Ledger API)
-
+---
 ## Configuration and installation details
 
 ### TLS
@@ -59,9 +75,12 @@ certManager:
   issuerName: "my-cert-manager-issuer"
 ```
 
+---
 ## Limitations
 
 ⚠️ **Upgrading to a different release is not supported for now** ⚠️
+
+---
 
 ## Parameters
 
@@ -175,6 +194,7 @@ certManager:
 | `ingress.pathType`    | Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific` | `Prefix`               |
 | `ingress.tls`         | Enable TLS configuration for `hostname`                                                                            | `[]`                   |
 
+---
 ## License
 
 Copyright &copy; 2023 Digital Asset (Switzerland) GmbH and/or its affiliates

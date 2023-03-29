@@ -2,6 +2,48 @@
 
 ⚠️ _**Daml Enterprise only**_ ⚠️
 
+
+## Table of contents
+
+- [Introduction](#introduction)
+- [Prerequisites](#-prerequisites-)
+- [TL;DR](#tldr)
+- [Configuration and installation details](#configuration-and-installation-details)
+- [Limitations](#limitations)
+- [Parameters](#parameters)
+- [License](#license)
+
+---
+
+## Introduction
+
+Canton Domain HA deployment
+
+Components:
+* Bootstrap
+* Console
+* Domain Topology Manager (active/passive)
+* Mediator (active/passive)
+* Sequencer (active/active)
+
+⚠️ Only PostgreSQL is supported as storage backend 🐘
+
+---
+
+## 🚦 Prerequisites 🚦
+
+- Kubernetes 1.23+
+- Helm 3.2+
+- Preconfigured PostgreSQL for the Domain Topology Manager, Mediator and Sequencer
+  - User
+  - Password
+  - Database
+- Cert-manager + CSI driver (only if TLS is enabled)
+- **Canton Enterprise docker images** copied to your own private Docker registry
+- Canton Participant(s)
+
+---
+
 ## TL;DR
 
 ```console
@@ -64,31 +106,8 @@ sequencer:
       key: "<k8s_secret_key>"
 ```
 
-## Introduction
 
-Canton Domain HA deployment
-
-Components:
-* Bootstrap
-* Console
-* Domain Topology Manager (active/passive)
-* Mediator (active/passive)
-* Sequencer (active/active)
-
-⚠️ Only PostgreSQL is supported as storage backend 🐘
-
-## Prerequisites
-
-- Kubernetes 1.23+
-- Helm 3.2+
-- Preconfigured PostgreSQL for the Domain Topology Manager, Mediator and Sequencer
-  - User
-  - Password
-  - Database
-- Cert-manager + CSI driver (only if TLS is enabled)
-- **Canton Enterprise docker images** copied to your own private Docker registry
-- Canton Participant(s)
-
+---
 ## Configuration and installation details
 
 ### Bootstrap
@@ -417,6 +436,7 @@ sequencer:
 | `sequencer.ingressRouteTCP.hostSNI`         | DNS record to cluster load balancer                                                                                | `""`            |
 | `sequencer.ingressRouteTCP.tls`             | Define TLS certificate configuration                                                                               | `{}`            |
 
+---
 ## License
 
 Copyright &copy; 2023 Digital Asset (Switzerland) GmbH and/or its affiliates
