@@ -1,5 +1,39 @@
 # Trigger service packed by Digital Asset
 
+
+
+
+## Table of contents
+
+- [Introduction](#introduction)
+- [Prerequisites](#-prerequisites-)
+- [TL;DR](#tldr)
+- [Configuration and installation details](#configuration-and-installation-details)
+- [Limitations](#limitations)
+- [Parameters](#parameters)
+- [License](#license)
+
+---
+
+
+## Introduction
+
+Trigger service HA deployment
+
+⚠️ Only PostgreSQL is supported as storage backend 🐘
+
+## 🚦 Prerequisites 🚦
+
+- Kubernetes 1.23+
+- Helm 3.2+
+- Preconfigured PostgreSQL for the Trigger
+  - User
+  - Password
+  - Database
+- Ledger API (exposed by a Canton Participant connected to a Domain)
+- Cert-manager + CSI driver (only if TLS is required by the Ledger API)
+
+---
 ## TL;DR
 
 ```console
@@ -27,23 +61,7 @@ ledgerAPI:
   host: "participant1-canton-participant.canton.svc.cluster.local"
 ```
 
-## Introduction
-
-Trigger service HA deployment
-
-⚠️ Only PostgreSQL is supported as storage backend 🐘
-
-## Prerequisites
-
-- Kubernetes 1.23+
-- Helm 3.2+
-- Preconfigured PostgreSQL for the Trigger
-  - User
-  - Password
-  - Database
-- Ledger API (exposed by a Canton Participant connected to a Domain)
-- Cert-manager + CSI driver (only if TLS is required by the Ledger API)
-
+---
 ## Configuration and installation details
 
 ### TLS
@@ -59,10 +77,12 @@ certManager:
   issuerName: "my-cert-manager-issuer"
 ```
 
+---
 ## Limitations
 
 ⚠️ **Upgrading to a different release is not supported for now** ⚠️
 
+---
 ## Parameters
 
 ### Common parameters
@@ -161,6 +181,8 @@ certManager:
 | `service.ports.metrics`           | Promotheus exporter service port (HTTP)                                              | `8081`      |
 | `service.sessionAffinity.enabled` | Enable `ClientIP` based session affinity                                             | `true`      |
 | `service.sessionAffinity.timeout` | Session timeout in seconds. Between `1` and `86400`                                  | `3600`      |
+
+---
 
 ## License
 
