@@ -7,6 +7,12 @@
 
 Daml Enterprise deployment with high availability, ready to install in Kubernetes using [Helm](https://github.com/helm/helm).
 
+- [TL;DR](#tldr)
+- [Before you begin](#before-you-begin)
+- [Installing DAML Helm Charts](#installing-daml-helm-charts)
+- [[Contributing guidelines](./CONTRIBUTING.md)](#-contributing-guidelines---contributingmd-)
+- [License](#license)
+
 ## TL;DR
 
 ```bash
@@ -53,6 +59,18 @@ Once you have installed the Helm client, you can deploy a Daml Enterprise Helm C
 Please refer to the [Quickstart Guide](https://helm.sh/docs/intro/quickstart/) if you wish to get running
 in just a few commands, otherwise the [Using Helm Guide](https://helm.sh/docs/intro/using_helm/) provides
 detailed instructions on how to use the Helm client to manage packages on your Kubernetes cluster.
+
+## Installing DAML Helm Charts
+
+Please refer to the README files in the helm chart releases of this repository for detailed instructions on how to install the components.
+
+The helm charts should be installed in the following order:
+
+1. [canton-domain](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-domain)
+2. [canton-participant](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant)
+3. [daml-http-json](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-http-json)
+4. [daml-trigger](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-trigger)
+
 
 ## [Contributing guidelines](./CONTRIBUTING.md)
 
