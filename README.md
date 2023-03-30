@@ -16,7 +16,7 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 
 ## Introduction
 
-<img src="./images/k8s-deployment.png">
+<img src="./images/k8s-deployment.png" width="400px">
 
 ## TL;DR
 
