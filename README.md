@@ -9,12 +9,15 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 
 ## Table of Contents
 
+- [Introduction] (#introduction)
 - [TL;DR](#tldr)
 - [Before you begin](#before-you-begin)
 - [Installing DAML Helm Charts](#installing-daml-helm-charts)
 - [License](#license)
 
 ## Introduction
+
+The following document intends to explain how to install the solution on a kubernetes cluster. The four helm charts stored in this repository will install the following services:
 
 <img src="./images/k8s-deployment.png" width="400px">
 
