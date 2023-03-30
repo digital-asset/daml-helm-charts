@@ -7,10 +7,16 @@
 
 Daml Enterprise deployment with high availability, ready to install in Kubernetes using [Helm](https://github.com/helm/helm).
 
+## Table of Contents
+
 - [TL;DR](#tldr)
 - [Before you begin](#before-you-begin)
 - [Installing DAML Helm Charts](#installing-daml-helm-charts)
 - [License](#license)
+
+## Introduction
+
+<img src="./images/k8s-deployment.png">
 
 ## TL;DR
 
