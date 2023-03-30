@@ -10,7 +10,6 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 - [TL;DR](#tldr)
 - [Before you begin](#before-you-begin)
 - [Installing DAML Helm Charts](#installing-daml-helm-charts)
-- [[Contributing guidelines](./CONTRIBUTING.md)](#-contributing-guidelines---contributingmd-)
 - [License](#license)
 
 ## TL;DR
