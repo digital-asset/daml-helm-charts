@@ -76,8 +76,8 @@ The helm charts should be installed in the following order:
 
 1. [canton-domain](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-domain)
 2. [canton-participant](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant)
-3. [daml-http-json](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-http-json)
-4. [daml-trigger](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-trigger)
+3. [daml-http-json](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-http-json) (optional)
+4. [daml-trigger](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-trigger) (optional)
 
 
 ## [Contributing guidelines](./CONTRIBUTING.md)
