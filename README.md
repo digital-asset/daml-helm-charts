@@ -21,6 +21,8 @@ The following document intends to explain how to install the solution on a kuber
 
 <img src="./images/k8s-deployment.png" width="400px">
 
+⚠️ Please note that in the architecture example we are sharing the same Postgres instance/DBMS but not the same database.
+
 ## TL;DR
 
 ```bash
