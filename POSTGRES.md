@@ -41,3 +41,43 @@ The minimal reference installation:
 
 The deployed components must have network connection to the database instance(s).
 Connecting to the database is described in our helm charts README files.
+
+## Postgres debug
+
+This section provides a few useful commands in case of issues with the database.
+
+
+Check participant locks (active/passive mechanism):
+```sql
+SELECT * FROM pg_locks;
+```
+
+Find database IDs:
+```sql
+SELECT oid AS database_id,
+       datname AS database_name,
+       datallowconn AS allow_connect,
+       datconnlimit AS connection_limit
+FROM pg_database
+ORDER BY oid;
+```
+
+All requests by specific user:
+```sql
+SELECT * FROM pg_stat_activity WHERE usename='participant1';
+```
+
+Server max connections:
+```sql
+show max_connections;
+```
+
+Total connections:
+```sql
+SELECT sum(numbackends) FROM pg_stat_database;
+```
+
+Total connections by user:
+```sql
+SELECT count(*) as connections, usename FROM pg_stat_activity GROUP BY usename ORDER BY connections DESC;
+```
