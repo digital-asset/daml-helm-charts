@@ -28,6 +28,9 @@ The following postresql major versions are tested and supported by our component
 
 ## Network connection
 
+[Max connections](https://www.postgresql.org/docs/14/runtime-config-connection.html#GUC-MAX-CONNECTIONS) setting of Postgresql must be set according to the number of components installed.
+A minimal reference installation using the default values in this repository in all helm charts requires at least 140 connections. 
+
 The deployed components must have network connection to the database instance(s).
 Connecting to the database is described in our helm charts README files.
 
