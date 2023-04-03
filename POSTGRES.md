@@ -18,7 +18,7 @@ The following postresql major versions are tested and supported by our component
 - 13.x
 - 14.x
 
-## Concurrent connection
+## Concurrent connections
 
 [Max connections](https://www.postgresql.org/docs/14/runtime-config-connection.html#GUC-MAX-CONNECTIONS) setting of Postgresql must be set according to the number of components installed.
 A minimal reference installation using the default values in this repository in all helm charts requires at least 140 connections - although we recommend a safety margin of 250 connections.
