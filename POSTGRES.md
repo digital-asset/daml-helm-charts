@@ -31,6 +31,10 @@ The following postresql major versions are tested and supported by our component
 The deployed components must have network connection to the database instance(s).
 Connecting to the database is described in our helm charts README files.
 
+For example:
+[Canton domain](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-domain#minimum-viable-configuration)
+Under storage values.
+
 ## [Contributing guidelines](./CONTRIBUTING.md)
 
 ## License
