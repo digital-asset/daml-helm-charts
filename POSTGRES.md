@@ -10,8 +10,7 @@
 
 - [Introduction](#introduction)
 - [Versions](#versions)
-- [Before you begin](#before-you-begin)
-- [Installing DAML Helm Charts](#installing-daml-helm-charts)
+- [Network connection](#network-connection)
 - [License](#license)
 
 ## Introduction
