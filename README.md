@@ -37,6 +37,7 @@ helm install myrelease digitalasset/<chart>
 
 - Kubernetes `1.24+`
 - Helm `3.9.0+`
+- [Postgres database instance](https://github.com/digital-asset/daml-helm-charts/tree/main/POSTGRES.md)
 
 ### The purpose of Helm
 
