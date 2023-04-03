@@ -25,7 +25,7 @@ The following postresql major versions are tested and supported by our component
 - 13.x
 - 14.x
 
-## Concurrent connection
+## Concurrent connections
 
 [Max connections](https://www.postgresql.org/docs/14/runtime-config-connection.html#GUC-MAX-CONNECTIONS) setting of Postgresql must be set according to the number of components installed and their client-side settings. Please find these settings in each charts README files. For example, `storage.maxConnections` under [Canton Participant Helm Chart](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant#participant-configuration).
 
