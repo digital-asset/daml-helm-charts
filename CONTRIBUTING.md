@@ -11,14 +11,14 @@ Any type of contribution is welcome; from new features, bug fixes, documentation
 3. If your PR corresponds to an issue, add `Fixes #XXX` to your pull request description.
 
 ***NOTE***: To make the Pull Requests' (PRs) testing and merging process easier, please submit
-changes to multiple charts in separate PRs. If there is too many changes to the same helm chart,
+changes to multiple charts in separate PRs. If there are too many changes to the same helm chart,
 try also to break it down into separate PRs.
 
 ### Technical requirements
 
-When submitting a PR make sure that it:
-- Must follow [Helm best practices](https://helm.sh/docs/chart_best_practices/).
-- Any change to a chart requires a version bump following [semver](https://semver.org/) principles.
+When submitting a PR make sure that:
+- It follows [Helm best practices](https://helm.sh/docs/chart_best_practices/).
+- Bumps version of any changed chart according to [semver](https://semver.org/) principles.
 
 ### Documentation requirements
 
@@ -61,4 +61,4 @@ find */ -name README.md | xargs sed -i -ne '/^## License$/ {p; r templates/LICEN
 
 1. Changes are manually reviewed and tested by Digital Asset.
 1. When the PR passes all tests, the PR is merged by the reviewer(s) in the GitHub `main` branch.
-1. We will release a new Helm chart version with our CI/CD system and make it available in the repository and refresh ArtifactHub.
+1. We will release a new Helm chart version with our CI/CD system and make it available in the repository and refresh Artifact Hub.
