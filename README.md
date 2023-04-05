@@ -12,7 +12,7 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 - [Introduction](#introduction)
 - [TL;DR](#tldr)
 - [Before you begin](#before-you-begin)
-- [Installing DAML Helm Charts](#installing-daml-helm-charts)
+- [Installing Daml Helm Charts](#installing-daml-helm-charts)
 - [License](#license)
 
 ## Introduction
@@ -71,7 +71,7 @@ Please refer to the [Quickstart Guide](https://helm.sh/docs/intro/quickstart/) i
 in just a few commands, otherwise the [Using Helm Guide](https://helm.sh/docs/intro/using_helm/) provides
 detailed instructions on how to use the Helm client to manage packages on your Kubernetes cluster.
 
-## Installing DAML Helm Charts
+## Installing Daml Helm Charts
 
 Please refer to the README files in the helm chart releases of this repository for detailed instructions on how to install the components.
 
