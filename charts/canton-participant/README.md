@@ -1,6 +1,5 @@
 # Canton Participant packed by Digital Asset
 
-
 ## Table of contents
 
 - [Introduction](#introduction)
@@ -12,8 +11,6 @@
 - [License](#license)
 
 ---
-
-
 ## Introduction
 
 Canton Participant HA deployment (active/passive)
@@ -42,7 +39,9 @@ helm install participant1 digitalasset/canton-participant
 
 ### Minimum viable configuration
 
-Example `participant1` configuration (TLS/JWT disabled):
+Example `participant1` configuration
+
+⚠️ *TLS/JWT are disabled*
 
 ```yaml
 participantName: "participant1"
@@ -58,7 +57,6 @@ storage:
     name: "<k8s_secret_name>"
     key: "<k8s_secret_key>"
 ```
-
 
 ---
 ## Configuration and installation details
@@ -97,6 +95,7 @@ ingressRouteTCP:
   tls:
     passthrough: true
 ```
+
 ---
 ## Limitations
 
@@ -107,19 +106,19 @@ ingressRouteTCP:
 
 ### Common parameters
 
-| Name                | Description                                                                                             | Value                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `nameOverride`      | String to partially override `common.name` template (will maintain the release name)                    | `""`                             |
-| `fullnameOverride`  | String to fully override `common.fullname` template                                                     | `""`                             |
-| `replicaCount`      | Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work) | `1`                              |
-| `image.registry`    | Canton Docker image registry                                                                            | `digitalasset-docker.jfrog.io`   |
-| `image.repository`  | Canton Docker image repository                                                                          | `digitalasset/canton-enterprise` |
-| `image.tag`         | Canton Docker image tag (immutable tags are recommended)                                                | `""`                             |
-| `image.digest`      | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`   | `""`                             |
-| `image.pullPolicy`  | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                      | `IfNotPresent`                   |
-| `image.pullSecrets` | Specify Canton Docker registry secret names as an array                                                 | `[]`                             |
-| `commonLabels`      | Add labels to all the deployed resources                                                                | `{}`                             |
-| `metrics.enabled`   | Enable Prometheus metrics endpoint                                                                      | `false`                          |
+| Name                | Description                                                                                             | Value                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `nameOverride`      | String to partially override `common.name` template (will maintain the release name)                    | `""`                                        |
+| `fullnameOverride`  | String to fully override `common.fullname` template                                                     | `""`                                        |
+| `replicaCount`      | Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work) | `1`                                         |
+| `image.registry`    | Canton Docker image registry                                                                            | `digitalasset-docker.jfrog.io/digitalasset` |
+| `image.repository`  | Canton Docker image repository                                                                          | `canton-enterprise`                         |
+| `image.tag`         | Canton Docker image tag (immutable tags are recommended)                                                | `""`                                        |
+| `image.digest`      | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`   | `""`                                        |
+| `image.pullPolicy`  | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                      | `IfNotPresent`                              |
+| `image.pullSecrets` | Specify Canton Docker registry secret names as an array                                                 | `[]`                                        |
+| `commonLabels`      | Add labels to all the deployed resources                                                                | `{}`                                        |
+| `metrics.enabled`   | Enable Prometheus metrics endpoint                                                                      | `false`                                     |
 
 ### Participant configuration
 
@@ -223,6 +222,7 @@ ingressRouteTCP:
 | `tls.certManager.issuerGroup`             | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                           | `cert-manager.io`                                                                    |
 | `tls.certManager.issuerKind`              | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                              | `Issuer`                                                                             |
 | `tls.certManager.issuerName`              | Cert-manager issuer name                                                                                                                                  | `my-cert-manager-issuer`                                                             |
+| `tls.certManager.fsGroup`                 | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                            | `""`                                                                                 |
 | `tls.public.enabled`                      | Enable TLS on Ledger API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`                              | `false`                                                                              |
 | `tls.public.trustCollectionFile`          | CA certificate, if empty `""` JVM default trust store is used                                                                                             | `/tls/ca.crt`                                                                        |
 | `tls.public.certChainFile`                | Certificate                                                                                                                                               | `/tls/tls.crt`                                                                       |
@@ -329,7 +329,7 @@ ingressRouteTCP:
 | `serviceAccount.imagePullSecrets`             | List of references to secrets in the same namespace to use for pulling any images in pods using this ServiceAccount | `{}`    |
 | `serviceAccount.secrets`                      | List of secrets allowed to be used by pods running using this ServiceAccount                                        | `{}`    |
 
-
+---
 ## License
 
 Copyright &copy; 2023 Digital Asset (Switzerland) GmbH and/or its affiliates

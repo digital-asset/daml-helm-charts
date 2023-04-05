@@ -9,9 +9,7 @@
 - [Parameters](#parameters)
 - [License](#license)
 
-
 ---
-
 ## Introduction
 
 HTTP JSON API service HA deployment
@@ -19,7 +17,6 @@ HTTP JSON API service HA deployment
 ⚠️ Only PostgreSQL is supported as storage backend 🐘
 
 ---
-
 ## 🚦 Prerequisites 🚦
 
 - Kubernetes 1.23+
@@ -133,6 +130,7 @@ certManager:
 | `tls.certManager.issuerGroup`      | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc. | `cert-manager.io`        |
 | `tls.certManager.issuerKind`       | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                    | `Issuer`                 |
 | `tls.certManager.issuerName`       | Cert-manager issuer name                                                                                                        | `my-cert-manager-issuer` |
+| `tls.certManager.fsGroup`          | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                  | `65532`                  |
 | `tls.trustCollectionFile`          | Trusted certificate(s), if omitted JVM default trust store is used                                                              | `/tls/ca.crt`            |
 | `tls.certChainFile`                | Certificate                                                                                                                     | `/tls/tls.crt`           |
 | `tls.privateKeyFile`               | Private key                                                                                                                     | `/tls/tls.key`           |

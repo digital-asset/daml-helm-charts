@@ -1,8 +1,5 @@
 # Trigger service packed by Digital Asset
 
-
-
-
 ## Table of contents
 
 - [Introduction](#introduction)
@@ -14,8 +11,6 @@
 - [License](#license)
 
 ---
-
-
 ## Introduction
 
 Trigger service HA deployment
@@ -132,6 +127,7 @@ certManager:
 | `tls.certManager.issuerGroup`      | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc. | `cert-manager.io`        |
 | `tls.certManager.issuerKind`       | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                    | `Issuer`                 |
 | `tls.certManager.issuerName`       | Cert-manager issuer name                                                                                                        | `my-cert-manager-issuer` |
+| `tls.certManager.fsGroup`          | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                  | `65532`                  |
 | `tls.trustCollectionFile`          | Trusted certificate(s), if omitted JVM default trust store is used                                                              | `/tls/ca.crt`            |
 | `tls.certChainFile`                | Certificate                                                                                                                     | `/tls/tls.crt`           |
 | `tls.privateKeyFile`               | Private key                                                                                                                     | `/tls/tls.key`           |
@@ -183,7 +179,6 @@ certManager:
 | `service.sessionAffinity.timeout` | Session timeout in seconds. Between `1` and `86400`                                  | `3600`      |
 
 ---
-
 ## License
 
 Copyright &copy; 2023 Digital Asset (Switzerland) GmbH and/or its affiliates

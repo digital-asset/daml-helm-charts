@@ -127,9 +127,9 @@ spec:
               csi.cert-manager.io/key-encoding: "PKCS8"
               csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}"
               csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
-              # Base docker image: gcr.io/distroless/java11-debian11
-              # User: nonroot (uid=gid=65532)
-              csi.cert-manager.io/fs-group: "65532"
+              {{- with .Values.tls.certManager.fsGroup }}
+              csi.cert-manager.io/fs-group: {{ . | quote }}
+              {{- end }}
         {{- end }}
         {{- if .Values.storage.certificatesSecret }}
         - name: pgtls

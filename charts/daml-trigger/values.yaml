@@ -92,17 +92,14 @@ tls:
   ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
   ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
   ## @param tls.certManager.issuerName Cert-manager issuer name
+  ## @param tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
   ##
   enabled: false
   certManager:
-    ## Issuer group
-    ## External issuers: "cas-issuer.jetstack.io", "cert-manager.k8s.cloudflare.com", etc.
     issuerGroup: "cert-manager.io"
-    ## Issuer kind: "Issuer" or "ClusterIssuer"
-    ## External issuers: "GoogleCASIssuer", "OriginIssuer", etc.
     issuerKind: "Issuer"
-    ## Issuer K8s resource name
     issuerName: "my-cert-manager-issuer"
+    fsGroup: 65532
   ## @param tls.trustCollectionFile Trusted certificate(s), if omitted JVM default trust store is used
   ## @param tls.certChainFile Certificate
   ## @param tls.privateKeyFile Private key
