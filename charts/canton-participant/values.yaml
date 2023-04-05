@@ -231,11 +231,13 @@ tls:
   ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
   ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
   ## @param tls.certManager.issuerName Cert-manager issuer name
+  ## @param tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
   ##
   certManager:
     issuerGroup: "cert-manager.io"
     issuerKind: "Issuer"
     issuerName: "my-cert-manager-issuer"
+    fsGroup: ""
   ## @param tls.public.enabled Enable TLS on Ledger API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
   ## @param tls.public.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
   ## @param tls.public.certChainFile Certificate

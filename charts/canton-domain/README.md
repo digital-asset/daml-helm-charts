@@ -14,7 +14,6 @@
 - [License](#license)
 
 ---
-
 ## Introduction
 
 Canton Domain HA deployment
@@ -29,7 +28,6 @@ Components:
 ⚠️ Only PostgreSQL is supported as storage backend 🐘
 
 ---
-
 ## 🚦 Prerequisites 🚦
 
 - Kubernetes 1.23+
@@ -43,7 +41,6 @@ Components:
 - Canton Participant(s)
 
 ---
-
 ## TL;DR
 
 ```console
@@ -53,7 +50,10 @@ helm install mydomain digitalasset/canton-domain
 
 ### Minimum viable configuration
 
-Example `mydomain` configuration bootstrapping a single `participant1` in namespace `canton` within the same Kubernetes cluster (TLS disabled):
+Example `mydomain` configuration bootstrapping a single `participant1` in namespace `canton` within
+the same Kubernetes cluster
+
+⚠️ *TLS is disabled*
 
 ```yaml
 bootstrap:
@@ -148,26 +148,28 @@ sequencer:
       passthrough: true
 ```
 
+---
 ## Limitations
 
 ⚠️ **Upgrading to a different release is not supported for now** ⚠️
 
+---
 ## Parameters
 
 ### Global parameters
 
-| Name                | Description                                                                                           | Value                            |
-| ------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `nameOverride`      | String to partially override `common.name` template (will maintain the release name)                  | `""`                             |
-| `fullnameOverride`  | String to fully override `common.fullname` template                                                   | `""`                             |
-| `image.registry`    | Canton Docker image registry                                                                          | `digitalasset-docker.jfrog.io`   |
-| `image.repository`  | Canton Docker image repository                                                                        | `digitalasset/canton-enterprise` |
-| `image.tag`         | Canton Docker image tag (immutable tags are recommended)                                              | `""`                             |
-| `image.digest`      | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag` | `""`                             |
-| `image.pullPolicy`  | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                    | `IfNotPresent`                   |
-| `image.pullSecrets` | Specify Canton Docker registry secret names as an array                                               | `[]`                             |
-| `commonLabels`      | Add labels to all the deployed resources                                                              | `{}`                             |
-| `metrics.enabled`   | Enable Prometheus metrics endpoint on Domain Topology Manager, Mediator and Sequencer                 | `false`                          |
+| Name                | Description                                                                                           | Value                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `nameOverride`      | String to partially override `common.name` template (will maintain the release name)                  | `""`                                        |
+| `fullnameOverride`  | String to fully override `common.fullname` template                                                   | `""`                                        |
+| `image.registry`    | Canton Docker image registry                                                                          | `digitalasset-docker.jfrog.io/digitalasset` |
+| `image.repository`  | Canton Docker image repository                                                                        | `canton-enterprise`                         |
+| `image.tag`         | Canton Docker image tag (immutable tags are recommended)                                              | `""`                                        |
+| `image.digest`      | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag` | `""`                                        |
+| `image.pullPolicy`  | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                    | `IfNotPresent`                              |
+| `image.pullSecrets` | Specify Canton Docker registry secret names as an array                                               | `[]`                                        |
+| `commonLabels`      | Add labels to all the deployed resources                                                              | `{}`                                        |
+| `metrics.enabled`   | Enable Prometheus metrics endpoint on Domain Topology Manager, Mediator and Sequencer                 | `false`                                     |
 
 ### Global PostgreSQL configuration
 
@@ -266,6 +268,7 @@ sequencer:
 | `common.tls.certManager.issuerGroup`                          | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                                    | `cert-manager.io`                                                                    |
 | `common.tls.certManager.issuerKind`                           | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                                       | `Issuer`                                                                             |
 | `common.tls.certManager.issuerName`                           | Cert-manager issuer name                                                                                                                                                           | `my-cert-manager-issuer`                                                             |
+| `common.tls.certManager.fsGroup`                              | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                                     | `""`                                                                                 |
 | `common.tls.public`                                           | Only for `sequencer`                                                                                                                                                               |                                                                                      |
 | `common.tls.public.enabled`                                   | Enable TLS on Ledger API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`                                                       | `false`                                                                              |
 | `common.tls.public.trustCollectionFile`                       | CA certificate, if empty `""` JVM default trust store is used                                                                                                                      | `/tls/ca.crt`                                                                        |

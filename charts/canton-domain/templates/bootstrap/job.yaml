@@ -109,6 +109,9 @@ spec:
               csi.cert-manager.io/key-encoding: "PKCS8"
               csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-bootstrap-tls"
               csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
+              {{- with .Values.common.tls.certManager.fsGroup }}
+              csi.cert-manager.io/fs-group: {{ . | quote }}
+              {{- end }}
         - name: mtls
           csi:
             driver: csi.cert-manager.io
@@ -120,6 +123,9 @@ spec:
               csi.cert-manager.io/key-encoding: "PKCS8"
               csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-bootstrap-mtls"
               csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
+              {{- with .Values.common.tls.certManager.fsGroup }}
+              csi.cert-manager.io/fs-group: {{ . | quote }}
+              {{- end }}
         {{- end }}
         {{- with .Values.bootstrap.extraVolumes }}
         {{- toYaml . | nindent 8 }}
