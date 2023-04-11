@@ -20,11 +20,10 @@ Canton Participant HA deployment (active/passive)
 ---
 ## 🚦 Prerequisites 🚦
 
-- Kubernetes 1.23+
-- Helm 3.2+
-- Preconfigured PostgreSQL for the Participant
-  - User
-  - Password
+- Kubernetes `1.24+`
+- Helm `3.9+`
+- Preconfigured PostgreSQL resources for the Participant:
+  - User/password
   - Database
 - Cert-manager + CSI driver (only if TLS is enabled)
 - Canton Domain
@@ -39,7 +38,9 @@ helm install participant1 digitalasset/canton-participant
 
 ### Minimum viable configuration
 
-Example `participant1` configuration (TLS/JWT disabled):
+Example participant `participant1` configuration (bootstrapped by a domain in namespace `canton` within the same Kubernetes cluster).
+
+⚠️ _TLS and JWT authentication are disabled_
 
 ```yaml
 participantName: "participant1"
@@ -94,8 +95,7 @@ ingressRouteTCP:
     passthrough: true
 ```
 
----
-## Limitations
+### Limitations
 
 ⚠️ **Upgrading to a different release is not supported for now** ⚠️
 
