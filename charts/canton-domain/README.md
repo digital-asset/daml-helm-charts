@@ -50,10 +50,7 @@ helm install mydomain digitalasset/canton-domain
 
 ### Minimum viable configuration
 
-Example `mydomain` configuration bootstrapping a single `participant1` in namespace `canton` within
-the same Kubernetes cluster
-
-⚠️ *TLS is disabled*
+Example `mydomain` configuration bootstrapping a single `participant1` in namespace `canton` within the same Kubernetes cluster (TLS disabled):
 
 ```yaml
 bootstrap:

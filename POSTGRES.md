@@ -1,83 +1,112 @@
-# Postgresql database requirements
+# PostgreSQL requirements for Daml Enterprise Helm Charts deployment
 
-## Table of Contents
+Any PostgreSQL server that meets these criteria is compatible.
 
-- [Introduction](#introduction)
-- [Versions](#versions)
-- [Network connection](#network-connection)
+Example SaaS solutions:
 
-## Introduction
+* Amazon [RDS for PostgreSQL](https://aws.amazon.com/rds/postgresql/) or [Aurora PostgreSQL](https://aws.amazon.com/fr/rds/aurora/)
+* Azure [Database for PostgreSQL](https://azure.microsoft.com/en-us/products/postgresql/)
+* Google [Cloud SQL](https://cloud.google.com/sql/docs/postgres) or [Cloud Spanner](https://cloud.google.com/spanner/docs/)
 
-This document intends to describe the required postgres database setup as dependency for daml-helm-charts deployment.
+## Table of contents
 
-Any postgresql database that meets the criterias work. 
+- [Supported versions](#supported-versions)
+- [Minimum server size](#minimum-server-size)
+- [Availability](#availability)
+- [Concurrent connections](#concurrent-connections)
+- [TLS](#tls)
+- [Debugging](#debugging)
 
-Some SaaS solution examples:
-https://azure.microsoft.com/en-us/products/postgresql/
-https://cloud.google.com/sql/docs/postgres
-https://aws.amazon.com/rds/postgresql/
+---
+## Supported versions
 
-## Versions
+PostgreSQL server versions `11` to `14` are supported by Canton and Daml services.
 
-The following postresql major versions are tested and supported by our components:
-- 11.x
-- 12.x
-- 13.x
-- 14.x
+## Minimum server size
+
+If you install each Helm chart once (Domain, Participant, HTTP JSON API service & Trigger service)
+using a shared PostgreSQL server for all databases, you should start with 4 vCPUs/cores and 16Go RAM.
+
+## Availability
+
+Your PostgresQL server should be highly available. Each Canton/Daml component always needs to be connected to its own database.
 
 ## Concurrent connections
 
-[Max connections](https://www.postgresql.org/docs/14/runtime-config-connection.html#GUC-MAX-CONNECTIONS) setting of Postgresql must be set according to the number of components installed and their client-side settings - which are handled as helm values. Please find these values in each charts README files. For example, `storage.maxConnections` under [Canton Participant Helm Chart](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant#participant-configuration).
+You should verify your [PostgreSQL server maximum allowed connections](https://www.postgresql.org/docs/14/runtime-config-connection.html#GUC-MAX-CONNECTIONS),
+espically if you share the same instance for all components, to allow all of them to connect without issues.
 
+The open-source PostgreSQL server default is `100`, a good start is to set `max_connections` to at least `200`. Remember that
+you also need to have enough room for system (WAL, autovacuum, replication, etc.) and admin connections.
 
-A minimal reference installation using the default values in this repository in all helm charts requires at least 140 connections - although we recommend starting with 200 concurrent connections set on postgres side.
+On most cloud providers' SaaS solution, the default server max connections is scaled according to your instance size
+and its available memory.
 
-The minimal reference installation:
-- Domain with two sequencers
-- Participant
-- HTTP JSON API service (optional, although part of the reference deployment)
-- Trigger service (optional, although part of the reference deployment)
+Client side settings are also available in Helm values, you can find them in the `Parameters` section of each chart readme.
+For Canton nodes you can set `storage.maxConnections`. For Daml services you can set `storage.poolSize`
+and `storage.minIdle`.
 
+An HA deployment of all the Helm charts in this repository with the default values requires around `120` connections:
+- Single Domain with two Sequencers
+- Single Participant
+- Single HTTP JSON API service
+- Single Trigger service
 
-The deployed components must have network connection to the database instance(s).
-Connecting to the database is described in our helm charts README files.
+## TLS
 
-## Postgres debug
+We strongly recommend to enable and enforce TLS for connections to your PostgreSQL server (Helm charts default).
+Please refer to the relevant [PostgreSQL server and client documentation](https://www.postgresql.org/docs/).
 
-This section provides a few useful commands in case of issues with the database.
+## Scaling
 
+In case your PostgreSQL server load gets high you can either or both:
+- Scale vertically using a bigger server with more CPU/RAM
+- Scale horizontally and host each database on a different PostgreSQL server
 
-Check participant locks (active/passive mechanism):
+---
+## Debugging
+
+A few useful PostgreSQL queries below in case of issues with your server and/or databases.
+
+#### Check locks
+
 ```sql
 SELECT * FROM pg_locks;
 ```
 
-Find database IDs:
+#### Display database IDs and connection information
+
 ```sql
-SELECT oid AS database_id,
-       datname AS database_name,
-       datallowconn AS allow_connect,
-       datconnlimit AS connection_limit
+SELECT oid AS db_id,
+       datname AS db_name,
+       datallowconn AS db_allow_connect,
+       datconnlimit AS db_connection_limit
 FROM pg_database
 ORDER BY oid;
 ```
 
-All requests by specific user:
+#### All requests by specific user
+
+Using `psql` can list roles/users with `\du+` then:
+
 ```sql
-SELECT * FROM pg_stat_activity WHERE usename='participant1';
+SELECT * FROM pg_stat_activity WHERE usename='<role_name>';
 ```
 
-Server max connections:
+#### Display server max connections setting
+
 ```sql
 show max_connections;
 ```
 
-Total connections:
+#### Total connections to server
+
 ```sql
 SELECT sum(numbackends) FROM pg_stat_database;
 ```
 
-Total connections by user:
+#### Total connections to server per role/user
+
 ```sql
 SELECT count(*) as connections, usename FROM pg_stat_activity GROUP BY usename ORDER BY connections DESC;
 ```
