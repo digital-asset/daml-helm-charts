@@ -3,7 +3,7 @@
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/digital-asset)](https://artifacthub.io/packages/search?repo=digital-asset)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
-# Daml Enterprise Helm Charts
+# Daml Enterprise Helm charts
 
 Daml Enterprise deployment with high availability, ready to install in Kubernetes using [Helm](https://github.com/helm/helm).
 
@@ -12,16 +12,17 @@ Daml Enterprise deployment with high availability, ready to install in Kubernete
 - [Introduction](#introduction)
 - [TL;DR](#tldr)
 - [Before you begin](#before-you-begin)
-- [Installing Daml Helm Charts](#installing-daml-helm-charts)
+- [Installing Daml Helm charts](#installing-daml-helm-charts)
 - [License](#license)
 
 ## Introduction
 
-The following document intends to explain how to install the solution on a kubernetes cluster. The four helm charts stored in this repository will install the following services:
+The following document intends to explain how to install the solution on a Kubernetes cluster. The Helm charts
+available in this repository will install the following services:
 
 <img src="./images/k8s-deployment.png" width="400px">
 
-⚠️ Please note that in the architecture example we are sharing the same Postgres instance/DBMS but not the same database.
+⚠️ Please note that we are sharing the same PostgreSQL server/instance but each component has its own database.
 
 ## TL;DR
 
@@ -36,8 +37,8 @@ helm install myrelease digitalasset/<chart>
 ### Prerequisites
 
 - Kubernetes `1.24+`
-- Helm `3.9.0+`
-- [Postgres database instance](https://github.com/digital-asset/daml-helm-charts/tree/main/POSTGRES.md)
+- Helm `3.9+`
+- [PostgreSQL server](https://github.com/digital-asset/daml-helm-charts/tree/main/POSTGRES.md)
 
 ### The purpose of Helm
 
@@ -71,17 +72,11 @@ Please refer to the [Quickstart Guide](https://helm.sh/docs/intro/quickstart/) i
 in just a few commands, otherwise the [Using Helm Guide](https://helm.sh/docs/intro/using_helm/) provides
 detailed instructions on how to use the Helm client to manage packages on your Kubernetes cluster.
 
-## Installing Daml Helm Charts
+## Installing Helm charts
 
-Please refer to the README files in the helm chart releases of this repository for detailed instructions on how to install the components.
+Please refer to the README of each Helm chart for detailed instructions on how to install/configure them.
 
-The helm charts should be installed in the following order:
-
-1. [canton-domain](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-domain)
-2. [canton-participant](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant)
-3. [daml-http-json](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-http-json) (optional)
-4. [daml-trigger](https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-trigger) (optional)
-
+For further information refer to the [Daml documentation](https://docs.daml.com/).
 
 ## [Contributing guidelines](./CONTRIBUTING.md)
 

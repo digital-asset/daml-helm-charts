@@ -39,9 +39,7 @@ helm install participant1 digitalasset/canton-participant
 
 ### Minimum viable configuration
 
-Example `participant1` configuration
-
-⚠️ *TLS/JWT are disabled*
+Example `participant1` configuration (TLS/JWT disabled):
 
 ```yaml
 participantName: "participant1"
