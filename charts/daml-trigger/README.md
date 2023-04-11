@@ -19,11 +19,10 @@ Trigger service HA deployment
 
 ## 🚦 Prerequisites 🚦
 
-- Kubernetes 1.23+
-- Helm 3.2+
-- Preconfigured PostgreSQL for the Trigger
-  - User
-  - Password
+- Kubernetes `1.24+`
+- Helm `3.9+`
+- Preconfigured PostgreSQL resources for the Trigger service:
+  - User/password
   - Database
 - Ledger API (exposed by a Canton Participant connected to a Domain)
 - Cert-manager + CSI driver (only if TLS is required by the Ledger API)
@@ -38,7 +37,9 @@ helm install mytrigger digitalasset/daml-trigger
 
 #### Minimum viable configuration
 
-Example configuration connecting to `participant1` in namespace `canton` within the same Kubernetes cluster (TLS/JWT disabled):
+Example configuration connecting to `participant1` in namespace `canton` within the same Kubernetes cluster.
+
+⚠️ _TLS and JWT authentication are disabled_
 
 ```yaml
 storage:
@@ -72,8 +73,7 @@ certManager:
   issuerName: "my-cert-manager-issuer"
 ```
 
----
-## Limitations
+### Limitations
 
 ⚠️ **Upgrading to a different release is not supported for now** ⚠️
 

@@ -2,7 +2,6 @@
 
 ⚠️ _**Daml Enterprise only**_ ⚠️
 
-
 ## Table of contents
 
 - [Introduction](#introduction)
@@ -30,15 +29,13 @@ Components:
 ---
 ## 🚦 Prerequisites 🚦
 
-- Kubernetes 1.23+
-- Helm 3.2+
-- Preconfigured PostgreSQL for the Domain Topology Manager, Mediator and Sequencer
-  - User
-  - Password
-  - Database
+- Kubernetes `1.24+`
+- Helm `3.9+`
+- Preconfigured PostgreSQL resources for each component (3): Domain Topology Manager, Mediator and Sequencer
+  - 3 users/passwords
+  - 3 databases
 - Cert-manager + CSI driver (only if TLS is enabled)
 - **Canton Enterprise docker images** copied to your own private Docker registry
-- Canton Participant(s)
 
 ---
 ## TL;DR
@@ -50,7 +47,11 @@ helm install mydomain digitalasset/canton-domain
 
 ### Minimum viable configuration
 
-Example `mydomain` configuration bootstrapping a single `participant1` in namespace `canton` within the same Kubernetes cluster (TLS disabled):
+Example configuration bootstrapping a domain `mydomain` and a remote participant `participant1` in namespace `canton`
+within the same Kubernetes cluster.
+
+⚠️ _TLS is disabled_
+⚠️ _Bootstrap Kubernetes job requires that the participant is already up and running_
 
 ```yaml
 bootstrap:
@@ -103,7 +104,6 @@ sequencer:
       key: "<k8s_secret_key>"
 ```
 
-
 ---
 ## Configuration and installation details
 
@@ -145,8 +145,7 @@ sequencer:
       passthrough: true
 ```
 
----
-## Limitations
+### Limitations
 
 ⚠️ **Upgrading to a different release is not supported for now** ⚠️
 
