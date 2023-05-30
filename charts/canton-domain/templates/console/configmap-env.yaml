@@ -1,0 +1,16 @@
+{{- if and .Values.console.enabled .Values.console.environment }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-console-envmap
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: console
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+{{- range $key,$value := .Values.console.environment }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}

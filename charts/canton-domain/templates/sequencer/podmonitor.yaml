@@ -1,0 +1,48 @@
+{{- if and .Values.metrics.enabled .Values.metrics.podMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ template "common.fullname" . }}-sequencer
+  labels: {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sequencer
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.sequencer.podMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- with .Values.sequencer.podMonitor.jobLabel }}
+  jobLabel: {{ . }}
+  {{- end }}
+  {{- with .Values.sequencer.podMonitor.podTargetLabels }}
+  podTargetLabels: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  podMetricsEndpoints:
+    - port: metrics
+    {{- with .Values.sequencer.podMonitor.extraPodMetricsEndpoints }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  selector:
+    matchLabels: {{- include "common.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sequencer
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace | quote }}
+  {{- with .Values.sequencer.podMonitor.sampleLimit }}
+  sampleLimit: {{ . }}
+  {{- end }}
+  {{- with .Values.sequencer.podMonitor.targetLimit }}
+  targetLimit: {{ . }}
+  {{- end }}
+  {{- with .Values.sequencer.podMonitor.labelLimit }}
+  labelLimit: {{ . }}
+  {{- end }}
+  {{- with .Values.sequencer.podMonitor.labelNameLengthLimit }}
+  labelNameLengthLimit: {{ . }}
+  {{- end }}
+  {{- with .Values.sequencer.podMonitor.labelValueLengthLimit }}
+  labelValueLengthLimit: {{ . }}
+  {{- end }}
+{{- end }}

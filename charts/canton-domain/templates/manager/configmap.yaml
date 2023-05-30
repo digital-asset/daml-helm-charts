@@ -18,28 +18,21 @@ data:
           admin-api {
             address = "0.0.0.0"
             port = {{ .Values.manager.ports.admin }}
-            {{- include "canton.tls.admin" (list .Values.common.tls.admin) | indent 12 }}
+            {{- include "canton.tls.admin" (list .Values.common.tls.admin .Values.common.mtls.admin) | indent 12 }}
           }
 
-          replication {
-            enabled = true
-          }
+          init.domain-parameters.unique-contract-keys = {{ .Values.manager.uniqueContractKeys }}
+
+          topology.open = {{ .Values.manager.topology.open }}
+
+          replication.enabled = true
 
           monitoring.grpc-health-server {
             address = "0.0.0.0"
             port = {{ .Values.manager.ports.health }}
           }
-
-          topology {
-            open = {{ .Values.manager.topology.open }}
-            require-participant-certificate = {{ .Values.manager.topology.requireParticipantCertificate }}
-          }
         }
       }
-
-      {{ include "canton.remoteMediators" . | nindent 6 | trim }}
-
-      {{ include "canton.remoteSequencers" . | nindent 6 | trim }}
 
       {{- include "canton.monitoring" (list . "manager") | nindent 6 }}
     }

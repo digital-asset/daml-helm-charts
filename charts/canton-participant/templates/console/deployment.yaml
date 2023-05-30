@@ -31,6 +31,8 @@ spec:
     metadata:
       annotations:
         "checksum/config": {{ include (print $.Template.BasePath "/configmap-remote.yaml") . | sha256sum | quote }}
+        "checksum/env": {{ include (print $.Template.BasePath "/console/configmap-env.yaml") . | sha256sum | quote }}
+        "checksum/secret": {{ include (print $.Template.BasePath "/console/secret-env.yaml") . | sha256sum | quote }}
         {{- with .Values.console.pod.annotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -44,7 +46,7 @@ spec:
         {{- end }}
     spec:
       {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ template "common.fullname" . }}
+      serviceAccountName: {{ template "common.serviceAccountName" (list . "console") }}
       {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -55,6 +57,15 @@ spec:
           image: {{ include "common.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           command: ["tail", "-f", "/dev/null"]
+          envFrom:
+            {{- if .Values.console.environment }}
+            - configMapRef:
+                name: {{ include "common.fullname" . }}-console-envmap
+            {{- end }}
+            {{- if .Values.console.environmentSecrets }}
+            - secretRef:
+                name: {{ include "common.fullname" . }}-console-secretmap
+            {{- end }}
           {{- with .Values.console.resources }}
           resources: {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -63,10 +74,25 @@ spec:
               mountPath: /canton/remote.conf
               readOnly: true
               subPath: remote.conf
-            {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
-            - name: mtls
-              mountPath: "/tls"
+            {{- if .Values.tls.public.enabled }}
+            - name: tls-public
+              mountPath: "/tls-public"
               readOnly: true
+            {{- if .Values.mtls.public.enabled }}
+            - name: mtls-public
+              mountPath: "/mtls-public"
+              readOnly: true
+            {{- end }}
+            {{- end }}
+            {{- if .Values.tls.admin.enabled }}
+            - name: tls-admin
+              mountPath: "/tls-admin"
+              readOnly: true
+            {{- if .Values.mtls.admin.enabled }}
+            - name: mtls-admin
+              mountPath: "/mtls-admin"
+              readOnly: true
+            {{- end }}
             {{- end }}
             {{- with .Values.console.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -75,21 +101,19 @@ spec:
         - name: config
           configMap:
             name: {{ include "common.fullname" . }}-remote
-        {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
-        - name: mtls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-console-mtls"
-              csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}-console.{{ .Release.Namespace }}.svc.cluster.local"
-              {{- with .Values.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
+        {{- if and .Values.tls.public.enabled .Values.tls.public.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list . "console" "tls-public" .Values.tls.public.certManager "") | indent 8 }}
+        {{- if and .Values.mtls.public.enabled .Values.mtls.public.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "console" "mtls-public" .Values.mtls.public.certManager "") | indent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- if and .Values.tls.admin.enabled .Values.tls.admin.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list . "console" "tls-admin" .Values.tls.admin.certManager "") | indent 8 }}
+        {{- if and .Values.mtls.admin.enabled .Values.mtls.admin.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "console" "mtls-admin" .Values.mtls.admin.certManager "") | indent 8 }}
+        {{- end }}
         {{- end }}
         {{- with .Values.console.extraVolumes }}
         {{- toYaml . | nindent 8 }}

@@ -18,20 +18,25 @@ data:
           public-api {
             address = "0.0.0.0"
             port = {{ .Values.sequencer.ports.public }}
-            {{- include "canton.sequencer.tls.public" (list .Values.common.tls.public) | indent 12 }}
+            {{- if .Values.common.tls.public.enabled }}
+            tls {
+              cert-chain-file = {{ .Values.common.tls.public.chain | quote }}
+              private-key-file = {{ .Values.common.tls.public.key | quote }}
+              minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" .Values.common.tls.public.minimumServerProtocolVersion }}
+              ciphers = {{ include "canton.tls.ciphers" .Values.common.tls.public.ciphers }}
+            }
+            {{- end }}
           }
 
           admin-api {
             address = "0.0.0.0"
             port = {{ .Values.sequencer.ports.admin }}
-            {{- include "canton.tls.admin" (list .Values.common.tls.admin) | indent 12 }}
+            {{- include "canton.tls.admin" (list .Values.common.tls.admin .Values.common.mtls.admin) | indent 12 }}
           }
 
           sequencer {
             type = database
-            high-availability {
-              enabled = true
-            }
+            high-availability.enabled = true
           }
 
           monitoring.grpc-health-server {
@@ -40,8 +45,6 @@ data:
           }
         }
       }
-
-      {{ include "canton.remoteMediators" . | nindent 6 | trim }}
 
       {{- include "canton.monitoring" (list . "sequencer") | nindent 6 }}
     }

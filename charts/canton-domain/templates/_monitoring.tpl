@@ -11,12 +11,16 @@ Params (List):
 */}}
 {{- define "canton.monitoring" -}}
 {{- $top       := index . 0 -}}
-{{- $component := index $top.Values (index . 1) -}}
+{{- $componentName := index . 1 -}}
+{{- $component := index $top.Values $componentName -}}
 {{- if $top.Values.metrics.enabled }}
-monitoring.metrics.reporters = [{
-  type = prometheus
-  address = "0.0.0.0"
-  port = {{ $component.ports.metrics }}
-}]
+monitoring.metrics {
+    report-jvm-metrics = yes
+    reporters = [{
+        type = prometheus
+        address = "0.0.0.0"
+        port = {{ $component.ports.metrics }}
+    }]
+}
 {{- end }}
 {{- end -}}

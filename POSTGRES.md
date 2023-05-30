@@ -14,7 +14,7 @@ Example SaaS solutions:
 - [Minimum server size](#minimum-server-size)
 - [Availability](#availability)
 - [Concurrent connections](#concurrent-connections)
-- [TLS](#tls)
+- [SSL/TLS](#tls)
 - [Debugging](#debugging)
 
 ---
@@ -56,6 +56,10 @@ An HA deployment of all the Helm charts in this repository with the default valu
 
 We strongly recommend to enable and enforce TLS for connections to your PostgreSQL server (Helm charts default).
 Please refer to the relevant [PostgreSQL server and client documentation](https://www.postgresql.org/docs/).
+
+On most cloud providers' SaaS solution, server SSL/TLS is enabled by default and certificates are signed by a public CA.
+In your `storage` values, `sslRootCert`, `sslCert` and `sslKey` can be left with an empty string value `""`.
+The default JVM trust store with common public CA certificates will be used.
 
 ## Scaling
 

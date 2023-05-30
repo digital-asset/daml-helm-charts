@@ -37,6 +37,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ template "common.serviceAccountName" . }}
+      {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -78,7 +81,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /livez
-              port: {{ .Values.ports.http }}
+              port: http
             timeoutSeconds: 1
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -87,7 +90,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /readyz
-              port: {{ .Values.ports.http }}
+              port: http
             timeoutSeconds: 1
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -102,6 +105,11 @@ spec:
             - name: tls
               mountPath: "/tls"
               readOnly: true
+            {{- if .Values.mtls.enabled }}
+            - name: mtls
+              mountPath: "/mtls"
+              readOnly: true
+            {{- end }}
             {{- end }}
             {{- if .Values.storage.certificatesSecret }}
             - name: pgtls
@@ -115,21 +123,12 @@ spec:
         - name: config
           configMap:
             name: {{ include "common.fullname" . }}
-        {{- if .Values.tls.enabled }}
-        - name: tls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}"
-              csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
-              {{- with .Values.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
+        {{- if and .Values.tls.enabled .Values.tls.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list . "" "tls" .Values.tls.certManager "") | indent 8 }}
+        {{- if and .Values.mtls.enabled .Values.mtls.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "" "mtls" .Values.mtls.certManager "") | indent 8 }}
+        {{- end }}
         {{- end }}
         {{- if .Values.storage.certificatesSecret }}
         - name: pgtls

@@ -17,7 +17,7 @@ replicaCount: 1
 ## @param image.tag Canton Docker image tag (immutable tags are recommended)
 ## @param image.digest Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
 ## @param image.pullPolicy Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
-## @param image.pullSecrets Specify Canton Docker registry secret names as an array
+## @param image.pullSecrets Specify Docker registry existing secret names as an array
 ##
 image:
   ## Private Docker image
@@ -26,24 +26,26 @@ image:
   tag: ""
   digest: ""
   pullPolicy: IfNotPresent
-  ## Secrets must be manually created in the namespace
-  ## You can also patch targeted namespace 'default' ServiceAccount with 'imagePullSecrets' instead of using pullSecrets
   pullSecrets: []
 
 ## @param commonLabels Add labels to all the deployed resources
 ##
 commonLabels: {}
 
-## @param metrics.enabled Enable Prometheus metrics endpoint
+## @param certManager.duration Cert-manager requested certificates validity period. If empty `""` defaults to `720h`
+## @param certManager.renewBefore Cert-manager time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`
 ##
-metrics:
-  enabled: false
+certManager:
+  duration: "87660h"
+  renewBefore: "1h"
 
 ## @section Participant configuration
 
 ## @param participantName Mandatory Canton Participant name
+## @param uniqueContractKeys When enabled, Participant can only connect to a Domain with unique contract keys enabled as well
 ##
 participantName: "participant1"
+uniqueContractKeys: false
 
 ## @extra storage PostgreSQL configuration
 
@@ -52,6 +54,7 @@ storage:
   ## @param storage.port Server port
   ## @param storage.database Database name
   ## @param storage.user User name
+  ##
   host: "postgres"
   port: 5432
   database: "participant1"
@@ -65,21 +68,22 @@ storage:
   existingSecret:
     name: ""
     key: ""
-  ## @param storage.maxConnections Database connection pool maximum connections
   ## @param storage.ssl Enable TLS connection
   ## @param storage.sslMode TLS mode. Allowed values: `disable`, `allow`, `prefer`, `require`, `verify-ca`, `verify-full`
-  ## @param storage.certificatesSecret Name of an existing K8s secret that contains certificate files, mounted to `/pgtls`, provide K8s secret key names as cert filenames. If empty `""`, provide the full path to cert files like `/path/to/file`.
-  ## @param storage.certCAFilename CA certificate file (PEM encoded X509v3). Intermediate certificate(s) that chain up to this root certificate can also appear in this file.
-  ## @param storage.certFilename Client certificate file (PEM encoded X509v3)
-  ## @param storage.certKeyFilename Client certificate key file (PKCS-12 or PKCS-8 DER)
+  ## @param storage.sslRootCert CA certificate file (PEM encoded X509v3). Intermediate certificate(s) that chain up to this root certificate can also appear in this file.
+  ## @param storage.sslCert Client certificate file (PEM encoded X509v3)
+  ## @param storage.sslKey Client certificate key file (PKCS-12 or PKCS-8 DER)
+  ## @param storage.certificatesSecret Name of an existing K8s secret that contains certificate files, mounted to `/pgtls` if not empty, provide K8s secret key names as filenames
   ##
-  maxConnections: 10
   ssl: true
   sslMode: "require"
+  sslRootCert: ""
+  sslCert: ""
+  sslKey: ""
   certificatesSecret: ""
-  certCAFilename: "ca.crt"
-  certFilename: "tls.crt"
-  certKeyFilename: "key.der"
+  ## @param storage.maxConnections Database connection pool maximum connections
+  ##
+  maxConnections: 10
 
 ## @section Bootstrap configuration
 
@@ -87,24 +91,45 @@ storage:
 ## @param bootstrap.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
 ## @param bootstrap.backoffLimit Specifies the number of retries before marking this job failed
 ## @param bootstrap.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
+## @param bootstrap.commandsTimeout Script commands timeout. Example values: `10s`, `10m' or `10h`
 ##
 bootstrap:
   enabled: false
   backoffLimit: 2
   activeDeadlineSeconds: 600
-  ## @extra bootstrap.remoteSequencer Remote sequencer
-  ## @param bootstrap.remoteSequencer.domainAlias Domain alias
-  ## @param bootstrap.remoteSequencer.domainId Domain ID
-  ## @param bootstrap.remoteSequencer.url Sequencer URL
-  ## @param bootstrap.remoteSequencer.certFile Path to sequencer CA certificate
-  ## @param bootstrap.remoteSequencer.initialRetryDelay Initial retry delay. Example values: `10s`, `10m' or `10h`
-  ## @param bootstrap.remoteSequencer.maxRetryDelay Maximum retry delay. Example values: `10s`, `10m' or `10h`
-  ##
+  commandsTimeout: "1m"
+  ## @extra bootstrap.remoteSequencer Remote sequencer connection configuration
   remoteSequencer:
+    ## @param bootstrap.remoteSequencer.domainAlias Domain alias
+    ## @param bootstrap.remoteSequencer.domainId Mandatory Domain ID
+    ## @param bootstrap.remoteSequencer.host Sequencer host
+    ## @param bootstrap.remoteSequencer.port Sequencer port, if empty `""` HTTP/HTTPS default is used (`80`/`443`)
+    ##
     domainAlias: "mydomain"
     domainId: ""
-    url: "https://mysequencer.domain.com:4401"
-    certFile: "/tls/ca.crt"
+    host: "mysequencer.domain.com"
+    port: ""
+    tls:
+      ## @param bootstrap.remoteSequencer.tls.enabled Enable TLS to Sequencer
+      ##
+      enabled: false
+      ## @extra bootstrap.remoteSequencer.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-<domain_alias>`
+      ## @param bootstrap.remoteSequencer.tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+      ## @param bootstrap.remoteSequencer.tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+      ## @param bootstrap.remoteSequencer.tls.certManager.issuerName Cert-manager issuer name
+      ## @param bootstrap.remoteSequencer.tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+      ##
+      certManager:
+        issuerGroup: "cert-manager.io"
+        issuerKind: "Issuer"
+        issuerName: ""
+        fsGroup: ""
+      ## @param bootstrap.remoteSequencer.tls.ca CA certificate, if empty `""` JVM default trust store is used
+      ##
+      ca: "/tls-mydomain/ca.crt"
+    ## @param bootstrap.remoteSequencer.initialRetryDelay Initial retry delay. Example values: `10s`, `10m' or `10h`
+    ## @param bootstrap.remoteSequencer.maxRetryDelay Maximum retry delay. Example values: `10s`, `10m' or `10h`
+    ##
     initialRetryDelay: "30s"
     maxRetryDelay: "10m"
 
@@ -157,6 +182,22 @@ bootstrap:
   ##
   extraVolumeMounts: []
   extraVolumes: []
+  ## @extra bootstrap.serviceAccount.create Creation of `ServiceAccount` for bootstrap pod(s) is enabled with global switch `serviceAccount.create`
+  ## @param bootstrap.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+  ## @param bootstrap.serviceAccount.annotations Service Account extra annotations
+  ## @param bootstrap.serviceAccount.labels Service Account extra labels
+  ## @param bootstrap.serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
+  ##
+  serviceAccount:
+    annotations: {}
+    labels: {}
+    automountServiceAccountToken: false
+    extraSecrets: []
+  ## @extra bootstrap.rbac.create Creation of RBAC resources for bootstrap pod(s) is enabled with global switch `rbac.create`
+  ## @param bootstrap.rbac.rules Custom RBAC rules to set
+  ##
+  rbac:
+    rules: []
 
 ## @section Console configuration
 
@@ -168,6 +209,11 @@ console:
   ## @param console.terminationGracePeriodSeconds Stop the pod immediately by default, tailing `/dev/null` to stay up
   ##
   terminationGracePeriodSeconds: 0
+  ## @param console.environment Environment variables
+  ## @param console.environmentSecrets Secret environment variables
+  ##
+  environment: {}
+  environmentSecrets: {}
   ## @param console.deployment.annotations Deployment extra annotations
   ## @param console.deployment.labels Deployment extra labels
   ## @param console.deployment.strategy Deployment strategy
@@ -196,6 +242,22 @@ console:
   ##
   extraVolumeMounts: []
   extraVolumes: []
+  ## @extra console.serviceAccount.create Creation of `ServiceAccount` for console pod(s) is enabled with global switch `serviceAccount.create`
+  ## @param console.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+  ## @param console.serviceAccount.annotations Service Account extra annotations
+  ## @param console.serviceAccount.labels Service Account extra labels
+  ## @param console.serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
+  ##
+  serviceAccount:
+    annotations: {}
+    labels: {}
+    automountServiceAccountToken: false
+    extraSecrets: []
+  ## @extra console.rbac.create Creation of RBAC resources for console pod(s) is enabled with global switch `rbac.create`
+  ## @param console.rbac.rules Custom RBAC rules to set
+  ##
+  rbac:
+    rules: []
 
 common:
   ## @section Common parameters for the `boostrap` and `console` only
@@ -227,69 +289,118 @@ logEncoder: "plain"
 ## @section TLS configuration
 
 tls:
-  ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled)
-  ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-  ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-  ## @param tls.certManager.issuerName Cert-manager issuer name
-  ## @param tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
-  ##
-  certManager:
-    issuerGroup: "cert-manager.io"
-    issuerKind: "Issuer"
-    issuerName: "my-cert-manager-issuer"
-    fsGroup: ""
-  ## @param tls.public.enabled Enable TLS on Ledger API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
-  ## @param tls.public.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
-  ## @param tls.public.certChainFile Certificate
-  ## @param tls.public.privateKeyFile Certificate key (PKCS-8)
-  ## @extra tls.public.clientAuth mTLS configuration
-  ## @param tls.public.clientAuth.type Define whether clients need to authenticate as well. Allowed values: `none`, `optional` or `require`
-  ## @param tls.public.clientAuth.certChainFile Certificate
-  ## @param tls.public.clientAuth.privateKeyFile Certificate key (PKCS-8)
-  ## @param tls.public.minimumServerProtocolVersion Minimum TLS version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
-  ## @param tls.public.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
-  ##
   public:
+    ## @param tls.public.enabled Enable TLS on Ledger API (gRPC)
+    ##
     enabled: false
-    trustCollectionFile: "/tls/ca.crt"
-    certChainFile: "/tls/tls.crt"
-    privateKeyFile: "/tls/tls.key"
-    clientAuth:
-      type: "require"
-      certChainFile: "/mtls/tls.crt"
-      privateKeyFile: "/mtls/tls.key"
+    ## @extra tls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-public`
+    ## @param tls.public.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+    ## @param tls.public.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+    ## @param tls.public.certManager.issuerName Cert-manager issuer name
+    ## @param tls.public.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ## @param tls.public.certManager.ipSans IP addresses the certificate will be requested for.
+    ##
+    certManager:
+      issuerGroup: "cert-manager.io"
+      issuerKind: "Issuer"
+      issuerName: ""
+      fsGroup: ""
+      ipSans: "0.0.0.0"
+    ## @param tls.public.ca CA certificate, if empty `""` JVM default trust store is used
+    ## @param tls.public.chain Certificate chain
+    ## @param tls.public.key Certificate private key (PKCS-8)
+    ##
+    ca: "/tls-public/ca.crt"
+    chain: "/tls-public/tls.crt"
+    key: "/tls-public/tls.key"
+    ## @param tls.public.minimumServerProtocolVersion Minimum version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+    ## @param tls.public.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
     ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+    ##
     minimumServerProtocolVersion: "TLSv1.3"
     ciphers:
       - "TLS_AES_128_GCM_SHA256"
       - "TLS_AES_256_GCM_SHA384"
       - "TLS_CHACHA20_POLY1305_SHA256"
-  ## @param tls.admin.enabled Enable TLS on admin API (gRPC), Cert-manager CSI driver will automatically mount certificates in folders `/tls` and `/mtls`
-  ## @param tls.admin.trustCollectionFile CA certificate, if empty `""` JVM default trust store is used
-  ## @param tls.admin.certChainFile Certificate
-  ## @param tls.admin.privateKeyFile Certificate key (PKCS-8)
-  ## @extra tls.admin.clientAuth mTLS configuration
-  ## @param tls.admin.clientAuth.type Define whether clients need to authenticate as well (mTLS). Allowed values: `none`, `optional` or `require`
-  ## @param tls.admin.clientAuth.certChainFile Certificate
-  ## @param tls.admin.clientAuth.privateKeyFile Certificate key (PKCS-8)
-  ## @param tls.admin.minimumServerProtocolVersion Minimum TLS version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
-  ## @param tls.admin.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
-  ##
   admin:
+    ## @param tls.admin.enabled Enable TLS on admin API (gRPC)
+    ##
     enabled: false
-    trustCollectionFile: "/tls/ca.crt"
-    certChainFile: "/tls/tls.crt"
-    privateKeyFile: "/tls/tls.key"
-    clientAuth:
-      type: "require"
-      certChainFile: "/mtls/tls.crt"
-      privateKeyFile: "/mtls/tls.key"
+    ## @extra tls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-admin`
+    ## @param tls.admin.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+    ## @param tls.admin.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+    ## @param tls.admin.certManager.issuerName Cert-manager issuer name
+    ## @param tls.admin.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ##
+    certManager:
+      issuerGroup: "cert-manager.io"
+      issuerKind: "Issuer"
+      issuerName: ""
+      fsGroup: ""
+    ## @param tls.admin.ca CA certificate, if empty `""` JVM default trust store is used
+    ## @param tls.admin.chain Certificate chain
+    ## @param tls.admin.key Certificate private key (PKCS-8)
+    ##
+    ca: "/tls-admin/ca.crt"
+    chain: "/tls-admin/tls.crt"
+    key: "/tls-admin/tls.key"
+    ## @param tls.admin.minimumServerProtocolVersion Minimum version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+    ## @param tls.admin.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
     ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+    ##
     minimumServerProtocolVersion: "TLSv1.3"
     ciphers:
       - "TLS_AES_128_GCM_SHA256"
       - "TLS_AES_256_GCM_SHA384"
       - "TLS_CHACHA20_POLY1305_SHA256"
+
+## @section mTLS configuration
+
+mtls:
+  public:
+    ## @param mtls.public.enabled Define whether clients need to authenticate as well using mTLS
+    ##
+    enabled: false
+    ## @extra mtls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-public`
+    ## @param mtls.public.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+    ## @param mtls.public.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+    ## @param mtls.public.certManager.issuerName Cert-manager issuer name
+    ## @param mtls.public.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ##
+    certManager:
+      issuerGroup: "cert-manager.io"
+      issuerKind: "Issuer"
+      issuerName: ""
+      fsGroup: ""
+    ## @param mtls.public.ca CA certificate, if empty `""` JVM default trust store is used
+    ## @param mtls.public.chain Certificate chain
+    ## @param mtls.public.key Certificate private key (PKCS-8)
+    ##
+    ca: "/mtls-public/ca.crt"
+    chain: "/mtls-public/tls.crt"
+    key: "/mtls-public/tls.key"
+  admin:
+    ## @param mtls.admin.enabled Define whether clients need to authenticate as well using mTLS
+    ##
+    enabled: false
+    ## @extra mtls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-admin`
+    ## @param mtls.admin.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+    ## @param mtls.admin.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+    ## @param mtls.admin.certManager.issuerName Cert-manager issuer name
+    ## @param mtls.admin.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ##
+    certManager:
+      issuerGroup: "cert-manager.io"
+      issuerKind: "Issuer"
+      issuerName: ""
+      fsGroup: ""
+    ## @param mtls.admin.ca CA certificate, if empty `""` JVM default trust store is used
+    ## @param mtls.admin.chain Certificate chain
+    ## @param mtls.admin.key Certificate private key (PKCS-8)
+    ##
+    ca: "/mtls-admin/ca.crt"
+    chain: "/mtls-admin/tls.crt"
+    key: "/mtls-admin/tls.key"
 
 ## @section Authentication configuration
 
@@ -422,19 +533,52 @@ ingressRouteTCP:
   hostSNI: ""
   tls: {}
 
-## @section Service Account
+## @section Service Account and RBAC configuration
 
-## @param serviceAccount.create Enable creation of ServiceAccount for participant pod(s)
-## @param serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+## @param serviceAccount.create Enable creation of service accounts for pod(s)
 ## @param serviceAccount.annotations Service Account extra annotations
 ## @param serviceAccount.labels Service Account extra labels
-## @param serviceAccount.imagePullSecrets List of references to secrets in the same namespace to use for pulling any images in pods using this ServiceAccount
-## @param serviceAccount.secrets List of secrets allowed to be used by pods running using this ServiceAccount
+## @param serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+## @param serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
 ##
 serviceAccount:
-  create: false
+  create: true
   annotations: {}
   labels: {}
-  automountServiceAccountToken: true
-  imagePullSecrets: {}
-  secrets: {}
+  automountServiceAccountToken: false
+  extraSecrets: []
+## @param rbac.create Enable creation of RBAC resources attached to the service accounts
+## @param rbac.rules Custom RBAC rules to set
+##
+rbac:
+  create: true
+  rules: []
+
+## @section Monitoring configuration
+
+metrics:
+  ## @param metrics.enabled Enable Prometheus metrics endpoint
+  ##
+  enabled: false
+  ## @param metrics.podMonitor.enabled Creates a Prometheus Operator PodMonitor (also requires `metrics.enabled` to be `true`)
+  ## @param metrics.podMonitor.labels Pod Monitor extra labels
+  ## @param metrics.podMonitor.jobLabel The label to use to retrieve the job name from
+  ## @param metrics.podMonitor.podTargetLabels PodTargetLabels transfers labels on the Kubernetes Pod onto the target
+  ## @param metrics.podMonitor.extraPodMetricsEndpoints Extra scrapeable endpoint configuration
+  ## @param metrics.podMonitor.sampleLimit Per-scrape limit on number of scraped samples that will be accepted
+  ## @param metrics.podMonitor.targetLimit Limit on the number of scraped targets that will be accepted
+  ## @param metrics.podMonitor.labelLimit Per-scrape limit on number of labels that will be accepted for a sample (Prometheus versions 2.27 and newer)
+  ## @param metrics.podMonitor.labelNameLengthLimit Per-scrape limit on length of labels name that will be accepted for a sample (Prometheus versions 2.27 and newer)
+  ## @param metrics.podMonitor.labelValueLengthLimit Per-scrape limit on length of labels value that will be accepted for a sample (Prometheus versions 2.27 and newer)
+  ##
+  podMonitor:
+    enabled: false
+    labels: {}
+    jobLabel: ""
+    podTargetLabels: []
+    extraPodMetricsEndpoints: []
+    sampleLimit: 0
+    targetLimit: 0
+    labelLimit: 0
+    labelNameLengthLimit: 0
+    labelValueLengthLimit: 0

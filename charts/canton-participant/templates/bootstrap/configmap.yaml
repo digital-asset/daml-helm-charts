@@ -14,20 +14,35 @@ data:
   bootstrap.canton: |
     logger.info("Bootstrap start")
 
+    import com.digitalasset.canton.config.NonNegativeDuration
     import com.digitalasset.canton.participant.domain.DomainConnectionConfig
     import com.digitalasset.canton.sequencing.GrpcSequencerConnection
     import com.digitalasset.canton.time.NonNegativeFiniteDuration
     import com.digitalasset.canton.util.BinaryFileUtil
 
+    logger.debug("Setting script commands timeout")
+    console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrap.commandsTimeout | quote }}).toSeconds))
+
+    logger.info(s"Waiting for participant to be running")
+    {{ .Values.participantName }}.health.wait_for_running()
+
+    {{ if not .Values.bootstrap.remoteSequencer.tls.enabled -}}
+    logger.warn("TLS to sequencer is disabled ⚠️")
+    {{ end -}}
     val domainAlias = {{ .Values.bootstrap.remoteSequencer.domainAlias | quote }}
     val domainId = DomainId.tryFromString({{ .Values.bootstrap.remoteSequencer.domainId | quote }})
-    val sequencerURL = {{ .Values.bootstrap.remoteSequencer.url | quote }}
+    val sequencerURL = {{ include "sequencer.url" . | quote }}
 
-    logger.info(s"Loading sequencer CA certificate file")
-    val certificate = BinaryFileUtil.tryReadByteStringFromFile({{ .Values.bootstrap.remoteSequencer.certFile | quote }})
-
-    logger.info(s"Connecting to domain ${domainAlias} with ID ${domainId} at ${sequencerURL}")
+    {{ if and .Values.bootstrap.remoteSequencer.tls.enabled .Values.bootstrap.remoteSequencer.tls.ca -}}
+    logger.info("Loading sequencer CA certificate file")
+    val certificate = BinaryFileUtil.tryReadByteStringFromFile({{ .Values.bootstrap.remoteSequencer.tls.ca | quote }})
+    logger.info("Creating sequencer gRPC connection with custom certificate")
     val connection = GrpcSequencerConnection.tryCreate(sequencerURL, Some(certificate))
+    {{ else -}}
+    logger.info("Creating sequencer gRPC connection without custom certificate")
+    val connection = GrpcSequencerConnection.tryCreate(sequencerURL)
+    {{ end }}
+    logger.info("Creating Domain connection configuration")
     val config = DomainConnectionConfig(
       domainAlias,
       connection,
@@ -37,8 +52,21 @@ data:
       Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.initialRetryDelay | quote }}).toSeconds)),
       Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
     )
-    {{ .Values.participantName }}.domains.register(config)
-    {{ .Values.participantName }}.domains.reconnect(domainAlias)
 
+    if ({{ .Values.participantName }}.domains.is_registered(domainAlias)) {
+      if({{ .Values.participantName }}.domains.config(domainAlias) != Some(config)) {
+        logger.warn(s"Sequencer of domain ${domainAlias} already registered, modifying configuration ⚠️")
+         {{ .Values.participantName }}.domains.modify(domainAlias, _ => config)
+      } else {
+        logger.info("Sequencer already registered with the same configuration")
+      }
+    } else {
+      logger.info(s"Registering sequencer of domain ${domainAlias}")
+      {{ .Values.participantName }}.domains.register(config)
+    }
+    logger.info(s"(Re)connecting to sequencer of domain ${domainAlias} at ${sequencerURL}")
+    {{ .Values.participantName }}.domains.reconnect(domainAlias)
+    logger.info("Pinging participant to make sure everything is alright")
+    {{ .Values.participantName }}.health.ping({{ .Values.participantName }})
     logger.info("Bootstrap succeeded")
 {{- end }}

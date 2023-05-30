@@ -14,6 +14,11 @@ data:
   bootstrap.canton: |
     logger.info("Bootstrap start")
 
+    import com.digitalasset.canton.config.NonNegativeDuration
+
+    logger.debug("Setting script commands timeout")
+    console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrap.commandsTimeout | quote }}).toSeconds))
+
     nodes.remote.foreach { node =>
       logger.info(s"Waiting for ${node.name} to be running")
       node.health.wait_for_running()
@@ -22,6 +27,8 @@ data:
     logger.info(s"Bootstrapping domain ${domainManagers.remote.head.name}")
     domainManagers.remote.head.setup.bootstrap_domain(sequencers.all, Seq(mediators.remote.head))
 
+    {{ if .Values.common.remoteParticipants -}}
+    logger.info("Bootstrapping participant(s)")
     participants.remote.foreach { participant =>
       logger.info(s"Waiting for participant ${participant.name} to be initialized")
       participant.health.wait_for_initialized()
@@ -51,6 +58,7 @@ data:
         )
       )
     }
+    {{- end }}
 
     logger.info("Bootstrap succeeded")
 {{- end }}

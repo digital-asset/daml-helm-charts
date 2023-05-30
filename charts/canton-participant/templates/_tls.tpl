@@ -39,7 +39,6 @@ null
 {{- end -}}
 {{- end -}}
 
-
 {{/*
 Participant Kubernetes service full DNS name.
 
@@ -51,14 +50,14 @@ Params:
 {{- end -}}
 
 {{/*
-Generate participant TLS certificate DNS names.
+Generate participant public API TLS certificate DNS names.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{- define "participant.tlsCertManagerDnsNames" -}}
+{{- define "participant.tls.public.certManagerDnsNames" -}}
 {{- $local := dict "first" true -}}
-{{- range $dns := list "localhost" (include "participant.serviceDNS" .) .Values.ingress.host .Values.ingressRouteTCP.hostSNI -}}
+{{- range $dns := list (include "participant.serviceDNS" .) .Values.ingress.host .Values.ingressRouteTCP.hostSNI -}}
 {{- if $dns -}}
 {{- if not $local.first -}}
 ,
@@ -67,4 +66,32 @@ Params:
 {{- $_ := set $local "first" false -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Generate remote sequencer connection URL.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
+*/}}
+{{- define "sequencer.url" -}}
+{{- if .Values.bootstrap.remoteSequencer.tls.enabled -}}
+https
+{{- else -}}
+http
+{{- end -}}
+://{{ .Values.bootstrap.remoteSequencer.host }}
+{{- with .Values.bootstrap.remoteSequencer.port -}}
+:{{ . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate remote sequencer TLS name.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
+*/}}
+{{- define "sequencer.tls.name" -}}
+{{- print "tls-" .Values.bootstrap.remoteSequencer.domainAlias -}}
 {{- end -}}

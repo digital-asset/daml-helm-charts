@@ -69,3 +69,20 @@ Return image for containers.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Create the name of the service account to use
+
+Params (List):
+  - Context - Dict - Required. Current context for the template evaluation.
+  - Component name - String - Required. Components with a sub key "serviceAccount" in values: "bootstrap", "console", "manager", "mediator" or "sequencer".
+*/}}
+{{- define "common.serviceAccountName" -}}
+{{- $top           := index . 0 -}}
+{{- $componentName := index . 1 -}}
+{{- $component     := index $top.Values $componentName -}}
+{{- if $top.Values.serviceAccount.create -}}
+    {{ default (printf "%s-%s" (include "common.fullname" $top) $componentName) $component.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" $component.serviceAccount.name }}
+{{- end -}}
+{{- end -}}

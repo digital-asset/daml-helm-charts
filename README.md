@@ -38,7 +38,10 @@ helm install myrelease digitalasset/<chart>
 
 - Kubernetes `1.24+`
 - Helm `3.9+`
-- [PostgreSQL server](https://github.com/digital-asset/daml-helm-charts/tree/main/POSTGRES.md)
+- PostgreSQL server
+- [Cert-manager](https://cert-manager.io/docs/) + CSI driver (only if TLS is enabled, optional but strongly recommended)
+
+### [PostgreSQL guidelines](./POSTGRES.md)
 
 ### The purpose of Helm
 
