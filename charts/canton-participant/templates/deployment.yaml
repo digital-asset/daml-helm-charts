@@ -40,7 +40,7 @@ spec:
         {{- end }}
     spec:
       {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ template "common.fullname" . }}
+      serviceAccountName: {{ template "common.serviceAccountName" (list . "") }}
       {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -117,13 +117,25 @@ spec:
               mountPath: /canton/participant.conf
               subPath: participant.conf
               readOnly: true
-            {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
-            - name: tls
-              mountPath: "/tls"
+            {{- if .Values.tls.public.enabled }}
+            - name: tls-public
+              mountPath: "/tls-public"
               readOnly: true
-            - name: mtls
-              mountPath: "/mtls"
+            {{- if .Values.mtls.public.enabled }}
+            - name: mtls-public
+              mountPath: "/mtls-public"
               readOnly: true
+            {{- end }}
+            {{- end }}
+            {{- if .Values.tls.admin.enabled }}
+            - name: tls-admin
+              mountPath: "/tls-admin"
+              readOnly: true
+            {{- if .Values.mtls.admin.enabled }}
+            - name: mtls-admin
+              mountPath: "/mtls-admin"
+              readOnly: true
+            {{- end }}
             {{- end }}
             {{- if .Values.storage.certificatesSecret }}
             - name: pgtls
@@ -137,36 +149,18 @@ spec:
         - name: config
           configMap:
             name: {{ include "common.fullname" . }}
-        {{- if or .Values.tls.public.enabled .Values.tls.admin.enabled }}
-        - name: tls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-tls"
-              csi.cert-manager.io/dns-names: "{{ include "participant.tlsCertManagerDnsNames" . }}"
-              csi.cert-manager.io/ip-sans: "0.0.0.0"
-              {{- with .Values.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
-        - name: mtls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-mtls"
-              csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
-              {{- with .Values.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
+        {{- if and .Values.tls.public.enabled .Values.tls.public.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "" "tls-public" .Values.tls.public.certManager (include "participant.tls.public.certManagerDnsNames" .)) | indent 8 }}
+        {{- if and .Values.mtls.public.enabled .Values.mtls.public.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "" "mtls-public" .Values.mtls.public.certManager "") | indent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- if and .Values.tls.admin.enabled .Values.tls.admin.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "" "tls-admin" .Values.tls.admin.certManager (include "participant.serviceDNS" .)) | indent 8 }}
+        {{- if and .Values.mtls.admin.enabled .Values.mtls.admin.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list . "" "mtls-admin" .Values.mtls.admin.certManager "") | indent 8 }}
+        {{- end }}
         {{- end }}
         {{- if .Values.storage.certificatesSecret }}
         - name: pgtls

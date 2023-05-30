@@ -25,13 +25,15 @@ data:
         {{- if .Values.tls.enabled }}
         tls {
           enabled = {{ .Values.tls.enabled }}
-          {{- if ne .Values.tls.trustCollectionFile "" }}
-          trust-collection-file = {{ .Values.tls.trustCollectionFile | quote }}
+          {{- if ne .Values.tls.ca "" }}
+          trust-collection-file = {{ .Values.tls.ca | quote }}
           {{- end }}
-          cert-chain-file = {{ .Values.tls.certChainFile | quote }}
-          private-key-file = {{ .Values.tls.privateKeyFile | quote }}
-          minimum-server-protocol-version = {{ .Values.tls.minimumServerProtocolVersion }}
-          ciphers = {{ .Values.tls.ciphers }}
+          {{- if .Values.mtls.enabled }}
+          cert-chain-file = {{ .Values.mtls.chain | quote }}
+          private-key-file = {{ .Values.mtls.key | quote }}
+          {{- end }}
+          minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" .Values.tls.minimumServerProtocolVersion }}
+          ciphers = {{ include "canton.tls.ciphers" .Values.tls.ciphers }}
         }
         {{- end }}
       }
@@ -40,7 +42,7 @@ data:
         user = {{ .Values.storage.user | quote }}
         password = ${?TRIGGER_DB_PASSWORD}
         driver = "org.postgresql.Driver"
-        url = "jdbc:postgresql://{{ .Values.storage.host }}:{{ .Values.storage.port }}/{{ .Values.storage.database }}{{ with .Values.storage.connectionProperties }}?{{ . }}{{ end }}"
+        url = {{ include "storage.url" . | trim | quote }}
         {{- with .Values.storage.tablePrefix }}
         tablePrefix = {{ . | quote }}
         {{- end }}

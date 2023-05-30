@@ -41,10 +41,13 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      restartPolicy: Never
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ template "common.serviceAccountName" (list . "bootstrap") }}
+      {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
+      restartPolicy: Never
       containers:
         - name: canton
           image: {{ include "common.image" . | quote }}
@@ -67,8 +70,8 @@ spec:
             - secretRef:
                 name: {{ include "common.fullname" . }}-bootstrap-secretmap
             {{- end }}
-          {{- if .Values.resources }}
-          resources: {{- toYaml .Values.bootstrap.resources | nindent 12 }}
+          {{- with .Values.bootstrap.resources }}
+          resources: {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: bootstrap
@@ -79,14 +82,22 @@ spec:
               mountPath: /canton/remote.conf
               subPath: remote.conf
               readOnly: true
-            {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "canton.participant.isTLS" .) }}
-            - name: tls
-              mountPath: "/tls"
-              readOnly: true
-            - name: mtls
-              mountPath: "/mtls"
+            {{- if .Values.common.tls.public.enabled }}
+            - name: tls-public
+              mountPath: "/tls-public"
               readOnly: true
             {{- end }}
+            {{- if .Values.common.tls.admin.enabled }}
+            - name: tls-admin
+              mountPath: "/tls-admin"
+              readOnly: true
+            {{- if .Values.common.mtls.admin.enabled }}
+            - name: mtls-admin
+              mountPath: "/mtls-admin"
+              readOnly: true
+            {{- end }}
+            {{- end }}
+            {{ include "remoteParticipants.volumeMounts" . | nindent 12 | trim }}
             {{- with .Values.bootstrap.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -97,36 +108,18 @@ spec:
         - name: config
           configMap:
             name: {{ include "common.fullname" . }}-remote
-        {{- if or .Values.common.tls.public.enabled .Values.common.tls.admin.enabled (include "canton.participant.isTLS" .) }}
-        - name: tls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-bootstrap-tls"
-              csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
-              {{- with .Values.common.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
-        - name: mtls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-bootstrap-mtls"
-              csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.job.cluster.local"
-              {{- with .Values.common.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
+        {{- if and .Values.common.tls.public.enabled .Values.common.tls.public.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list . "bootstrap" "tls-public" .Values.common.tls.public.certManager "") | indent 8 }}
         {{- end }}
+        {{- if and .Values.common.tls.admin.enabled .Values.common.tls.admin.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list . "bootstrap" "tls-admin" .Values.common.tls.admin.certManager "") | indent 8 }}
+        {{- if and .Values.common.mtls.admin.enabled .Values.common.mtls.admin.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "bootstrap" "mtls-admin" .Values.common.mtls.admin.certManager "") | indent 8 }}
+        {{- end }}
+        {{- end }}
+        {{ include "remoteParticipants.volumes" (list . "bootstrap") | nindent 8 | trim }}
         {{- with .Values.bootstrap.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

@@ -20,18 +20,20 @@ data:
             port = {{ .Values.ports.public }}
             {{- if .Values.tls.public.enabled }}
             tls {
-              {{- if ne .Values.tls.public.trustCollectionFile "" }}
-              trust-collection-file = {{ .Values.tls.public.trustCollectionFile | quote }}
+              cert-chain-file = {{ .Values.tls.public.chain | quote }}
+              private-key-file = {{ .Values.tls.public.key | quote }}
+              {{- if .Values.mtls.public.enabled }}
+              {{- if ne .Values.mtls.public.ca "" }}
+              trust-collection-file = {{ .Values.mtls.public.ca | quote }}
               {{- end }}
-              cert-chain-file = {{ .Values.tls.public.certChainFile | quote }}
-              private-key-file = {{ .Values.tls.public.privateKeyFile | quote }}
               client-auth = {
-                type = {{ .Values.tls.public.clientAuth.type }}
+                type = "require"
                 admin-client {
-                  cert-chain-file = {{ .Values.tls.public.clientAuth.certChainFile | quote }}
-                  private-key-file = {{ .Values.tls.public.clientAuth.privateKeyFile | quote }}
+                  cert-chain-file = {{ .Values.mtls.public.chain | quote }}
+                  private-key-file = {{ .Values.mtls.public.key | quote }}
                 }
               }
+              {{- end }}
               minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" .Values.tls.public.minimumServerProtocolVersion }}
               ciphers = {{ include "canton.tls.ciphers" .Values.tls.public.ciphers }}
             }
@@ -58,27 +60,29 @@ data:
             port = {{ .Values.ports.admin }}
             {{- if .Values.tls.admin.enabled }}
             tls {
-              {{- if ne .Values.tls.admin.trustCollectionFile "" }}
-              trust-collection-file = {{ .Values.tls.admin.trustCollectionFile | quote }}
+              cert-chain-file = {{ .Values.tls.admin.chain | quote }}
+              private-key-file = {{ .Values.tls.admin.key | quote }}
+              {{- if .Values.mtls.admin.enabled }}
+              {{- if ne .Values.mtls.admin.ca "" }}
+              trust-collection-file = {{ .Values.mtls.admin.ca | quote }}
               {{- end }}
-              cert-chain-file = {{ .Values.tls.admin.certChainFile | quote }}
-              private-key-file = {{ .Values.tls.admin.privateKeyFile | quote }}
               client-auth = {
-                type = {{ .Values.tls.admin.clientAuth.type }}
+                type = "require"
                 admin-client {
-                  cert-chain-file = {{ .Values.tls.admin.clientAuth.certChainFile | quote }}
-                  private-key-file = {{ .Values.tls.admin.clientAuth.privateKeyFile | quote }}
+                  cert-chain-file = ""
+                  private-key-file = ""
                 }
               }
+              {{- end }}
               minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" .Values.tls.admin.minimumServerProtocolVersion }}
               ciphers = {{ include "canton.tls.ciphers" .Values.tls.admin.ciphers }}
             }
             {{- end }}
           }
 
-          replication {
-            enabled = true
-          }
+          init.parameters.unique-contract-keys = {{ .Values.uniqueContractKeys }}
+
+          replication.enabled = true
 
           monitoring.grpc-health-server {
             address = "0.0.0.0"
@@ -88,10 +92,13 @@ data:
       }
 
       {{ if .Values.metrics.enabled -}}
-      monitoring.metrics.reporters = [{
-        type = prometheus
-        address = "0.0.0.0"
-        port = {{ .Values.ports.metrics }}
-      }]
+      monitoring.metrics {
+        report-jvm-metrics = yes
+        reporters = [{
+          type = prometheus
+          address = "0.0.0.0"
+          port = {{ .Values.ports.metrics }}
+        }]
+      }
       {{- end }}
     }

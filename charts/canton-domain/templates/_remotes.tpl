@@ -2,85 +2,98 @@
 {{/*
 Generate remote-participants configuration block.
 Ports and TLS configuration might be missing.
+The bootstrap and console are not using the remote participant(s) public API (aka Ledger API),
+hence the empty string address and default port number.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{ define "canton.remoteParticipants" }}
-{{ range $participant := .Values.common.remoteParticipants }}
+{{ define "remoteParticipants" }}
+{{ range $remoteParticipant := .Values.common.remoteParticipants }}
 remote-participants {
-  {{ $participant.name }} {
+  {{ $remoteParticipant.name }} {
     ledger-api {
-      address = {{ $participant.host }}
-      port = {{ ($participant.ports).public | default 4001 }}
-      {{- if or (($participant.tls).public).enabled (($participant.tls).admin).enabled }}
-      {{- include "canton.tls.remote" (list $participant.tls.public) | indent 6 }}
+      address = ""
+      port = 4001
+    }
+
+    admin-api {
+      address = {{ $remoteParticipant.host }}
+      port = {{ ($remoteParticipant.ports).admin | default 4002 }}
+      {{- if (($remoteParticipant.tls).admin).enabled }}
+      {{- include "canton.tls.remote" (list $remoteParticipant.tls.admin $remoteParticipant.mtls.admin) | indent 6 }}
       {{- end }}
     }
-    admin-api {
-      address = {{ $participant.host }}
-      port = {{ ($participant.ports).admin | default 4002 }}
-      {{- if or (($participant.tls).public).enabled (($participant.tls).admin).enabled }}
-      {{- include "canton.tls.remote" (list $participant.tls.admin) | indent 6 }}
-      {{- end }}
-    }
   }
 }
 {{ end }}
 {{ end }}
 
 {{/*
-Find if any of the participant requires TLS for either the admin or public API.
-TLS configuration might be missing.
+Generate bootstrap and console TLS and mTLS certificate volumeMounts for remote participant(s) using the Cert-manager CSI driver.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{- define "canton.participant.isTLS" -}}
-{{- range $participant := .Values.common.remoteParticipants -}}
-{{- if or (($participant.tls).public).enabled (($participant.tls).admin).enabled -}}
-true
-{{- end -}}
-{{- end -}}
+{{- define "remoteParticipants.volumeMounts" }}
+{{- range $remoteParticipant := .Values.common.remoteParticipants }}
+{{- if (($remoteParticipant.tls).admin).enabled }}
+- name: tls-{{ $remoteParticipant.name }}
+  mountPath: "/tls-{{ $remoteParticipant.name }}"
+  readOnly: true
+{{- if (($remoteParticipant.mtls).admin).enabled }}
+- name: mtls-{{ $remoteParticipant.name }}
+  mountPath: "/mtls-{{ $remoteParticipant.name }}"
+  readOnly: true
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate remote participant TLS name.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
+*/}}
+{{- define "remoteParticipant.tls.name" -}}
+{{- print "tls-" . -}}
 {{- end -}}
 
 {{/*
-Generate remote-sequencers configuration block.
+Generate remote participant mTLS name.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{ define "canton.remoteSequencers" }}
-remote-sequencers {
-  {{ .Values.common.sequencerName }} {
-    public-api {
-      address = "{{ template "common.fullname" . }}-sequencer.{{ .Release.Namespace }}.svc.cluster.local"
-      port = {{ .Values.sequencer.service.ports.public }}
-      {{- include "canton.remoteSequencer.tls.public" (list .Values.common.tls.public) | indent 6 }}
-    }
-    admin-api {
-      address = "{{ template "common.fullname" . }}-sequencer.{{ .Release.Namespace }}.svc.cluster.local"
-      port = {{ .Values.sequencer.service.ports.admin }}
-      {{- include "canton.tls.remote" (list .Values.common.tls.admin) | indent 6 }}
-    }
-  }
-}
-{{ end }}
+{{- define "remoteParticipant.mtls.name" -}}
+{{- print "mtls-" . -}}
+{{- end -}}
 
 {{/*
-Generate remote-mediators configuration block.
+Generate bootstrap and console TLS and mTLS certificate volumes for remote participant(s) using the Cert-manager CSI driver.
+
+Optional sub keys:
+- "remoteParticipant.tls.admin.certManager.issuerGroup"
+- "remoteParticipant.tls.admin.certManager.issuerKind"
+- "remoteParticipant.tls.admin.certManager.fsGroup"
+- "remoteParticipant.mtls.admin.certManager.issuerGroup"
+- "remoteParticipant.mtls.admin.certManager.issuerKind"
+- "remoteParticipant.mtls.admin.certManager.fsGroup"
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{ define "canton.remoteMediators" }}
-remote-mediators {
-  {{ .Values.common.mediatorName }} {
-    admin-api {
-      address = "{{ template "common.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
-      port = {{ .Values.mediator.service.ports.admin }}
-      {{- include "canton.tls.remote" (list .Values.common.tls.admin) | indent 6 }}
-    }
-  }
-}
-{{ end }}
+{{- define "remoteParticipants.volumes" }}
+{{- $top              := index . 0 }}
+{{- $component        := index . 1 }}
+{{- range $remoteParticipant := $top.Values.common.remoteParticipants }}
+{{- if and (($remoteParticipant.tls).admin).enabled ((($remoteParticipant.tls).admin).certManager).issuerName }}
+# Dummy certificate only used to mount the root CA certificate
+{{- include "certManager.csi" (list $top $component (include "remoteParticipant.tls.name" $remoteParticipant.name) $remoteParticipant.tls.admin.certManager "") }}
+{{- if and (($remoteParticipant.mtls).admin).enabled ((($remoteParticipant.mtls).admin).certManager).issuerName }}
+{{- include "certManager.csi" (list $top $component (include "remoteParticipant.mtls.name" $remoteParticipant.name) $remoteParticipant.mtls.admin.certManager "") }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

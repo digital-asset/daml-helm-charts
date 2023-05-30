@@ -18,12 +18,10 @@ data:
           admin-api {
             address = "0.0.0.0"
             port = {{ .Values.mediator.ports.admin }}
-            {{- include "canton.tls.admin" (list .Values.common.tls.admin) | indent 12 }}
+            {{- include "canton.tls.admin" (list .Values.common.tls.admin .Values.common.mtls.admin) | indent 12 }}
           }
 
-          replication {
-            enabled = true
-          }
+          replication.enabled = true
 
           monitoring.grpc-health-server {
             address = "0.0.0.0"
@@ -31,8 +29,6 @@ data:
           }
         }
       }
-
-      {{ include "canton.remoteSequencers" . | nindent 6 | trim }}
 
       {{- include "canton.monitoring" (list . "mediator") | nindent 6 }}
     }

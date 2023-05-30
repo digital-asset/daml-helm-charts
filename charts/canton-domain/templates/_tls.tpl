@@ -4,25 +4,29 @@ Generic TLS block.
 
 Params:
   - Admin API TLS configuration - String - Required. Common sub key "common.tls.admin".
+  - Admin API mTLS configuration - String - Required. Common sub key "common.mtls.admin".
 */}}
 {{- define "canton.tls.admin" -}}
-{{- $top  := index . 0 -}}
-{{- if $top.enabled }}
+{{- $tls  := index . 0 -}}
+{{- $mtls  := index . 1 -}}
+{{- if $tls.enabled }}
 tls {
-  {{- with $top.trustCollectionFile }}
-  trust-collection-file = {{ . | quote }}
+  cert-chain-file = {{ $tls.chain | quote }}
+  private-key-file = {{ $tls.key | quote }}
+  {{- if $mtls.enabled }}
+  {{- if ne $mtls.ca "" }}
+  trust-collection-file = {{ $mtls.ca | quote }}
   {{- end }}
-  cert-chain-file = {{ $top.certChainFile | quote }}
-  private-key-file = {{ $top.privateKeyFile | quote }}
   client-auth = {
-    type = {{ $top.clientAuth.type }}
+    type = "require"
     admin-client {
-      cert-chain-file = {{ $top.clientAuth.certChainFile | quote }}
-      private-key-file = {{ $top.clientAuth.privateKeyFile | quote }}
+      cert-chain-file = ""
+      private-key-file = ""
     }
   }
-  minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" $top.minimumServerProtocolVersion }}
-  ciphers = {{ include "canton.tls.ciphers" $top.ciphers }}
+  {{- end }}
+  minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" $tls.minimumServerProtocolVersion }}
+  ciphers = {{ include "canton.tls.ciphers" $tls.ciphers }}
 }
 {{- end }}
 {{- end -}}
@@ -32,53 +36,21 @@ Generic remote TLS block.
 
 Params:
   - Remote admin or public API TLS configuration - String - Required. Canton node sub key "tls.admin" or "tls.public".
+  - Remote admin or public API mTLS configuration - String - Required. Canton node sub key "mtls.admin" or "mtls.public".
 */}}
 {{- define "canton.tls.remote" -}}
-{{- $top  := index . 0 -}}
-{{- if $top.enabled }}
+{{- $tls  := index . 0 -}}
+{{- $mtls  := index . 1 -}}
+{{- if $tls.enabled }}
 tls {
-  trust-collection-file = {{ $top.trustCollectionFile | default "/mtls/ca.crt" | quote }}
+  trust-collection-file = {{ $tls.ca | default "" | quote }}
+  {{- if $mtls.enabled }}
   client-cert = {
-    cert-chain-file = {{ $top.certChainFile | default "/mtls/tls.crt" | quote }}
-    private-key-file = {{ $top.privateKeyFile | default "/mtls/tls.key" | quote }}
+    cert-chain-file = {{ $mtls.chain | default "" | quote }}
+    private-key-file = {{ $mtls.key | default "" | quote }}
   }
+  {{- end }}
 }
-{{- end }}
-{{- end -}}
-
-{{/*
-Sequencer public API TLS block (does not support mTLS).
-
-Params:
-  - Public API TLS configuration - String - Required. Common sub key "common.tls.public".
-*/}}
-{{- define "canton.sequencer.tls.public" -}}
-{{- $top  := index . 0 -}}
-{{- if $top.enabled }}
-tls {
-  cert-chain-file = {{ $top.certChainFile | quote }}
-  private-key-file = {{ $top.privateKeyFile | quote }}
-  minimum-server-protocol-version = {{ include "canton.tls.minimumServerProtocolVersion" $top.minimumServerProtocolVersion }}
-  ciphers = {{ include "canton.tls.ciphers" $top.ciphers }}
-}
-{{- end }}
-{{- end -}}
-
-{{/*
-Remote sequencer public API TLS block (does not support mTLS).
-
-Params:
-  - Remote public API TLS configuration - String - Required. Common sub key "common.tls.public".
-*/}}
-{{- define "canton.remoteSequencer.tls.public" -}}
-{{- $top  := index . 0 -}}
-{{- if $top.enabled }}
-transport-security = true
-{{- with $top.trustCollectionFile }}
-custom-trust-certificates = {
-  pem-file = {{ . | quote }}
-}
-{{- end }}
 {{- end }}
 {{- end -}}
 
@@ -122,6 +94,25 @@ null
 {{- end -}}
 {{- end -}}
 
+{{/*
+Domain Topology Manager Kubernetes service full DNS name.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
+*/}}
+{{- define "manager.serviceDNS" -}}
+{{ template "common.fullname" . }}-manager.{{ .Release.Namespace }}.svc.cluster.local
+{{- end -}}
+
+{{/*
+Mediator Kubernetes service full DNS name.
+
+Params:
+  - Context - Dict - Required. Current context for the template evaluation.
+*/}}
+{{- define "mediator.serviceDNS" -}}
+{{ template "common.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local
+{{- end -}}
 
 {{/*
 Sequencer Kubernetes service full DNS name.
@@ -129,19 +120,19 @@ Sequencer Kubernetes service full DNS name.
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{- define "canton.sequencer.serviceDNS" -}}
+{{- define "sequencer.serviceDNS" -}}
 {{ template "common.fullname" . }}-sequencer.{{ .Release.Namespace }}.svc.cluster.local
 {{- end -}}
 
 {{/*
-Generate sequencer TLS certificate DNS names.
+Generate sequencer public TLS certificate DNS names.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
-{{- define "canton.sequencer.tlsCertManagerDnsNames" -}}
+{{- define "sequencer.tls.public.certManagerDnsNames" -}}
 {{- $local := dict "first" true -}}
-{{- range $dns := list "localhost" (include "canton.sequencer.serviceDNS" .) .Values.sequencer.ingress.host .Values.sequencer.ingressRouteTCP.hostSNI -}}
+{{- range $dns := list (include "sequencer.serviceDNS" .) .Values.sequencer.ingress.host .Values.sequencer.ingressRouteTCP.hostSNI -}}
 {{- if $dns -}}
 {{- if not $local.first -}}
 ,

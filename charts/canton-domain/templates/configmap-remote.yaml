@@ -24,17 +24,43 @@ data:
       remote-domain-managers {
         {{ .Values.common.domainName }} {
           admin-api {
-            address = "{{ template "common.fullname" . }}-manager.{{ .Release.Namespace }}.svc.cluster.local"
+            address = {{ include "manager.serviceDNS" . | quote }}
             port = {{ .Values.manager.service.ports.admin }}
-            {{- include "canton.tls.remote" (list .Values.common.tls.admin) | indent 12 }}
+            {{- include "canton.tls.remote" (list .Values.common.tls.admin .Values.common.mtls.admin) | indent 12 }}
           }
         }
       }
 
-      {{ include "canton.remoteMediators" . | nindent 6 | trim }}
+      remote-mediators {
+        {{ .Values.common.mediatorName }} {
+          admin-api {
+            address = {{ include "mediator.serviceDNS" . | quote }}
+            port = {{ .Values.mediator.service.ports.admin }}
+            {{- include "canton.tls.remote" (list .Values.common.tls.admin .Values.common.mtls.admin) | indent 12 }}
+          }
+        }
+      }
 
-      {{ include "canton.remoteSequencers" . | nindent 6 | trim }}
+      remote-sequencers {
+        {{ .Values.common.sequencerName }} {
+          public-api {
+            address = {{ include "sequencer.serviceDNS" . | quote }}
+            port = {{ .Values.sequencer.service.ports.public }}
+            {{- if .Values.common.tls.public.enabled }}
+            transport-security = true
+            {{- with .Values.common.tls.public.ca }}
+            custom-trust-certificates.pem-file = {{ . | quote }}
+            {{- end }}
+            {{- end }}
+          }
+          admin-api {
+            address = {{ include "sequencer.serviceDNS" . | quote }}
+            port = {{ .Values.sequencer.service.ports.admin }}
+            {{- include "canton.tls.remote" (list .Values.common.tls.admin .Values.common.mtls.admin) | indent 12 }}
+          }
+        }
+      }
 
-      {{ include "canton.remoteParticipants" . | nindent 6 | trim }}
+      {{ include "remoteParticipants" . | nindent 6 | trim }}
     }
 {{- end }}

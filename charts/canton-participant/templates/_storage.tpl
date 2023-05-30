@@ -19,40 +19,18 @@ storage {
       ssl = {{ .Values.storage.ssl }}
       {{- if .Values.storage.ssl }}
       sslmode = {{ .Values.storage.sslMode | quote }}
-      {{- if .Values.storage.certCAFilename }}
-      sslrootcert = {{- include "postgresql.certPath" (list . "certCAFilename") | quote -}}
+      {{- if .Values.storage.sslRootCert }}
+      sslrootcert = {{ .Values.storage.sslRootCert | quote }}
       {{- end }}
-      {{- if .Values.storage.certFilename }}
-      sslcert = {{- include "postgresql.certPath" (list . "certFilename") | quote -}}
+      {{- if .Values.storage.sslCert }}
+      sslcert = {{ .Values.storage.sslCert | quote }}
       {{- end }}
-      {{- if .Values.storage.certKeyFilename }}
-      sslkey = {{- include "postgresql.certPath" (list . "certKeyFilename") | quote -}}
+      {{- if .Values.storage.sslKey }}
+      sslkey = {{ .Values.storage.sslKey | quote }}
       {{- end }}
       {{- end }}
     }
   }
   max-connections = {{ .Values.storage.maxConnections }}
 }
-{{- end -}}
-
-{{/*
-Return the path to the provided PostgreSQL certificate.
-
-Usage:
-{{ include "postgresql.certPath" (list . "key") }}
-
-Params (List):
-  - Context - Dict - Required. Current context for the template evaluation.
-  - Filename - String - Required. Cert file sub key of "storage" in values: "certCAFilename", "certFilename" or "certKeyFilename".
-    If an existing certificatesSecret is used, everything is mounted into /pgtls,
-    provide a secret key name like "tls.crt". Otherwise provide the full path like "/path/to/file".
-*/}}
-{{- define "postgresql.certPath" -}}
-{{- $top  := index . 0 -}}
-{{- $file := index $top.Values.storage (index . 1) -}}
-{{- if $top.Values.storage.certificatesSecret -}}
-{{- printf "/pgtls/%s" $file -}}
-{{- else -}}
-{{- $file -}}
-{{- end -}}
 {{- end -}}

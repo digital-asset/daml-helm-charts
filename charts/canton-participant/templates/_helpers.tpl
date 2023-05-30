@@ -68,3 +68,25 @@ Return image for containers.
     {{- printf "%s%s%s"  .Values.image.repository $separator $termination -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Create the name of the service account to use
+
+Params (List):
+  - Context - Dict - Required. Current context for the template evaluation.
+  - Component name - String - Required. Components with a sub key "serviceAccount" in values: "bootstrap", "console", ""
+*/}}
+{{- define "common.serviceAccountName" -}}
+{{- $top           := index . 0 -}}
+{{- $componentName := index . 1 -}}
+{{- $component     := index $top.Values $componentName -}}
+{{- if $top.Values.serviceAccount.create -}}
+    {{- if $componentName -}}
+        {{ default (printf "%s-%s" (include "common.fullname" $top) $componentName) $component.serviceAccount.name }}
+    {{- else -}}
+        {{ default (include "common.fullname" $top) $top.Values.serviceAccount.name }}
+    {{- end -}}
+{{- else -}}
+    {{ default "default" $component.serviceAccount.name }}
+{{- end -}}
+{{- end -}}

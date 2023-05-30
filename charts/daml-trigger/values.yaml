@@ -16,7 +16,7 @@ replicaCount: 1
 ## @param image.tag Docker image tag (immutable tags are recommended)
 ## @param image.digest Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
 ## @param image.pullPolicy Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
-## @param image.pullSecrets Specify Docker registry secret names as an array
+## @param image.pullSecrets Specify Docker registry existing secret names as an array
 ##
 image:
   ## Private Docker image
@@ -25,43 +25,57 @@ image:
   tag: ""
   digest: ""
   pullPolicy: IfNotPresent
-  ## Secrets must be manually created in the namespace
-  ## You can also patch targeted namespace 'default' ServiceAccount with 'imagePullSecrets' instead of using pullSecrets
   pullSecrets: []
 
 ## @param commonLabels Add labels to all the deployed resources
 ##
 commonLabels: {}
 
-## @param metrics.enabled Enable Prometheus metrics endpoint
-## @param metrics.reportingInterval Metrics reporting interval
+## @extra certManager Cert-manager CSI driver common configuration
+## @param certManager.duration Requested duration the signed certificates will be valid for
+## @param certManager.renewBefore Time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`
 ##
-metrics:
-  enabled: false
-  reportingInterval: "30s"
+certManager:
+  duration: "87660h"
+  renewBefore: "1h"
 
 ## @section Trigger configuration
 
 ## @extra storage PostgreSQL configuration
-## @param storage.host Server hostname
-## @param storage.port Server port
-## @param storage.database Database name
-## @param storage.user User name
-## @param storage.existingSecret.name Name of existing secret with user credentials
-## @param storage.existingSecret.key Name of key in existing secret with user password
-##
+
 storage:
+  ## @param storage.host Server hostname
+  ## @param storage.port Server port
+  ## @param storage.database Database name
+  ## @param storage.user User name
+  ##
   host: "postgres"
   port: 5432
   database: "trigger"
   user: "trigger"
+  ## @param storage.existingSecret.name Name of existing secret with user credentials
+  ## @param storage.existingSecret.key Name of key in existing secret with user password
   ## Secret must be manually created in the namespace
   ## If existingSecret.name is set: environment variable TRIGGER_DB_PASSWORD will be mounted from the scepcified secret/key
   ## Alternatively you can set key TRIGGER_DB_PASSWORD directly in environmentSecrets
+  ##
   existingSecret:
     name: ""
     key: ""
-  ## @param storage.connectionProperties PostgreSQL JDBC driver connection URI properties (everything after `?`)
+  ## @param storage.ssl Enable TLS connection
+  ## @param storage.sslMode TLS mode. Allowed values: `disable`, `allow`, `prefer`, `require`, `verify-ca`, `verify-full`
+  ## @param storage.sslRootCert CA certificate file (PEM encoded X509v3). Intermediate certificate(s) that chain up to this root certificate can also appear in this file.
+  ## @param storage.sslCert Client certificate file (PEM encoded X509v3)
+  ## @param storage.sslKey Client certificate key file (PKCS-12 or PKCS-8 DER)
+  ## @param storage.certificatesSecret Name of an existing K8s secret that contains certificate files, mounted to `/pgtls` if not empty, provide K8s secret key names as filenames
+  ##
+  ssl: true
+  sslMode: "require"
+  sslRootCert: ""
+  sslCert: ""
+  sslKey: ""
+  certificatesSecret: ""
+  ## @param storage.extraConnectionProperties Extra PostgreSQL JDBC driver connection URI properties (everything after `?`, start with `&`)
   ## @param storage.tablePrefix Prefix for DB table names (to avoid collisions)
   ## @param storage.poolSize DB connection pool maximum connections
   ## @param storage.minIdle DB connection pool minimum idle connections
@@ -69,13 +83,12 @@ storage:
   ## @param storage.connectionTimeout  DB connection pool timeout
   ## @param storage.certificatesSecret Name of an existing secret containing certificates, mounted to `/pgtls`
   ##
-  connectionProperties: "ssl=true&sslmode=require"
+  extraConnectionProperties: ""
   tablePrefix: ""
   poolSize: 10
   minIdle: 4
   idleTimeout: "10s"
   connectionTimeout: "60s"
-  certificatesSecret: ""
 
 ## @param ledgerAPI.host Ledger API hostname
 ## @param ledgerAPI.port Ledger API port
@@ -84,34 +97,57 @@ ledgerAPI:
   host: "participant"
   port: 4001
 
-## @section mTLS configuration
+## @section TLS configuration
 
 tls:
-  ## @param tls.enabled Enable mTLS to Ledger API (gRPC)
-  ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled)
+  ## @param tls.enabled Enable TLS to Ledger API (gRPC)
+  ##
+  enabled: false
+  ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/tls`
   ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
   ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
   ## @param tls.certManager.issuerName Cert-manager issuer name
   ## @param tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
   ##
-  enabled: false
   certManager:
     issuerGroup: "cert-manager.io"
     issuerKind: "Issuer"
-    issuerName: "my-cert-manager-issuer"
+    issuerName: ""
     fsGroup: 65532
-  ## @param tls.trustCollectionFile Trusted certificate(s), if omitted JVM default trust store is used
-  ## @param tls.certChainFile Certificate
-  ## @param tls.privateKeyFile Private key
-  ## @param tls.minimumServerProtocolVersion Minimum TLS version allowed
-  ## @param tls.ciphers Specify ciphers allowed, if set to `null` JVM defaults are used
+  ## @param tls.ca CA certificate, if empty `""` JVM default trust store is used
   ##
-  trustCollectionFile: "/tls/ca.crt"
-  certChainFile: "/tls/tls.crt"
-  privateKeyFile: "/tls/tls.key"
-  ## Note that up until at least Daml 2.6.0 these two parameters are not being picked up.
+  ca: "/tls/ca.crt"
+  ## @param tls.minimumServerProtocolVersion Minimum version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+  ## @param tls.ciphers Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)
+  ## Configuration recommended by Mozilla: https://wiki.mozilla.org/Security/Server_Side_TLS
+  ## Note: until at least Daml 2.6.3 these two parameters are not being picked up
+  ##
   minimumServerProtocolVersion: "TLSv1.3"
-  ciphers: "null"
+  ciphers:
+    - "TLS_AES_128_GCM_SHA256"
+    - "TLS_AES_256_GCM_SHA384"
+    - "TLS_CHACHA20_POLY1305_SHA256"
+
+mtls:
+  ## @param mtls.enabled Enable mTLS to Ledger API (gRPC)
+  ##
+  enabled: false
+  ## @extra mtls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/mtls`
+  ## @param mtls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+  ## @param mtls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+  ## @param mtls.certManager.issuerName Cert-manager issuer name
+  ## @param mtls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+  ##
+  certManager:
+    issuerGroup: "cert-manager.io"
+    issuerKind: "Issuer"
+    issuerName: ""
+    fsGroup: 65532
+  ## @param mtls.chain Certificate chain
+  ## @param mtls.key Certificate private key (PKCS-8)
+  ##
+  chain: "/mtls/tls.crt"
+  key: "/mtls/tls.key"
 
 ## @section Logging
 
@@ -189,3 +225,55 @@ service:
     enabled: true
     # Seconds between 1 and 86400
     timeout: 3600  # 1 hour
+
+## @section Service Account and RBAC configuration
+
+## @param serviceAccount.create Enable creation of service accounts for pod(s)
+## @param serviceAccount.annotations Service Account extra annotations
+## @param serviceAccount.labels Service Account extra labels
+## @param serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+## @param serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
+##
+serviceAccount:
+  create: true
+  annotations: {}
+  labels: {}
+  automountServiceAccountToken: false
+  extraSecrets: []
+## @param rbac.create Enable creation of RBAC resources attached to the service accounts
+## @param rbac.rules Custom RBAC rules to set
+##
+rbac:
+  create: true
+  rules: []
+
+## @section Monitoring configuration
+
+metrics:
+  ## @param metrics.enabled Enable Prometheus metrics endpoint
+  ## @param metrics.reportingInterval Metrics reporting interval
+  ##
+  enabled: false
+  reportingInterval: "30s"
+  ## @param metrics.podMonitor.enabled Creates a Prometheus Operator PodMonitor (also requires `metrics.enabled` to be `true`)
+  ## @param metrics.podMonitor.labels Pod Monitor extra labels
+  ## @param metrics.podMonitor.jobLabel The label to use to retrieve the job name from
+  ## @param metrics.podMonitor.podTargetLabels PodTargetLabels transfers labels on the Kubernetes Pod onto the target
+  ## @param metrics.podMonitor.extraPodMetricsEndpoints Extra scrapeable endpoint configuration
+  ## @param metrics.podMonitor.sampleLimit Per-scrape limit on number of scraped samples that will be accepted
+  ## @param metrics.podMonitor.targetLimit Limit on the number of scraped targets that will be accepted
+  ## @param metrics.podMonitor.labelLimit Per-scrape limit on number of labels that will be accepted for a sample (Prometheus versions 2.27 and newer)
+  ## @param metrics.podMonitor.labelNameLengthLimit Per-scrape limit on length of labels name that will be accepted for a sample (Prometheus versions 2.27 and newer)
+  ## @param metrics.podMonitor.labelValueLengthLimit Per-scrape limit on length of labels value that will be accepted for a sample (Prometheus versions 2.27 and newer)
+  ##
+  podMonitor:
+    enabled: false
+    labels: {}
+    jobLabel: ""
+    podTargetLabels: []
+    extraPodMetricsEndpoints: []
+    sampleLimit: 0
+    targetLimit: 0
+    labelLimit: 0
+    labelNameLengthLimit: 0
+    labelValueLengthLimit: 0

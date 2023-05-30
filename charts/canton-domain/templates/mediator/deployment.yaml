@@ -39,8 +39,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.common.serviceAccount.create }}
-      serviceAccountName: {{ template "common.fullname" . }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ template "common.serviceAccountName" (list . "mediator") }}
       {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
@@ -116,12 +116,14 @@ spec:
               subPath: mediator.conf
               readOnly: true
             {{- if .Values.common.tls.admin.enabled }}
-            - name: tls
-              mountPath: "/tls"
+            - name: tls-admin
+              mountPath: "/tls-admin"
               readOnly: true
-            - name: mtls
-              mountPath: "/mtls"
+            {{- if .Values.common.mtls.admin.enabled }}
+            - name: mtls-admin
+              mountPath: "/mtls-admin"
               readOnly: true
+            {{- end }}
             {{- end }}
             {{- if .Values.storage.certificatesSecret }}
             - name: pgtls
@@ -135,36 +137,11 @@ spec:
         - name: config
           configMap:
             name: {{ include "common.fullname" . }}-mediator
-        {{- if .Values.common.tls.admin.enabled }}
-        - name: tls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-mediator-tls"
-              csi.cert-manager.io/dns-names: "localhost,{{ template "common.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
-              csi.cert-manager.io/ip-sans: "0.0.0.0"
-              {{- with .Values.common.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
-        - name: mtls
-          csi:
-            driver: csi.cert-manager.io
-            readOnly: true
-            volumeAttributes:
-              csi.cert-manager.io/issuer-group: "{{ .Values.common.tls.certManager.issuerGroup }}"
-              csi.cert-manager.io/issuer-kind: "{{ .Values.common.tls.certManager.issuerKind }}"
-              csi.cert-manager.io/issuer-name: "{{ .Values.common.tls.certManager.issuerName }}"
-              csi.cert-manager.io/key-encoding: "PKCS8"
-              csi.cert-manager.io/common-name: "{{ template "common.fullname" . }}-mediator-mtls"
-              csi.cert-manager.io/dns-names: "{{ template "common.fullname" . }}-mediator.{{ .Release.Namespace }}.svc.cluster.local"
-              {{- with .Values.common.tls.certManager.fsGroup }}
-              csi.cert-manager.io/fs-group: {{ . | quote }}
-              {{- end }}
+        {{- if and .Values.common.tls.admin.enabled .Values.common.tls.admin.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "mediator" "tls-admin" .Values.common.tls.admin.certManager (include "mediator.serviceDNS" .)) | indent 8 }}
+        {{- if and .Values.common.mtls.admin.enabled .Values.common.mtls.admin.certManager.issuerName }}
+        {{- include "certManager.csi" (list . "mediator" "mtls-admin" .Values.common.mtls.admin.certManager "") | indent 8 }}
+        {{- end }}
         {{- end }}
         {{- if .Values.storage.certificatesSecret }}
         - name: pgtls
