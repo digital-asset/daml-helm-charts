@@ -11,11 +11,12 @@
 #
 repositoryID: 92466ee9-c0d0-448f-8f25-b4899445009b
 ignore:
+  # Ignore versions before 0.1.0.
   - name: canton-domain
-    version: "0\.0\.*"
+    version: 0\.0\.\d+
   - name: canton-participant
-    version: "0\.0\.*"
+    version: 0\.0\.\d+
   - name: daml-http-json
-    version: "0\.0\.*"
+    version: 0\.0\.\d+
   - name: daml-trigger
-    version: "0\.0\.*"    
+    version: 0\.0\.\d+
