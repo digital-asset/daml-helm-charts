@@ -1,0 +1,22 @@
+# Artifact Hub repository metadata file
+#
+# Some settings like the verified publisher flag or the ignored packages won't
+# be applied until the next time the repository is processed. Please keep in
+# mind that the repository won't be processed if it has not changed since the
+# last time it was processed. Depending on the repository kind, this is checked
+# in a different way. For Helm http based repositories, we consider it has
+# changed if the `index.yaml` file changes. For git based repositories, it does
+# when the hash of the last commit in the branch you set up changes. This does
+# NOT apply to ownership claim operations, which are processed immediately.
+#
+repositoryID: 92466ee9-c0d0-448f-8f25-b4899445009b
+ignore:
+  # Ignore versions before 0.1.0.
+  - name: canton-domain
+    version: 0\.0\.\d+
+  - name: canton-participant
+    version: 0\.0\.\d+
+  - name: daml-http-json
+    version: 0\.0\.\d+
+  - name: daml-trigger
+    version: 0\.0\.\d+
