@@ -65,7 +65,7 @@ Return image for containers.
 {{- if .Values.image.registry }}
     {{- printf "%s/%s%s%s" .Values.image.registry .Values.image.repository $separator $termination -}}
 {{- else -}}
-    {{- printf "%s%s%s"  .Values.image.repository $separator $termination -}}
+    {{- printf "%s%s%s" .Values.image.repository $separator $termination -}}
 {{- end -}}
 {{- end -}}
 

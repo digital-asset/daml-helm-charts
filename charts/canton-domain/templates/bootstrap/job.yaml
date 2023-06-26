@@ -48,10 +48,16 @@ spec:
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: Never
+      {{- if .Values.bootstrap.pod.securityContext.enabled }}
+      securityContext: {{- omit .Values.bootstrap.pod.securityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       containers:
         - name: canton
           image: {{ include "common.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.bootstrap.securityContext.enabled }}
+          securityContext: {{- omit .Values.bootstrap.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           args:
             - "run"
             - "--log-profile=container"

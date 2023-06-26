@@ -45,10 +45,16 @@ spec:
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.common.pod.securityContext.enabled }}
+      securityContext: {{- omit .Values.common.pod.securityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       containers:
         - name: canton
           image: {{ include "common.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.common.securityContext.enabled }}
+          securityContext: {{- omit .Values.common.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           args:
             - "daemon"
             - "--log-profile=container"

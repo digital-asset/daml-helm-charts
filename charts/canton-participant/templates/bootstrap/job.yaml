@@ -48,10 +48,16 @@ spec:
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: Never
+      {{- if .Values.bootstrap.pod.securityContext.enabled }}
+      securityContext: {{- omit .Values.bootstrap.pod.securityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       containers:
         - name: canton
           image: {{ include "common.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.bootstrap.securityContext.enabled }}
+          securityContext: {{- omit .Values.bootstrap.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           args:
             - "run"
             - "--log-profile=container"
@@ -102,10 +108,24 @@ spec:
               readOnly: true
             {{- end }}
             {{- end }}
-            {{- if and .Values.bootstrap.remoteSequencer.tls.enabled }}
+            {{- if .Values.bootstrap.remoteSequencer.tls.enabled }}
             - name: {{ include "sequencer.tls.name" . }}
               mountPath: "/{{ include "sequencer.tls.name" . }}"
               readOnly: true
+            {{- end }}
+            {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
+            {{- with .Values.testing.bootstrap.remoteDomainManager }}
+            {{- if .tls.enabled }}
+            - name: tls-domain-manager
+              mountPath: "/tls-domain-manager"
+              readOnly: true
+            {{- if .mtls.enabled }}
+            - name: mtls-domain-manager
+              mountPath: "/mtls-domain-manager"
+              readOnly: true
+            {{- end }}
+            {{- end }}
+            {{- end }}
             {{- end }}
             {{- with .Values.bootstrap.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -137,6 +157,18 @@ spec:
         {{- end }}
         {{- with .Values.bootstrap.extraVolumes }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
+        {{- with .Values.testing.bootstrap.remoteDomainManager }}
+        {{- if and .tls.enabled .tls.certManager.issuerName }}
+        # Dummy certificate only used to mount the root CA certificate
+        {{- include "certManager.csi" (list $ "bootstrap" "tls-domain-manager" .tls.certManager "") | indent 8 }}
+        {{- if and .mtls.enabled .mtls.certManager.issuerName }}
+        {{- include "certManager.csi" (list $ "bootstrap" "mtls-domain-manager" .mtls.certManager "") | indent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+
         {{- end }}
       {{- with .Values.bootstrap.nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}

@@ -9,7 +9,7 @@ Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{ define "remoteParticipants" }}
-{{ range $remoteParticipant := .Values.common.remoteParticipants }}
+{{ range $remoteParticipant := .Values.testing.bootstrap.remoteParticipants }}
 remote-participants {
   {{ $remoteParticipant.name }} {
     ledger-api {
@@ -36,7 +36,7 @@ Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{- define "remoteParticipants.volumeMounts" }}
-{{- range $remoteParticipant := .Values.common.remoteParticipants }}
+{{- range $remoteParticipant := .Values.testing.bootstrap.remoteParticipants }}
 {{- if (($remoteParticipant.tls).admin).enabled }}
 - name: tls-{{ $remoteParticipant.name }}
   mountPath: "/tls-{{ $remoteParticipant.name }}"
@@ -87,7 +87,7 @@ Params:
 {{- define "remoteParticipants.volumes" }}
 {{- $top              := index . 0 }}
 {{- $component        := index . 1 }}
-{{- range $remoteParticipant := $top.Values.common.remoteParticipants }}
+{{- range $remoteParticipant := $top.Values.testing.bootstrap.remoteParticipants }}
 {{- if and (($remoteParticipant.tls).admin).enabled ((($remoteParticipant.tls).admin).certManager).issuerName }}
 # Dummy certificate only used to mount the root CA certificate
 {{- include "certManager.csi" (list $top $component (include "remoteParticipant.tls.name" $remoteParticipant.name) $remoteParticipant.tls.admin.certManager "") }}

@@ -42,14 +42,15 @@ data:
             {{- if .Values.authServices.enabled }}
             auth-services = [{
               type = {{ .Values.authServices.type | quote }}
-              {{- if .Values.authServices.url }}
+              {{- if eq .Values.authServices.type "jwt-rs-256-jwks" }}
               url = {{ .Values.authServices.url | quote }}
-              {{- end }}
-              {{- if .Values.authServices.certificate }}
+              {{- else if has .Values.authServices.type (list "jwt-rs-256-crt" "jwt-es-256-crt" "jwt-es-512-crt") }}
               certificate = {{ .Values.authServices.certificate | quote }}
+              {{- else }}
+              {{- fail (printf "invalid value '%s' for JWT authentication type" .Values.authServices.type) }}
               {{- end }}
-              {{- if .Values.authServices.secret }}
-              secret = {{ .Values.authServices.secret | quote }}
+              {{- with .Values.authServices.targetAudience }}
+              target-audience = {{ . | quote }}
               {{- end }}
             }]
             {{- end }}

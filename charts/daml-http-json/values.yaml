@@ -187,12 +187,37 @@ deployment:
   annotations: {}
   labels: {}
   strategy: {}
-## @param pod.annotations Extra annotations for Deployment pods
-## @param pod.labels Extra labels for Deployment pods
-##
+
 pod:
+  ## @param pod.annotations Extra annotations for Deployment pods
+  ## @param pod.labels Extra labels for Deployment pods
+  ##
   annotations: {}
   labels: {}
+  ## @param pod.securityContext.enabled Enable pods Security Context
+  ## @param pod.securityContext.fsGroup Special supplemental GID that applies to all containers in a pod
+  ## @param pod.securityContext.fsGroupChangePolicy Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always`
+  ## @param pod.securityContext.sysctls List of namespaced sysctls used for the pod
+  ##
+  securityContext:
+    enabled: true
+    fsGroup: 65532
+    fsGroupChangePolicy: "Always"
+    sysctls: []
+
+## @param securityContext.enabled Enable containers Security Context
+## @param securityContext.readOnlyRootFilesystem Whether this container has a read-only root filesystem
+## @param securityContext.runAsGroup The GID to run the entrypoint of the container process
+## @param securityContext.runAsNonRoot Indicates that the container must run as a non-root user
+## @param securityContext.runAsUser The UID to run the entrypoint of the container process
+##
+securityContext:
+  enabled: true
+  readOnlyRootFilesystem: true
+  runAsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532
+
 ## @param affinity Affinity for pods assignment
 ## @param nodeSelector Node labels for pods assignment
 ## @param resources Resources requests/limits for HTTP JSON API container
@@ -202,6 +227,7 @@ affinity: {}
 nodeSelector: {}
 resources: {}
 tolerations: []
+
 ## @param extraVolumeMounts Specify extra list of additional volumeMounts for HTTP JSON API container
 ## @param extraVolumes Specify extra list of additional volumes for HTTP JSON API pod
 ##

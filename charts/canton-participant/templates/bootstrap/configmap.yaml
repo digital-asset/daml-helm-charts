@@ -20,17 +20,35 @@ data:
     import com.digitalasset.canton.time.NonNegativeFiniteDuration
     import com.digitalasset.canton.util.BinaryFileUtil
 
+    val participant = participants.remote.head
+
     logger.debug("Setting script commands timeout")
     console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrap.commandsTimeout | quote }}).toSeconds))
 
     logger.info(s"Waiting for participant to be running")
-    {{ .Values.participantName }}.health.wait_for_running()
+    participant.health.wait_for_running()
 
-    {{ if not .Values.bootstrap.remoteSequencer.tls.enabled -}}
+    {{- if .Values.bootstrap.remoteSequencer.tls.enabled }}
+    logger.debug("TLS to sequencer is enabled")
+    {{- else -}}
     logger.warn("TLS to sequencer is disabled ⚠️")
-    {{ end -}}
+    {{- end }}
+
     val domainAlias = {{ .Values.bootstrap.remoteSequencer.domainAlias | quote }}
+
+    {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
+    val domainManager = domainManagers.remote.head
+    val domainId = domainManager.id
+    if (domainManager.participants.list.exists(_.item.participant == participant.id)) {
+      logger.info(s"Participant ${participant.name} already registered to domain ${domainManager.name}")
+    } else {
+      logger.info(s"Registering participant ${participant.name} to domain ${domainManager.name}")
+      domainManager.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
+    }
+    {{- else -}}
     val domainId = DomainId.tryFromString({{ .Values.bootstrap.remoteSequencer.domainId | quote }})
+    {{- end }}
+
     val sequencerURL = {{ include "sequencer.url" . | quote }}
 
     {{ if and .Values.bootstrap.remoteSequencer.tls.enabled .Values.bootstrap.remoteSequencer.tls.ca -}}
@@ -53,20 +71,20 @@ data:
       Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
     )
 
-    if ({{ .Values.participantName }}.domains.is_registered(domainAlias)) {
-      if({{ .Values.participantName }}.domains.config(domainAlias) != Some(config)) {
+    if (participant.domains.is_registered(domainAlias)) {
+      if(participant.domains.config(domainAlias) != Some(config)) {
         logger.warn(s"Sequencer of domain ${domainAlias} already registered, modifying configuration ⚠️")
-         {{ .Values.participantName }}.domains.modify(domainAlias, _ => config)
+         participant.domains.modify(domainAlias, _ => config)
       } else {
         logger.info("Sequencer already registered with the same configuration")
       }
     } else {
       logger.info(s"Registering sequencer of domain ${domainAlias}")
-      {{ .Values.participantName }}.domains.register(config)
+      participant.domains.register(config)
     }
     logger.info(s"(Re)connecting to sequencer of domain ${domainAlias} at ${sequencerURL}")
-    {{ .Values.participantName }}.domains.reconnect(domainAlias)
+    participant.domains.reconnect(domainAlias)
     logger.info("Pinging participant to make sure everything is alright")
-    {{ .Values.participantName }}.health.ping({{ .Values.participantName }})
+    participant.health.ping(participant)
     logger.info("Bootstrap succeeded")
 {{- end }}
