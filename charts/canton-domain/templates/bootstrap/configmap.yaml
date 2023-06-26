@@ -14,6 +14,10 @@ data:
   bootstrap.canton: |
     logger.info("Bootstrap start")
 
+    val domainManager = domainManagers.remote.head
+    val mediator = mediators.remote.head
+    val sequencer = sequencers.remote.head
+
     import com.digitalasset.canton.config.NonNegativeDuration
 
     logger.debug("Setting script commands timeout")
@@ -24,28 +28,28 @@ data:
       node.health.wait_for_running()
     }
 
-    logger.info(s"Bootstrapping domain ${domainManagers.remote.head.name}")
-    domainManagers.remote.head.setup.bootstrap_domain(sequencers.all, Seq(mediators.remote.head))
+    logger.info(s"Bootstrapping domain ${domainManager.name}")
+    domainManager.setup.bootstrap_domain(Seq(sequencer), Seq(mediator))
 
-    {{ if .Values.common.remoteParticipants -}}
+    {{ if .Values.testing.bootstrap.remoteParticipants -}}
     logger.info("Bootstrapping participant(s)")
     participants.remote.foreach { participant =>
       logger.info(s"Waiting for participant ${participant.name} to be initialized")
       participant.health.wait_for_initialized()
 
       {{- if .Values.manager.topology.open }}
-      logger.warn(s"Your domain ${domainManagers.remote.head.name} is open, any participant can join ⚠️")
+      logger.warn(s"Your domain ${domainManager.name} is open, any participant can join ⚠️")
       {{- else }}
-      if (domainManagers.remote.head.participants.list.forall(_.item.participant != participant.id)) {
-        logger.info(s"Registering participant ${participant.name} to domain ${domainManagers.remote.head.name}")
-        domainManagers.remote.head.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
+      if (domainManager.participants.list.exists(_.item.participant == participant.id)) {
+        logger.info(s"Participant ${participant.name} already registered to domain ${domainManager.name}")
       } else {
-        logger.info(s"Participant already registered in domain ${domainManagers.remote.head.name}")
+        logger.info(s"Registering participant ${participant.name} to domain ${domainManager.name}")
+        domainManager.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
       }
       {{- end }}
 
-      logger.info(s"Connecting participant ${participant.name} to domain ${domainManagers.remote.head.name} and sequencer(s) ${sequencers.remote.head.name}")
-      participant.domains.connect_multi(domainManagers.remote.head.name, Seq(sequencers.remote.head))
+      logger.info(s"Connecting participant ${participant.name} to domain ${domainManager.name} and sequencer(s) ${sequencer.name}")
+      participant.domains.connect_multi(domainManager.name, Seq(sequencer))
 
       logger.info(s"Pinging participant ${participant.name} to make sure everything is alright")
       participant.health.ping(participant)

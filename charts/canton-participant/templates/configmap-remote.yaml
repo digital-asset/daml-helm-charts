@@ -55,5 +55,28 @@ data:
           }
         }
       }
+      {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
+      remote-domain-managers {
+        {{ .Values.bootstrap.remoteSequencer.domainAlias }} {
+          {{- with .Values.testing.bootstrap.remoteDomainManager }}
+          admin-api {
+            address = {{ .host | quote }}
+            port = {{ .port }}
+            {{- if .tls.enabled }}
+            tls {
+              trust-collection-file = {{ .tls.ca | quote }}
+              {{- if .mtls.enabled }}
+              client-cert = {
+                cert-chain-file = {{ .mtls.chain | quote }}
+                private-key-file = {{ .mtls.key | quote }}
+              }
+              {{- end }}
+            }
+            {{- end }}
+          }
+          {{- end }}
+        }
+      }
+      {{- end }}
     }
 {{- end }}

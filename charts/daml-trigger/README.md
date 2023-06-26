@@ -196,21 +196,30 @@ it will be mounted as files into folder `/tls`.
 
 ### Deployment configuration
 
-| Name                     | Description                                                              | Value |
-| ------------------------ | ------------------------------------------------------------------------ | ----- |
-| `environment`            | Container environment variables                                          | `{}`  |
-| `environmentSecrets`     | Container secret environment variables                                   | `{}`  |
-| `deployment.annotations` | Deployment extra annotations                                             | `{}`  |
-| `deployment.labels`      | Deployment extra labels                                                  | `{}`  |
-| `deployment.strategy`    | Deployment strategy                                                      | `{}`  |
-| `pod.annotations`        | Extra annotations for Deployment pods                                    | `{}`  |
-| `pod.labels`             | Extra labels for Deployment pods                                         | `{}`  |
-| `affinity`               | Affinity for pods assignment                                             | `{}`  |
-| `nodeSelector`           | Node labels for pods assignment                                          | `{}`  |
-| `resources`              | Resources requests/limits for HTTP Trigger container                     | `{}`  |
-| `tolerations`            | Tolerations for pods assignment                                          | `[]`  |
-| `extraVolumeMounts`      | Specify extra list of additional volumeMounts for HTTP Trigger container | `[]`  |
-| `extraVolumes`           | Specify extra list of additional volumes for HTTP Trigger pod            | `[]`  |
+| Name                                      | Description                                                                                                                                          | Value    |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `environment`                             | Container environment variables                                                                                                                      | `{}`     |
+| `environmentSecrets`                      | Container secret environment variables                                                                                                               | `{}`     |
+| `deployment.annotations`                  | Deployment extra annotations                                                                                                                         | `{}`     |
+| `deployment.labels`                       | Deployment extra labels                                                                                                                              | `{}`     |
+| `deployment.strategy`                     | Deployment strategy                                                                                                                                  | `{}`     |
+| `pod.annotations`                         | Extra annotations for Deployment pods                                                                                                                | `{}`     |
+| `pod.labels`                              | Extra labels for Deployment pods                                                                                                                     | `{}`     |
+| `pod.securityContext.enabled`             | Enable pods Security Context                                                                                                                         | `true`   |
+| `pod.securityContext.fsGroup`             | Special supplemental GID that applies to all containers in a pod                                                                                     | `65532`  |
+| `pod.securityContext.fsGroupChangePolicy` | Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always` | `Always` |
+| `pod.securityContext.sysctls`             | List of namespaced sysctls used for the pod                                                                                                          | `[]`     |
+| `securityContext.enabled`                 | Enable containers Security Context                                                                                                                   | `true`   |
+| `securityContext.readOnlyRootFilesystem`  | Whether this container has a read-only root filesystem                                                                                               | `true`   |
+| `securityContext.runAsGroup`              | The GID to run the entrypoint of the container process                                                                                               | `65532`  |
+| `securityContext.runAsNonRoot`            | Indicates that the container must run as a non-root user                                                                                             | `true`   |
+| `securityContext.runAsUser`               | The UID to run the entrypoint of the container process                                                                                               | `65532`  |
+| `affinity`                                | Affinity for pods assignment                                                                                                                         | `{}`     |
+| `nodeSelector`                            | Node labels for pods assignment                                                                                                                      | `{}`     |
+| `resources`                               | Resources requests/limits for HTTP Trigger container                                                                                                 | `{}`     |
+| `tolerations`                             | Tolerations for pods assignment                                                                                                                      | `[]`     |
+| `extraVolumeMounts`                       | Specify extra list of additional volumeMounts for HTTP Trigger container                                                                             | `[]`     |
+| `extraVolumes`                            | Specify extra list of additional volumes for HTTP Trigger pod                                                                                        | `[]`     |
 
 ### Service configuration
 

@@ -52,10 +52,16 @@ spec:
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.console.terminationGracePeriodSeconds }}
+      {{- if .Values.console.pod.securityContext.enabled }}
+      securityContext: {{- omit .Values.console.pod.securityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
       containers:
-        - name: canton
-          image: {{ include "common.image" . | quote }}
+        - name: console
+          image: {{ include "console.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.console.securityContext.enabled }}
+          securityContext: {{- omit .Values.console.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           command: ["tail", "-f", "/dev/null"]
           envFrom:
             {{- if .Values.console.environment }}

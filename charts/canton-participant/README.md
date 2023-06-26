@@ -140,20 +140,20 @@ ingressRouteTCP:
 
 ### Common parameters
 
-| Name                      | Description                                                                                               | Value                                       |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `nameOverride`            | String to partially override `common.name` template (will maintain the release name)                      | `""`                                        |
-| `fullnameOverride`        | String to fully override `common.fullname` template                                                       | `""`                                        |
-| `replicaCount`            | Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work)   | `1`                                         |
-| `image.registry`          | Canton Docker image registry                                                                              | `digitalasset-docker.jfrog.io/digitalasset` |
-| `image.repository`        | Canton Docker image repository                                                                            | `canton-enterprise`                         |
-| `image.tag`               | Canton Docker image tag (immutable tags are recommended)                                                  | `""`                                        |
-| `image.digest`            | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`     | `""`                                        |
-| `image.pullPolicy`        | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                        | `IfNotPresent`                              |
-| `image.pullSecrets`       | Specify Docker registry existing secret names as an array                                                 | `[]`                                        |
-| `commonLabels`            | Add labels to all the deployed resources                                                                  | `{}`                                        |
-| `certManager.duration`    | Cert-manager requested certificates validity period. If empty `""` defaults to `720h`                     | `87660h`                                    |
-| `certManager.renewBefore` | Cert-manager time to renew the certificate before expiry. If empty `""` defaults to a third of `duration` | `1h`                                        |
+| Name                      | Description                                                                                               | Value                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `nameOverride`            | String to partially override `common.name` template (will maintain the release name)                      | `""`                           |
+| `fullnameOverride`        | String to fully override `common.fullname` template                                                       | `""`                           |
+| `replicaCount`            | Number of Participant pods to deploy. Allowed values: `1` (active/passive HA, scaling up does not work)   | `1`                            |
+| `image.registry`          | Canton Docker image registry                                                                              | `digitalasset-docker.jfrog.io` |
+| `image.repository`        | Canton Docker image repository                                                                            | `canton-enterprise`            |
+| `image.tag`               | Canton Docker image tag (immutable tags are recommended)                                                  | `""`                           |
+| `image.digest`            | Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`     | `""`                           |
+| `image.pullPolicy`        | Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                        | `IfNotPresent`                 |
+| `image.pullSecrets`       | Specify Docker registry existing secret names as an array                                                 | `[]`                           |
+| `commonLabels`            | Add labels to all the deployed resources                                                                  | `{}`                           |
+| `certManager.duration`    | Cert-manager requested certificates validity period. If empty `""` defaults to `720h`                     | `87660h`                       |
+| `certManager.renewBefore` | Cert-manager time to renew the certificate before expiry. If empty `""` defaults to a third of `duration` | `1h`                           |
 
 ### Participant configuration
 
@@ -195,7 +195,7 @@ ingressRouteTCP:
 | `bootstrap.remoteSequencer.tls.certManager.issuerGroup` | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                        | `cert-manager.io`           |
 | `bootstrap.remoteSequencer.tls.certManager.issuerKind`  | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                           | `Issuer`                    |
 | `bootstrap.remoteSequencer.tls.certManager.issuerName`  | Cert-manager issuer name                                                                                                                                               | `""`                        |
-| `bootstrap.remoteSequencer.tls.certManager.fsGroup`     | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                         | `""`                        |
+| `bootstrap.remoteSequencer.tls.certManager.fsGroup`     | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                         | `65532`                     |
 | `bootstrap.remoteSequencer.tls.ca`                      | CA certificate, if empty `""` JVM default trust store is used                                                                                                          | `/tls-mydomain/ca.crt`      |
 | `bootstrap.remoteSequencer.initialRetryDelay`           | Initial retry delay. Example values: `10s`, `10m' or `10h`                                                                                                             | `30s`                       |
 | `bootstrap.remoteSequencer.maxRetryDelay`               | Maximum retry delay. Example values: `10s`, `10m' or `10h`                                                                                                             | `10m`                       |
@@ -205,14 +205,23 @@ ingressRouteTCP:
 | `bootstrap.logLevel.stdout`                             | Usually the text displayed in the Canton console                                                                                                                       | `INFO`                      |
 | `bootstrap.environment`                                 | Environment variables                                                                                                                                                  | `{}`                        |
 | `bootstrap.environmentSecrets`                          | Secret environment variables                                                                                                                                           | `{}`                        |
-| `bootstrap.job`                                         | Job and Helm hook configuration                                                                                                                                        |                             |
+| `bootstrap.job`                                         | Bootstrap Job and Helm hook configuration                                                                                                                              |                             |
 | `bootstrap.job.annotations`                             | Job extra annotations                                                                                                                                                  | `{}`                        |
 | `bootstrap.job.labels`                                  | Job extra labels                                                                                                                                                       | `{}`                        |
 | `bootstrap.job.helmHook`                                | Annotation `helm.sh/hook` value                                                                                                                                        | `post-install,post-upgrade` |
 | `bootstrap.job.helmHookWeight`                          | Annotation `helm.sh/hook-weight` value                                                                                                                                 | `5`                         |
 | `bootstrap.job.helmHookDeletePolicy`                    | Annotation `helm.sh/hook-delete-policy` value                                                                                                                          | `before-hook-creation`      |
-| `bootstrap.pod.annotations`                             | Extra annotations for Job pods                                                                                                                                         | `{}`                        |
-| `bootstrap.pod.labels`                                  | Extra labels for Job pods                                                                                                                                              | `{}`                        |
+| `bootstrap.pod.annotations`                             | Extra annotations for bootstrap Job pods                                                                                                                               | `{}`                        |
+| `bootstrap.pod.labels`                                  | Extra labels for bootstrap Job pods                                                                                                                                    | `{}`                        |
+| `bootstrap.pod.securityContext.enabled`                 | Enable bootstrap Job pods Security Context                                                                                                                             | `true`                      |
+| `bootstrap.pod.securityContext.fsGroup`                 | Special supplemental GID that applies to all containers in a pod                                                                                                       | `65532`                     |
+| `bootstrap.pod.securityContext.fsGroupChangePolicy`     | Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always`                   | `Always`                    |
+| `bootstrap.pod.securityContext.sysctls`                 | List of namespaced sysctls used for the pod                                                                                                                            | `[]`                        |
+| `bootstrap.securityContext.enabled`                     | Enable bootstrap container Security Context                                                                                                                            | `true`                      |
+| `bootstrap.securityContext.readOnlyRootFilesystem`      | Whether this container has a read-only root filesystem                                                                                                                 | `false`                     |
+| `bootstrap.securityContext.runAsGroup`                  | The GID to run the entrypoint of the container process                                                                                                                 | `65532`                     |
+| `bootstrap.securityContext.runAsNonRoot`                | Indicates that the container must run as a non-root user                                                                                                               | `true`                      |
+| `bootstrap.securityContext.runAsUser`                   | The UID to run the entrypoint of the container process                                                                                                                 | `65532`                     |
 | `bootstrap.affinity`                                    | Affinity for pods assignment                                                                                                                                           | `{}`                        |
 | `bootstrap.nodeSelector`                                | Node labels for pods assignment                                                                                                                                        | `{}`                        |
 | `bootstrap.resources`                                   | Resources requests/limits for bootstrap container                                                                                                                      | `{}`                        |
@@ -229,31 +238,44 @@ ingressRouteTCP:
 
 ### Console configuration
 
-| Name                                                  | Description                                                                                                        | Value   |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------- |
-| `console`                                             | Single console pod for administration/debug of all the other components                                            |         |
-| `console.enabled`                                     | Enable Deployment                                                                                                  | `false` |
-| `console.terminationGracePeriodSeconds`               | Stop the pod immediately by default, tailing `/dev/null` to stay up                                                | `0`     |
-| `console.environment`                                 | Environment variables                                                                                              | `{}`    |
-| `console.environmentSecrets`                          | Secret environment variables                                                                                       | `{}`    |
-| `console.deployment.annotations`                      | Deployment extra annotations                                                                                       | `{}`    |
-| `console.deployment.labels`                           | Deployment extra labels                                                                                            | `{}`    |
-| `console.deployment.strategy`                         | Deployment strategy                                                                                                | `{}`    |
-| `console.pod.annotations`                             | Extra annotations for Deployment pods                                                                              | `{}`    |
-| `console.pod.labels`                                  | Extra labels for Deployment pods                                                                                   | `{}`    |
-| `console.affinity`                                    | Affinity for pods assignment                                                                                       | `{}`    |
-| `console.nodeSelector`                                | Node labels for pods assignment                                                                                    | `{}`    |
-| `console.resources`                                   | Resources requests/limits for console container                                                                    | `{}`    |
-| `console.tolerations`                                 | Tolerations for pods assignment                                                                                    | `[]`    |
-| `console.extraVolumeMounts`                           | Specify extra list of additional volumeMounts for console container                                                | `[]`    |
-| `console.extraVolumes`                                | Specify extra list of additional volumes for console pod                                                           | `[]`    |
-| `console.serviceAccount.create`                       | Creation of `ServiceAccount` for console pod(s) is enabled with global switch `serviceAccount.create`              |         |
-| `console.serviceAccount.automountServiceAccountToken` | API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API | `false` |
-| `console.serviceAccount.annotations`                  | Service Account extra annotations                                                                                  | `{}`    |
-| `console.serviceAccount.labels`                       | Service Account extra labels                                                                                       | `{}`    |
-| `console.serviceAccount.extraSecrets`                 | List of extra secrets allowed to be used by pods running using this ServiceAccount                                 | `[]`    |
-| `console.rbac.create`                                 | Creation of RBAC resources for console pod(s) is enabled with global switch `rbac.create`                          |         |
-| `console.rbac.rules`                                  | Custom RBAC rules to set                                                                                           | `[]`    |
+| Name                                                  | Description                                                                                                                                          | Value                     |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `console`                                             | Single console pod for administration/debug of all the other components                                                                              |                           |
+| `console.enabled`                                     | Enable Deployment                                                                                                                                    | `false`                   |
+| `console.terminationGracePeriodSeconds`               | Stop the pod immediately by default, tailing `/dev/null` to stay up                                                                                  | `0`                       |
+| `console.image`                                       | Specific Docker image to be able to start a Canton console. Reusing `image.registry`, `image.pullPolicy` and `image.pullSecrets`                     |                           |
+| `console.image.repository`                            | Canton console Docker image repository                                                                                                               | `canton-enterprise-debug` |
+| `console.image.tag`                                   | Canton console Docker image tag (immutable tags are recommended)                                                                                     | `""`                      |
+| `console.image.digest`                                | Canton console Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`                                        | `""`                      |
+| `console.environment`                                 | Environment variables                                                                                                                                | `{}`                      |
+| `console.environmentSecrets`                          | Secret environment variables                                                                                                                         | `{}`                      |
+| `console.deployment.annotations`                      | Deployment extra annotations                                                                                                                         | `{}`                      |
+| `console.deployment.labels`                           | Deployment extra labels                                                                                                                              | `{}`                      |
+| `console.deployment.strategy`                         | Deployment strategy                                                                                                                                  | `{}`                      |
+| `console.pod.annotations`                             | Extra annotations for console Deployment pods                                                                                                        | `{}`                      |
+| `console.pod.labels`                                  | Extra labels for console Deployment pods                                                                                                             | `{}`                      |
+| `console.pod.securityContext.enabled`                 | Enable console Deployment pods Security Context                                                                                                      | `true`                    |
+| `console.pod.securityContext.fsGroup`                 | Special supplemental GID that applies to all containers in a pod                                                                                     | `65532`                   |
+| `console.pod.securityContext.fsGroupChangePolicy`     | Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always` | `Always`                  |
+| `console.pod.securityContext.sysctls`                 | List of namespaced sysctls used for the pod                                                                                                          | `[]`                      |
+| `console.securityContext.enabled`                     | Enable console container Security Context                                                                                                            | `true`                    |
+| `console.securityContext.readOnlyRootFilesystem`      | Whether this container has a read-only root filesystem                                                                                               | `false`                   |
+| `console.securityContext.runAsGroup`                  | The GID to run the entrypoint of the container process                                                                                               | `65532`                   |
+| `console.securityContext.runAsNonRoot`                | Indicates that the container must run as a non-root user                                                                                             | `true`                    |
+| `console.securityContext.runAsUser`                   | The UID to run the entrypoint of the container process                                                                                               | `65532`                   |
+| `console.affinity`                                    | Affinity for pods assignment                                                                                                                         | `{}`                      |
+| `console.nodeSelector`                                | Node labels for pods assignment                                                                                                                      | `{}`                      |
+| `console.resources`                                   | Resources requests/limits for console container                                                                                                      | `{}`                      |
+| `console.tolerations`                                 | Tolerations for pods assignment                                                                                                                      | `[]`                      |
+| `console.extraVolumeMounts`                           | Specify extra list of additional volumeMounts for console container                                                                                  | `[]`                      |
+| `console.extraVolumes`                                | Specify extra list of additional volumes for console pod                                                                                             | `[]`                      |
+| `console.serviceAccount.create`                       | Creation of `ServiceAccount` for console pod(s) is enabled with global switch `serviceAccount.create`                                                |                           |
+| `console.serviceAccount.automountServiceAccountToken` | API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API                                   | `false`                   |
+| `console.serviceAccount.annotations`                  | Service Account extra annotations                                                                                                                    | `{}`                      |
+| `console.serviceAccount.labels`                       | Service Account extra labels                                                                                                                         | `{}`                      |
+| `console.serviceAccount.extraSecrets`                 | List of extra secrets allowed to be used by pods running using this ServiceAccount                                                                   | `[]`                      |
+| `console.rbac.create`                                 | Creation of RBAC resources for console pod(s) is enabled with global switch `rbac.create`                                                            |                           |
+| `console.rbac.rules`                                  | Custom RBAC rules to set                                                                                                                             | `[]`                      |
 
 ### Common parameters for the `boostrap` and `console` only
 
@@ -283,7 +305,7 @@ ingressRouteTCP:
 | `tls.public.certManager.issuerGroup`      | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                  | `cert-manager.io`                                                                    |
 | `tls.public.certManager.issuerKind`       | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                     | `Issuer`                                                                             |
 | `tls.public.certManager.issuerName`       | Cert-manager issuer name                                                                                                                                         | `""`                                                                                 |
-| `tls.public.certManager.fsGroup`          | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                   | `""`                                                                                 |
+| `tls.public.certManager.fsGroup`          | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                   | `65532`                                                                              |
 | `tls.public.certManager.ipSans`           | IP addresses the certificate will be requested for.                                                                                                              | `0.0.0.0`                                                                            |
 | `tls.public.ca`                           | CA certificate, if empty `""` JVM default trust store is used                                                                                                    | `/tls-public/ca.crt`                                                                 |
 | `tls.public.chain`                        | Certificate chain                                                                                                                                                | `/tls-public/tls.crt`                                                                |
@@ -295,7 +317,7 @@ ingressRouteTCP:
 | `tls.admin.certManager.issuerGroup`       | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                  | `cert-manager.io`                                                                    |
 | `tls.admin.certManager.issuerKind`        | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                     | `Issuer`                                                                             |
 | `tls.admin.certManager.issuerName`        | Cert-manager issuer name                                                                                                                                         | `""`                                                                                 |
-| `tls.admin.certManager.fsGroup`           | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                   | `""`                                                                                 |
+| `tls.admin.certManager.fsGroup`           | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                   | `65532`                                                                              |
 | `tls.admin.ca`                            | CA certificate, if empty `""` JVM default trust store is used                                                                                                    | `/tls-admin/ca.crt`                                                                  |
 | `tls.admin.chain`                         | Certificate chain                                                                                                                                                | `/tls-admin/tls.crt`                                                                 |
 | `tls.admin.key`                           | Certificate private key (PKCS-8)                                                                                                                                 | `/tls-admin/tls.key`                                                                 |
@@ -311,7 +333,7 @@ ingressRouteTCP:
 | `mtls.public.certManager.issuerGroup` | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                   | `cert-manager.io`      |
 | `mtls.public.certManager.issuerKind`  | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                      | `Issuer`               |
 | `mtls.public.certManager.issuerName`  | Cert-manager issuer name                                                                                                                                          | `""`                   |
-| `mtls.public.certManager.fsGroup`     | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                    | `""`                   |
+| `mtls.public.certManager.fsGroup`     | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                    | `65532`                |
 | `mtls.public.ca`                      | CA certificate, if empty `""` JVM default trust store is used                                                                                                     | `/mtls-public/ca.crt`  |
 | `mtls.public.chain`                   | Certificate chain                                                                                                                                                 | `/mtls-public/tls.crt` |
 | `mtls.public.key`                     | Certificate private key (PKCS-8)                                                                                                                                  | `/mtls-public/tls.key` |
@@ -320,21 +342,20 @@ ingressRouteTCP:
 | `mtls.admin.certManager.issuerGroup`  | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                   | `cert-manager.io`      |
 | `mtls.admin.certManager.issuerKind`   | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                      | `Issuer`               |
 | `mtls.admin.certManager.issuerName`   | Cert-manager issuer name                                                                                                                                          | `""`                   |
-| `mtls.admin.certManager.fsGroup`      | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                    | `""`                   |
+| `mtls.admin.certManager.fsGroup`      | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                    | `65532`                |
 | `mtls.admin.ca`                       | CA certificate, if empty `""` JVM default trust store is used                                                                                                     | `/mtls-admin/ca.crt`   |
 | `mtls.admin.chain`                    | Certificate chain                                                                                                                                                 | `/mtls-admin/tls.crt`  |
 | `mtls.admin.key`                      | Certificate private key (PKCS-8)                                                                                                                                  | `/mtls-admin/tls.key`  |
 
 ### Authentication configuration
 
-| Name                       | Description                                                                                              | Value                                 |
-| -------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `authServices.enabled`     | Enabled JWT authentication                                                                               | `false`                               |
-| `authServices.type`        | Certificate type of authorizations. Allowed values: `jwt-rs-256-crt`, `jwt-es-256-crt`, `jwt-es-512-crt` | `jwt-rs-256-jwks`                     |
-| `authServices`             | `url`, `certificate` and `secret` are mutually exclusive, set only one and comment out the others        |                                       |
-| `authServices.url`         | URL to JWKS (only for type `jwt-rs-256-jwks`)                                                            | `https://mydomain.com/auth/jwks.json` |
-| `authServices.certificate` | Path to RS256 certificate used to sign JWTs (only for type `jwt-rs-256-crt`)                             |                                       |
-| `authServices.secret`      | Plaintext secret (only for type `unsafe-jwt-hmac-256`)<br />**DO NOT USE IN PRODUCTION**                 |                                       |
+| Name                          | Description                                                                                                      | Value                                 |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `authServices.enabled`        | Enabled JWT authentication                                                                                       | `false`                               |
+| `authServices.type`           | Type of authorization. Allowed values: `jwt-rs-256-jwks`, `jwt-rs-256-crt`, `jwt-es-256-crt`, `jwt-es-512-crt`   | `jwt-rs-256-jwks`                     |
+| `authServices.url`            | URL to JWKS (only used for type `jwt-rs-256-jwks`)                                                               | `https://mydomain.com/auth/jwks.json` |
+| `authServices.certificate`    | Path to certificate used to sign JWTs (only used for types `jwt-rs-256-crt`, `jwt-es-256-crt`, `jwt-es-512-crt`) | `/path/to/jwt.crt`                    |
+| `authServices.targetAudience` | Custom JWT token audience                                                                                        | `""`                                  |
 
 ### Container ports
 
@@ -347,22 +368,31 @@ ingressRouteTCP:
 
 ### Deployment configuration
 
-| Name                     | Description                                                             | Value |
-| ------------------------ | ----------------------------------------------------------------------- | ----- |
-| `environment`            | Container environment variables                                         | `{}`  |
-| `environmentSecrets`     | Container secret environment variables                                  | `{}`  |
-| `deployment.annotations` | Deployment extra annotations                                            | `{}`  |
-| `deployment.labels`      | Deployment extra labels                                                 | `{}`  |
-| `pod.annotations`        | Extra annotations for Deployment pods                                   | `{}`  |
-| `pod.labels`             | Extra labels for Deployment pods                                        | `{}`  |
-| `affinity`               | Affinity for pods assignment                                            | `{}`  |
-| `nodeSelector`           | Node labels for pods assignment                                         | `{}`  |
-| `resources`              | Resources requests/limits for Canton container                          | `{}`  |
-| `tolerations`            | Tolerations for pods assignment                                         | `[]`  |
-| `livenessProbe`          | Override `livenessProbe` default configuration                          | `{}`  |
-| `readinessProbe`         | Override `readinessProbe` default configuration                         | `{}`  |
-| `extraVolumeMounts`      | Specify extra list of additional volumeMounts for participant container | `[]`  |
-| `extraVolumes`           | Specify extra list of additional volumes for participant pod            | `[]`  |
+| Name                                      | Description                                                                                                                                          | Value    |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `environment`                             | Container environment variables                                                                                                                      | `{}`     |
+| `environmentSecrets`                      | Container secret environment variables                                                                                                               | `{}`     |
+| `deployment.annotations`                  | Deployment extra annotations                                                                                                                         | `{}`     |
+| `deployment.labels`                       | Deployment extra labels                                                                                                                              | `{}`     |
+| `pod.annotations`                         | Extra annotations for Deployment pods                                                                                                                | `{}`     |
+| `pod.labels`                              | Extra labels for Deployment pods                                                                                                                     | `{}`     |
+| `pod.securityContext.enabled`             | Enable pods Security Context                                                                                                                         | `true`   |
+| `pod.securityContext.fsGroup`             | Special supplemental GID that applies to all containers in a pod                                                                                     | `65532`  |
+| `pod.securityContext.fsGroupChangePolicy` | Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always` | `Always` |
+| `pod.securityContext.sysctls`             | List of namespaced sysctls used for the pod                                                                                                          | `[]`     |
+| `securityContext.enabled`                 | Enable containers Security Context                                                                                                                   | `true`   |
+| `securityContext.readOnlyRootFilesystem`  | Whether this container has a read-only root filesystem                                                                                               | `false`  |
+| `securityContext.runAsGroup`              | The GID to run the entrypoint of the container process                                                                                               | `65532`  |
+| `securityContext.runAsNonRoot`            | Indicates that the container must run as a non-root user                                                                                             | `true`   |
+| `securityContext.runAsUser`               | The UID to run the entrypoint of the container process                                                                                               | `65532`  |
+| `affinity`                                | Affinity for pods assignment                                                                                                                         | `{}`     |
+| `nodeSelector`                            | Node labels for pods assignment                                                                                                                      | `{}`     |
+| `resources`                               | Resources requests/limits for Canton container                                                                                                       | `{}`     |
+| `tolerations`                             | Tolerations for pods assignment                                                                                                                      | `[]`     |
+| `livenessProbe`                           | Override `livenessProbe` default configuration                                                                                                       | `{}`     |
+| `readinessProbe`                          | Override `readinessProbe` default configuration                                                                                                      | `{}`     |
+| `extraVolumeMounts`                       | Specify extra list of additional volumeMounts for participant container                                                                              | `[]`     |
+| `extraVolumes`                            | Specify extra list of additional volumes for participant pod                                                                                         | `[]`     |
 
 ### Service configuration
 
@@ -426,6 +456,30 @@ ingressRouteTCP:
 | `metrics.podMonitor.labelLimit`               | Per-scrape limit on number of labels that will be accepted for a sample (Prometheus versions 2.27 and newer)       | `0`     |
 | `metrics.podMonitor.labelNameLengthLimit`     | Per-scrape limit on length of labels name that will be accepted for a sample (Prometheus versions 2.27 and newer)  | `0`     |
 | `metrics.podMonitor.labelValueLengthLimit`    | Per-scrape limit on length of labels value that will be accepted for a sample (Prometheus versions 2.27 and newer) | `0`     |
+
+### Automated testing configuration (do not use in production)
+
+| Name                                                                 | Description                                                                                                                                                             | Value                          |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `testing.bootstrap.automaticDomainRegistration`                      | Automatically adds the participant in the domain allow-list.                                                                                                            | `false`                        |
+| `testing.bootstrap.remoteDomainManager`                              | Remote domain manager connection configuration                                                                                                                          |                                |
+| `testing.bootstrap.remoteDomainManager.host`                         | Domain manager host                                                                                                                                                     | `""`                           |
+| `testing.bootstrap.remoteDomainManager.port`                         | Domain manager port                                                                                                                                                     | `4801`                         |
+| `testing.bootstrap.remoteDomainManager.tls.enabled`                  | Enable TLS to Domain manager                                                                                                                                            | `false`                        |
+| `testing.bootstrap.remoteDomainManager.tls.certManager`              | Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-domain-manager`  |                                |
+| `testing.bootstrap.remoteDomainManager.tls.certManager.issuerGroup`  | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                         | `cert-manager.io`              |
+| `testing.bootstrap.remoteDomainManager.tls.certManager.issuerKind`   | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                            | `Issuer`                       |
+| `testing.bootstrap.remoteDomainManager.tls.certManager.issuerName`   | Cert-manager issuer name                                                                                                                                                | `""`                           |
+| `testing.bootstrap.remoteDomainManager.tls.certManager.fsGroup`      | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                          | `65532`                        |
+| `testing.bootstrap.remoteDomainManager.tls.ca`                       | CA certificate, if empty `""` JVM default trust store is used                                                                                                           | `/tls-domain-manager/ca.crt`   |
+| `testing.bootstrap.remoteDomainManager.mtls.enabled`                 | Enable mTLS to Domain manager                                                                                                                                           | `false`                        |
+| `testing.bootstrap.remoteDomainManager.mtls.certManager`             | Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-domain-manager` |                                |
+| `testing.bootstrap.remoteDomainManager.mtls.certManager.issuerGroup` | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                                         | `cert-manager.io`              |
+| `testing.bootstrap.remoteDomainManager.mtls.certManager.issuerKind`  | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                                            | `Issuer`                       |
+| `testing.bootstrap.remoteDomainManager.mtls.certManager.issuerName`  | Cert-manager issuer name                                                                                                                                                | `""`                           |
+| `testing.bootstrap.remoteDomainManager.mtls.certManager.fsGroup`     | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                                          | `65532`                        |
+| `testing.bootstrap.remoteDomainManager.mtls.chain`                   | Certificate chain                                                                                                                                                       | `/mtls-domain-manager/tls.crt` |
+| `testing.bootstrap.remoteDomainManager.mtls.key`                     | Certificate private key (PKCS-8)                                                                                                                                        | `/mtls-domain-manager/tls.key` |
 
 ---
 ## License
