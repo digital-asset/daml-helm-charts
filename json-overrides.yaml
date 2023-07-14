@@ -1,0 +1,28 @@
+---
+
+image:
+  ## Private Docker image
+  pullSecrets: 
+    - name: digitalasset-docker.jfrog.io
+
+storage:
+  host: "adam01.postgres.database.azure.com"
+  port: 5432
+  database: "json"
+  user: "adam01"
+  existingSecret:
+    name: "postgres-connection"
+    key: "postgres-connection.yaml"
+
+ledgerAPI:
+  host: "participant1-canton-participant.canton.svc.cluster.local"
+  port: 4001
+
+
+tls:
+  enabled: true
+  certManager:
+    issuerName: canton-tls-issuer
+    issuerGroup: certmanager.step.sm
+    issuerKind: StepClusterIssuer
+    fsGroup: 65532
