@@ -1,0 +1,86 @@
+---
+nameOverride: ""
+
+fullnameOverride: ""
+
+replicaCount: 1
+image:
+  registry: digitalasset-docker.jfrog.io
+  repository: canton-enterprise
+  tag: "2.6.5-by-20230616-123-f1b545fc"
+  pullSecrets:
+    - name: digitalasset-docker.jfrog.io
+
+storage:
+  host: "adam01.postgres.database.azure.com"
+  port: 5432
+  database: "participant1"
+  user: "adam01"
+  existingSecret:
+    name: "postgres-connection"
+    key: "postgres-connection.yaml"
+
+bootstrap:
+  remoteSequencer:
+    tls:
+      enabled: true
+      certManager:
+        issuerName: canton-tls-issuer
+        issuerGroup: certmanager.step.sm
+        issuerKind: StepClusterIssuer
+        fsGroup: 65532
+
+console:
+  image:
+    tag: 2.6.5-by-20230616-123-f1b545fc"
+
+tls:
+  public:
+    enabled: true
+    certManager:
+      issuerName: canton-tls-issuer
+      issuerGroup: certmanager.step.sm
+      issuerKind: StepClusterIssuer
+  admin:
+    enabled: true
+    certManager:
+      issuerName: canton-tls-issuer
+      issuerGroup: certmanager.step.sm
+      issuerKind: StepClusterIssuer
+
+mtls:
+  public:
+    enabled: false
+    certManager:
+      issuerName: canton-tls-issuer
+      issuerGroup: certmanager.step.sm
+      issuerKind: StepClusterIssuer
+  admin:
+    enabled: false
+    certManager:
+      issuerName: canton-tls-issuer
+      issuerGroup: certmanager.step.sm
+      issuerKind: StepClusterIssuer
+      fsGroup: 65532
+
+## @section Automated testing configuration (do not use in production)
+
+testing:
+  bootstrap:
+    automaticDomainRegistration: false
+    remoteDomainManager:
+      host: ""
+      port: 4801
+      tls:
+        enabled: true
+        certManager:
+          issuerName: canton-tls-issuer
+          issuerGroup: certmanager.step.sm
+          issuerKind: StepClusterIssuer
+          fsGroup: 65532
+      mtls:
+        enabled: false
+        certManager:
+          issuerName: canton-tls-issuer
+          issuerGroup: certmanager.step.sm
+          issuerKind: StepClusterIssuer
