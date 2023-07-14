@@ -1,0 +1,111 @@
+
+image:
+  registry: digitalasset-docker.jfrog.io
+  repository: canton-enterprise
+  tag: "2.6.5-by-20230616-123-f1b545fc"
+  digest: ""
+  pullPolicy: Always
+  pullSecrets:
+    - name: digitalasset-docker.jfrog.io
+
+
+
+storage:
+  host: "adam01.postgres.database.azure.com"
+  port: 5432
+  database: "participant1"
+  user: "adam01"
+  existingSecret:
+    name: "postgres-connection"
+    key: "postgres-connection.yaml"
+
+
+bootstrap:
+  enabled: true
+
+console:
+  enabled: true
+  image:
+    repository: canton-enterprise-debug
+    tag: "2.6.5-by-20230616-123-f1b545fc"
+    digest: ""
+
+common:
+  tls:
+    public:
+      enabled: true
+      certManager:
+        issuerName: canton-tls-issuer
+        issuerGroup: certmanager.step.sm
+        issuerKind: StepClusterIssuer
+        fsGroup: 65532
+    admin:
+      enabled: true
+      certManager:
+        issuerName: canton-tls-issuer
+        issuerGroup: certmanager.step.sm
+        issuerKind: StepClusterIssuer
+        fsGroup: 65532
+
+  mtls:
+    admin:
+      enabled: false
+      certManager:
+        issuerName: canton-tls-issuer
+        issuerGroup: certmanager.step.sm
+        issuerKind: StepClusterIssuer
+        fsGroup: 65532
+
+manager:
+  storage:
+    database: "manager"
+    user: "adam01"
+    existingSecret:
+      name: "postgres-connection"
+      key: "postgres-connection.yaml"
+
+mediator:
+  storage:
+    database: "mediator"
+    user: "adam01"
+    existingSecret:
+      name: "postgres-connection"
+      key: "postgres-connection.yaml"
+
+sequencer:
+  storage:
+    database: "sequencer"
+    user: "adam01"
+    existingSecret:
+      name: "postgres-connection"
+      key: "postgres-connection.yaml"
+    maxConnections: 10
+
+## @section Automated testing configuration (do not use in production)
+
+testing:
+  bootstrap:
+    remoteParticipants:
+      - name: "participant1"
+        host: "participant1-canton-participant.canton.svc.cluster.local"
+        ports:
+          admin: 4002
+        tls:
+          admin:
+            enabled: true
+            certManager:
+              issuerName: canton-tls-issuer
+              issuerGroup: certmanager.step.sm
+              issuerKind: StepClusterIssuer
+              fsGroup: 65532
+            ca: "/tls-participant1/ca.crt"
+        mtls:
+          admin:
+            enabled: false
+            certManager:
+              issuerName: canton-tls-issuer
+              issuerGroup: certmanager.step.sm
+              issuerKind: StepClusterIssuer
+              fsGroup: 65532
+            chain: "/mtls-participant1/tls.crt"
+            key: "/mtls-participant1/tls.key"
