@@ -25,8 +25,8 @@ Params (List):
     driver: csi.cert-manager.io
     readOnly: true
     volumeAttributes:
-      csi.cert-manager.io/issuer-group: {{ $volumeAttributes.issuerGroup | default "cert-manager.io" | quote }}
-      csi.cert-manager.io/issuer-kind: {{ $volumeAttributes.issuerKind | default "Issuer" | quote }}
+      csi.cert-manager.io/issuer-group: {{ $volumeAttributes.issuerGroup | default $top.Values.certManager.issuerGroup | quote }}
+      csi.cert-manager.io/issuer-kind: {{ $volumeAttributes.issuerKind | default $top.Values.certManager.issuerKind | quote }}
       csi.cert-manager.io/issuer-name: {{ $volumeAttributes.issuerName | quote }}
       csi.cert-manager.io/key-encoding: "PKCS8"
       csi.cert-manager.io/common-name: {{ $volumeAttributes.commonName | quote }}
@@ -36,9 +36,7 @@ Params (List):
       {{- with $volumeAttributes.ipSans }}
       csi.cert-manager.io/ip-sans: {{ . | quote }}
       {{- end }}
-      {{- with $volumeAttributes.fsGroup }}
-      csi.cert-manager.io/fs-group: {{ . | quote }}
-      {{- end }}
+      csi.cert-manager.io/fs-group: {{ $top.Values.certManager.fsGroup | quote }}
       {{- with $volumeAttributes.duration }}
       csi.cert-manager.io/duration: {{ $volumeAttributes.duration | quote }}
       {{- end }}

@@ -74,7 +74,7 @@ Return image for console containers.
 */}}
 {{- define "console.image" -}}
 {{- $separator := ":" -}}
-{{- $termination := .Values.console.image.tag | default .Chart.AppVersion -}}
+{{- $termination := .Values.console.image.tag | default (print .Chart.AppVersion "-debug") -}}
 {{- if .Values.console.image.digest }}
     {{- $separator = "@" -}}
     {{- $termination = .Values.console.image.digest -}}

@@ -31,13 +31,19 @@ image:
 ##
 commonLabels: {}
 
-## @extra certManager Cert-manager CSI driver common configuration
-## @param certManager.duration Requested duration the signed certificates will be valid for
+## @extra certManager Cert-manager CSI driver defaults
+## @param certManager.duration Requested certificates validity period. If empty `""` defaults to `720h`
 ## @param certManager.renewBefore Time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`
+## @param certManager.issuerGroup Issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+## @param certManager.issuerKind Issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+## @param certManager.fsGroup FS Group of mounted files, should be paired with and match container `runAsGroup`
 ##
 certManager:
   duration: "87660h"
   renewBefore: "1h"
+  issuerGroup: "cert-manager.io"
+  issuerKind: "Issuer"
+  fsGroup: 65532
 
 ## @section HTTP JSON API configuration
 
@@ -109,16 +115,14 @@ tls:
   ##
   enabled: false
   ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/tls`
-  ## @param tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-  ## @param tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-  ## @param tls.certManager.issuerName Cert-manager issuer name
-  ## @param tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+  ## @param tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+  ## @param tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+  ## @param tls.certManager.issuerName Issuer name
   ##
   certManager:
-    issuerGroup: "cert-manager.io"
-    issuerKind: "Issuer"
+    issuerGroup: ""
+    issuerKind: ""
     issuerName: ""
-    fsGroup: 65532
   ## @param tls.ca CA certificate, if empty `""` JVM default trust store is used
   ##
   ca: "/tls/ca.crt"
@@ -138,16 +142,14 @@ mtls:
   ##
   enabled: false
   ## @extra mtls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/mtls`
-  ## @param mtls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-  ## @param mtls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-  ## @param mtls.certManager.issuerName Cert-manager issuer name
-  ## @param mtls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+  ## @param mtls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+  ## @param mtls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+  ## @param mtls.certManager.issuerName Issuer name
   ##
   certManager:
-    issuerGroup: "cert-manager.io"
-    issuerKind: "Issuer"
+    issuerGroup: ""
+    issuerKind: ""
     issuerName: ""
-    fsGroup: 65532
   ## @param mtls.chain Certificate chain
   ## @param mtls.key Certificate private key (PKCS-8)
   ##
@@ -173,10 +175,12 @@ ports:
 
 ## @section Deployment configuration
 
-## @param environment Container environment variables
+## @extra environment Container environment variables
+## @param environment.JDK_JAVA_OPTIONS Java launcher environment variable
 ## @param environmentSecrets Container secret environment variables
 ##
-environment: {}
+environment:
+  JDK_JAVA_OPTIONS: "-XX:+ExitOnOutOfMemoryError -XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70"
 environmentSecrets: {}
 
 ## @param deployment.annotations Deployment extra annotations
@@ -220,12 +224,20 @@ securityContext:
 
 ## @param affinity Affinity for pods assignment
 ## @param nodeSelector Node labels for pods assignment
-## @param resources Resources requests/limits for HTTP JSON API container
+## @extra resources Resources requests/limits for HTTP JSON API container
 ## @param tolerations Tolerations for pods assignment
 ##
 affinity: {}
 nodeSelector: {}
-resources: {}
+resources:
+  ## @skip resources.requests.cpu
+  ## @skip resources.limits.cpu
+  ## @skip resources.limits.memory
+  requests:
+    cpu: 200m
+  limits:
+    cpu: 1
+    memory: 1Gi
 tolerations: []
 
 ## @param extraVolumeMounts Specify extra list of additional volumeMounts for HTTP JSON API container
