@@ -53,6 +53,11 @@ data:
               target-audience = {{ . | quote }}
               {{- end }}
             }]
+            {{- with .Values.authServices.additionalAdminUserId }}
+            user-management-service = {
+              additional-admin-user-id = {{ . | quote }}
+            }
+            {{- end }}
             {{- end }}
           }
 

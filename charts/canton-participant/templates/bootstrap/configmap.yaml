@@ -30,7 +30,7 @@ data:
 
     {{- if .Values.bootstrap.remoteSequencer.tls.enabled }}
     logger.debug("TLS to sequencer is enabled")
-    {{- else -}}
+    {{- else }}
     logger.warn("TLS to sequencer is disabled ⚠️")
     {{- end }}
 

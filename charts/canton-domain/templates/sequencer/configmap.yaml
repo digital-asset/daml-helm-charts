@@ -35,8 +35,13 @@ data:
           }
 
           sequencer {
-            type = database
+            type = {{ .Values.sequencer.type }}
             high-availability.enabled = true
+            {{- with .Values.sequencer.config }}
+            config {
+              {{- . | nindent 14 }}
+            }
+            {{- end }}
           }
 
           monitoring.grpc-health-server {

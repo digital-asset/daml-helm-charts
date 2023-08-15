@@ -21,6 +21,7 @@ HTTP JSON API service HA deployment
 ---
 ## 🚦 Prerequisites 🚦
 
+- **Daml HTTP JSON API service image** copied to your own private container image registry
 - Kubernetes `1.24+`
 - Helm `3.9+`
 - Preconfigured PostgreSQL resources for the HTTP JSON API service:
@@ -33,8 +34,8 @@ HTTP JSON API service HA deployment
 ## TL;DR
 
 ```console
-helm repo add digitalasset https://digital-asset.github.io/daml-helm-charts/
-helm install myjson digitalasset/daml-http-json
+helm repo add digital-asset https://digital-asset.github.io/daml-helm-charts/
+helm install myjson digital-asset/daml-http-json
 ```
 
 #### Minimum viable configuration
@@ -115,21 +116,24 @@ it will be mounted as files into folder `/tls`.
 
 ### Common parameters
 
-| Name                      | Description                                                                                    | Value                          |
-| ------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------ |
-| `nameOverride`            | String to partially override `common.name` template (will maintain the release name)           | `""`                           |
-| `fullnameOverride`        | String to fully override `common.fullname` template                                            | `""`                           |
-| `replicaCount`            | Number of Participant pods to deploy                                                           | `1`                            |
-| `image.registry`          | Docker image registry                                                                          | `digitalasset-docker.jfrog.io` |
-| `image.repository`        | Docker image repository                                                                        | `http-json`                    |
-| `image.tag`               | Docker image tag (immutable tags are recommended)                                              | `""`                           |
-| `image.digest`            | Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag` | `""`                           |
-| `image.pullPolicy`        | Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                    | `IfNotPresent`                 |
-| `image.pullSecrets`       | Specify Docker registry existing secret names as an array                                      | `[]`                           |
-| `commonLabels`            | Add labels to all the deployed resources                                                       | `{}`                           |
-| `certManager`             | Cert-manager CSI driver common configuration                                                   |                                |
-| `certManager.duration`    | Requested duration the signed certificates will be valid for                                   | `87660h`                       |
-| `certManager.renewBefore` | Time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`   | `1h`                           |
+| Name                      | Description                                                                                                        | Value                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| `nameOverride`            | String to partially override `common.name` template (will maintain the release name)                               | `""`                           |
+| `fullnameOverride`        | String to fully override `common.fullname` template                                                                | `""`                           |
+| `replicaCount`            | Number of Participant pods to deploy                                                                               | `1`                            |
+| `image.registry`          | Docker image registry                                                                                              | `digitalasset-docker.jfrog.io` |
+| `image.repository`        | Docker image repository                                                                                            | `http-json`                    |
+| `image.tag`               | Docker image tag (immutable tags are recommended)                                                                  | `""`                           |
+| `image.digest`            | Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`                     | `""`                           |
+| `image.pullPolicy`        | Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                                        | `IfNotPresent`                 |
+| `image.pullSecrets`       | Specify Docker registry existing secret names as an array                                                          | `[]`                           |
+| `commonLabels`            | Add labels to all the deployed resources                                                                           | `{}`                           |
+| `certManager`             | Cert-manager CSI driver defaults                                                                                   |                                |
+| `certManager.duration`    | Requested certificates validity period. If empty `""` defaults to `720h`                                           | `87660h`                       |
+| `certManager.renewBefore` | Time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`                       | `1h`                           |
+| `certManager.issuerGroup` | Issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc. | `cert-manager.io`              |
+| `certManager.issuerKind`  | Issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                    | `Issuer`                       |
+| `certManager.fsGroup`     | FS Group of mounted files, should be paired with and match container `runAsGroup`                                  | `65532`                        |
 
 ### HTTP JSON API configuration
 
@@ -165,19 +169,17 @@ it will be mounted as files into folder `/tls`.
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `tls.enabled`                      | Enable TLS to Ledger API (gRPC)                                                                                                                       | `false`                                                                              |
 | `tls.certManager`                  | Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/tls`                         |                                                                                      |
-| `tls.certManager.issuerGroup`      | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                       | `cert-manager.io`                                                                    |
-| `tls.certManager.issuerKind`       | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                          | `Issuer`                                                                             |
-| `tls.certManager.issuerName`       | Cert-manager issuer name                                                                                                                              | `""`                                                                                 |
-| `tls.certManager.fsGroup`          | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                        | `65532`                                                                              |
+| `tls.certManager.issuerGroup`      | Issuer group (optional), defaults to `certManager.issuerGroup` if empty                                                                               | `""`                                                                                 |
+| `tls.certManager.issuerKind`       | Issuer kind (optional), defaults to `certManager.issuerKind` if empty                                                                                 | `""`                                                                                 |
+| `tls.certManager.issuerName`       | Issuer name                                                                                                                                           | `""`                                                                                 |
 | `tls.ca`                           | CA certificate, if empty `""` JVM default trust store is used                                                                                         | `/tls/ca.crt`                                                                        |
 | `tls.minimumServerProtocolVersion` | Minimum version allowed: `TLSv1.2` or `TLSv1.3`. If empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html) | `TLSv1.3`                                                                            |
 | `tls.ciphers`                      | Specify ciphers allowed, if empty `""` JVM defaults are used [[documentation]](https://www.java.com/en/configure_crypto.html)                         | `["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","TLS_CHACHA20_POLY1305_SHA256"]` |
 | `mtls.enabled`                     | Enable mTLS to Ledger API (gRPC)                                                                                                                      | `false`                                                                              |
 | `mtls.certManager`                 | Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/mtls`                        |                                                                                      |
-| `mtls.certManager.issuerGroup`     | Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.                       | `cert-manager.io`                                                                    |
-| `mtls.certManager.issuerKind`      | Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.                                          | `Issuer`                                                                             |
-| `mtls.certManager.issuerName`      | Cert-manager issuer name                                                                                                                              | `""`                                                                                 |
-| `mtls.certManager.fsGroup`         | Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`                                                        | `65532`                                                                              |
+| `mtls.certManager.issuerGroup`     | Issuer group (optional), defaults to `certManager.issuerGroup` if empty                                                                               | `""`                                                                                 |
+| `mtls.certManager.issuerKind`      | Issuer kind (optional), defaults to `certManager.issuerKind` if empty                                                                                 | `""`                                                                                 |
+| `mtls.certManager.issuerName`      | Issuer name                                                                                                                                           | `""`                                                                                 |
 | `mtls.chain`                       | Certificate chain                                                                                                                                     | `/mtls/tls.crt`                                                                      |
 | `mtls.key`                         | Certificate private key (PKCS-8)                                                                                                                      | `/mtls/tls.key`                                                                      |
 
@@ -197,30 +199,31 @@ it will be mounted as files into folder `/tls`.
 
 ### Deployment configuration
 
-| Name                                      | Description                                                                                                                                          | Value    |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `environment`                             | Container environment variables                                                                                                                      | `{}`     |
-| `environmentSecrets`                      | Container secret environment variables                                                                                                               | `{}`     |
-| `deployment.annotations`                  | Deployment extra annotations                                                                                                                         | `{}`     |
-| `deployment.labels`                       | Deployment extra labels                                                                                                                              | `{}`     |
-| `deployment.strategy`                     | Deployment strategy                                                                                                                                  | `{}`     |
-| `pod.annotations`                         | Extra annotations for Deployment pods                                                                                                                | `{}`     |
-| `pod.labels`                              | Extra labels for Deployment pods                                                                                                                     | `{}`     |
-| `pod.securityContext.enabled`             | Enable pods Security Context                                                                                                                         | `true`   |
-| `pod.securityContext.fsGroup`             | Special supplemental GID that applies to all containers in a pod                                                                                     | `65532`  |
-| `pod.securityContext.fsGroupChangePolicy` | Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always` | `Always` |
-| `pod.securityContext.sysctls`             | List of namespaced sysctls used for the pod                                                                                                          | `[]`     |
-| `securityContext.enabled`                 | Enable containers Security Context                                                                                                                   | `true`   |
-| `securityContext.readOnlyRootFilesystem`  | Whether this container has a read-only root filesystem                                                                                               | `true`   |
-| `securityContext.runAsGroup`              | The GID to run the entrypoint of the container process                                                                                               | `65532`  |
-| `securityContext.runAsNonRoot`            | Indicates that the container must run as a non-root user                                                                                             | `true`   |
-| `securityContext.runAsUser`               | The UID to run the entrypoint of the container process                                                                                               | `65532`  |
-| `affinity`                                | Affinity for pods assignment                                                                                                                         | `{}`     |
-| `nodeSelector`                            | Node labels for pods assignment                                                                                                                      | `{}`     |
-| `resources`                               | Resources requests/limits for HTTP JSON API container                                                                                                | `{}`     |
-| `tolerations`                             | Tolerations for pods assignment                                                                                                                      | `[]`     |
-| `extraVolumeMounts`                       | Specify extra list of additional volumeMounts for HTTP JSON API container                                                                            | `[]`     |
-| `extraVolumes`                            | Specify extra list of additional volumes for HTTP JSON API pod                                                                                       | `[]`     |
+| Name                                      | Description                                                                                                                                          | Value                                                                             |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `environment`                             | Container environment variables                                                                                                                      |                                                                                   |
+| `environment.JDK_JAVA_OPTIONS`            | Java launcher environment variable                                                                                                                   | `-XX:+ExitOnOutOfMemoryError -XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70` |
+| `environmentSecrets`                      | Container secret environment variables                                                                                                               | `{}`                                                                              |
+| `deployment.annotations`                  | Deployment extra annotations                                                                                                                         | `{}`                                                                              |
+| `deployment.labels`                       | Deployment extra labels                                                                                                                              | `{}`                                                                              |
+| `deployment.strategy`                     | Deployment strategy                                                                                                                                  | `{}`                                                                              |
+| `pod.annotations`                         | Extra annotations for Deployment pods                                                                                                                | `{}`                                                                              |
+| `pod.labels`                              | Extra labels for Deployment pods                                                                                                                     | `{}`                                                                              |
+| `pod.securityContext.enabled`             | Enable pods Security Context                                                                                                                         | `true`                                                                            |
+| `pod.securityContext.fsGroup`             | Special supplemental GID that applies to all containers in a pod                                                                                     | `65532`                                                                           |
+| `pod.securityContext.fsGroupChangePolicy` | Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always` | `Always`                                                                          |
+| `pod.securityContext.sysctls`             | List of namespaced sysctls used for the pod                                                                                                          | `[]`                                                                              |
+| `securityContext.enabled`                 | Enable containers Security Context                                                                                                                   | `true`                                                                            |
+| `securityContext.readOnlyRootFilesystem`  | Whether this container has a read-only root filesystem                                                                                               | `true`                                                                            |
+| `securityContext.runAsGroup`              | The GID to run the entrypoint of the container process                                                                                               | `65532`                                                                           |
+| `securityContext.runAsNonRoot`            | Indicates that the container must run as a non-root user                                                                                             | `true`                                                                            |
+| `securityContext.runAsUser`               | The UID to run the entrypoint of the container process                                                                                               | `65532`                                                                           |
+| `affinity`                                | Affinity for pods assignment                                                                                                                         | `{}`                                                                              |
+| `nodeSelector`                            | Node labels for pods assignment                                                                                                                      | `{}`                                                                              |
+| `resources`                               | Resources requests/limits for HTTP JSON API container                                                                                                |                                                                                   |
+| `tolerations`                             | Tolerations for pods assignment                                                                                                                      | `[]`                                                                              |
+| `extraVolumeMounts`                       | Specify extra list of additional volumeMounts for HTTP JSON API container                                                                            | `[]`                                                                              |
+| `extraVolumes`                            | Specify extra list of additional volumes for HTTP JSON API pod                                                                                       | `[]`                                                                              |
 
 ### Service configuration
 

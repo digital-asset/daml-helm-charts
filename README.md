@@ -27,9 +27,9 @@ available in this repository will install the following services:
 ## TL;DR
 
 ```bash
-helm repo add digitalasset https://digital-asset.github.io/daml-helm-charts/
-helm search repo digitalasset
-helm install myrelease digitalasset/<chart>
+helm repo add digital-asset https://digital-asset.github.io/daml-helm-charts/
+helm search repo digital-asset
+helm install myrelease digital-asset/<chart>
 ```
 
 ## Before you begin

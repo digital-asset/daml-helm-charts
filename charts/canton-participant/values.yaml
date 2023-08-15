@@ -32,12 +32,19 @@ image:
 ##
 commonLabels: {}
 
-## @param certManager.duration Cert-manager requested certificates validity period. If empty `""` defaults to `720h`
-## @param certManager.renewBefore Cert-manager time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`
+## @extra certManager Cert-manager CSI driver defaults
+## @param certManager.duration Requested certificates validity period. If empty `""` defaults to `720h`
+## @param certManager.renewBefore Time to renew the certificate before expiry. If empty `""` defaults to a third of `duration`
+## @param certManager.issuerGroup Issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
+## @param certManager.issuerKind Issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
+## @param certManager.fsGroup FS Group of mounted files, should be paired with and match container `runAsGroup`
 ##
 certManager:
   duration: "87660h"
   renewBefore: "1h"
+  issuerGroup: "cert-manager.io"
+  issuerKind: "Issuer"
+  fsGroup: 65532
 
 ## @section Participant configuration
 
@@ -114,16 +121,14 @@ bootstrap:
       ##
       enabled: false
       ## @extra bootstrap.remoteSequencer.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-<domain_alias>`
-      ## @param bootstrap.remoteSequencer.tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-      ## @param bootstrap.remoteSequencer.tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-      ## @param bootstrap.remoteSequencer.tls.certManager.issuerName Cert-manager issuer name
-      ## @param bootstrap.remoteSequencer.tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+      ## @param bootstrap.remoteSequencer.tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+      ## @param bootstrap.remoteSequencer.tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+      ## @param bootstrap.remoteSequencer.tls.certManager.issuerName Issuer name
       ##
       certManager:
-        issuerGroup: "cert-manager.io"
-        issuerKind: "Issuer"
+        issuerGroup: ""
+        issuerKind: ""
         issuerName: ""
-        fsGroup: 65532
       ## @param bootstrap.remoteSequencer.tls.ca CA certificate, if empty `""` JVM default trust store is used
       ##
       ca: "/tls-mydomain/ca.crt"
@@ -142,10 +147,12 @@ bootstrap:
     root: "INFO"
     canton: "INFO"
     stdout: "INFO"
-  ## @param bootstrap.environment Environment variables
+  ## @extra bootstrap.environment Environment variables
   ## @param bootstrap.environmentSecrets Secret environment variables
+  ## @param bootstrap.environment.JDK_JAVA_OPTIONS Java launcher environment variable
   ##
-  environment: {}
+  environment:
+    JDK_JAVA_OPTIONS: "-XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70"
   environmentSecrets: {}
   ## @extra bootstrap.job Bootstrap Job and Helm hook configuration
   ## @param bootstrap.job.annotations Job extra annotations
@@ -190,12 +197,20 @@ bootstrap:
     runAsUser: 65532
   ## @param bootstrap.affinity Affinity for pods assignment
   ## @param bootstrap.nodeSelector Node labels for pods assignment
-  ## @param bootstrap.resources Resources requests/limits for bootstrap container
+  ## @extra bootstrap.resources Resources requests/limits for bootstrap container
   ## @param bootstrap.tolerations Tolerations for pods assignment
   ##
   affinity: {}
   nodeSelector: {}
-  resources: {}
+  resources:
+    ## @skip bootstrap.resources.requests.cpu
+    ## @skip bootstrap.resources.limits.cpu
+    ## @skip bootstrap.resources.limits.memory
+    requests:
+      cpu: 100m
+    limits:
+      cpu: 1
+      memory: 1Gi
   tolerations: []
   ## @param bootstrap.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
   ## @param bootstrap.extraVolumes Specify extra list of additional volumes for bootstrap pod
@@ -236,13 +251,15 @@ console:
   ##
   image:
     ## Private Docker image
-    repository: canton-enterprise-debug
+    repository: canton-enterprise
     tag: ""
     digest: ""
-  ## @param console.environment Environment variables
+  ## @extra console.environment Environment variables
   ## @param console.environmentSecrets Secret environment variables
+  ## @param console.environment.JDK_JAVA_OPTIONS Java launcher environment variable
   ##
-  environment: {}
+  environment:
+    JDK_JAVA_OPTIONS: "-XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70"
   environmentSecrets: {}
   ## @param console.deployment.annotations Deployment extra annotations
   ## @param console.deployment.labels Deployment extra labels
@@ -281,12 +298,20 @@ console:
     runAsUser: 65532
   ## @param console.affinity Affinity for pods assignment
   ## @param console.nodeSelector Node labels for pods assignment
-  ## @param console.resources Resources requests/limits for console container
+  ## @extra console.resources Resources requests/limits for console container
   ## @param console.tolerations Tolerations for pods assignment
   ##
   affinity: {}
   nodeSelector: {}
-  resources: {}
+  resources:
+    ## @skip console.resources.requests.cpu
+    ## @skip console.resources.limits.cpu
+    ## @skip console.resources.limits.memory
+    requests:
+      cpu: 100m
+    limits:
+      cpu: 1
+      memory: 1Gi
   tolerations: []
   ## @param console.extraVolumeMounts Specify extra list of additional volumeMounts for console container
   ## @param console.extraVolumes Specify extra list of additional volumes for console pod
@@ -323,6 +348,14 @@ common:
     enableTestingCommands: false
     enableRepairCommands: false
 
+  ## @section Network Policy
+  ##
+  ## @param common.networkpolicy.enabled Enable Network Policy definitions
+  ## @param common.networkpolicy.labels Network Policy extra labels
+  networkpolicy:
+    enabled: true
+    labels: {}
+
 ## @section Logging
 
 ## @extra logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
@@ -345,17 +378,15 @@ tls:
     ##
     enabled: false
     ## @extra tls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-public`
-    ## @param tls.public.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-    ## @param tls.public.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-    ## @param tls.public.certManager.issuerName Cert-manager issuer name
-    ## @param tls.public.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ## @param tls.public.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+    ## @param tls.public.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param tls.public.certManager.issuerName Issuer name
     ## @param tls.public.certManager.ipSans IP addresses the certificate will be requested for.
     ##
     certManager:
-      issuerGroup: "cert-manager.io"
-      issuerKind: "Issuer"
+      issuerGroup: ""
+      issuerKind: ""
       issuerName: ""
-      fsGroup: 65532
       ipSans: "0.0.0.0"
     ## @param tls.public.ca CA certificate, if empty `""` JVM default trust store is used
     ## @param tls.public.chain Certificate chain
@@ -378,16 +409,14 @@ tls:
     ##
     enabled: false
     ## @extra tls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-admin`
-    ## @param tls.admin.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-    ## @param tls.admin.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-    ## @param tls.admin.certManager.issuerName Cert-manager issuer name
-    ## @param tls.admin.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ## @param tls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+    ## @param tls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param tls.admin.certManager.issuerName Issuer name
     ##
     certManager:
-      issuerGroup: "cert-manager.io"
-      issuerKind: "Issuer"
+      issuerGroup: ""
+      issuerKind: ""
       issuerName: ""
-      fsGroup: 65532
     ## @param tls.admin.ca CA certificate, if empty `""` JVM default trust store is used
     ## @param tls.admin.chain Certificate chain
     ## @param tls.admin.key Certificate private key (PKCS-8)
@@ -413,16 +442,14 @@ mtls:
     ##
     enabled: false
     ## @extra mtls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-public`
-    ## @param mtls.public.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-    ## @param mtls.public.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-    ## @param mtls.public.certManager.issuerName Cert-manager issuer name
-    ## @param mtls.public.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ## @param mtls.public.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+    ## @param mtls.public.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param mtls.public.certManager.issuerName Issuer name
     ##
     certManager:
-      issuerGroup: "cert-manager.io"
-      issuerKind: "Issuer"
+      issuerGroup: ""
+      issuerKind: ""
       issuerName: ""
-      fsGroup: 65532
     ## @param mtls.public.ca CA certificate, if empty `""` JVM default trust store is used
     ## @param mtls.public.chain Certificate chain
     ## @param mtls.public.key Certificate private key (PKCS-8)
@@ -435,16 +462,14 @@ mtls:
     ##
     enabled: false
     ## @extra mtls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-admin`
-    ## @param mtls.admin.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-    ## @param mtls.admin.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-    ## @param mtls.admin.certManager.issuerName Cert-manager issuer name
-    ## @param mtls.admin.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+    ## @param mtls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+    ## @param mtls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param mtls.admin.certManager.issuerName Issuer name
     ##
     certManager:
-      issuerGroup: "cert-manager.io"
-      issuerKind: "Issuer"
+      issuerGroup: ""
+      issuerKind: ""
       issuerName: ""
-      fsGroup: 65532
     ## @param mtls.admin.ca CA certificate, if empty `""` JVM default trust store is used
     ## @param mtls.admin.chain Certificate chain
     ## @param mtls.admin.key Certificate private key (PKCS-8)
@@ -460,6 +485,7 @@ mtls:
 ## @param authServices.url URL to JWKS (only used for type `jwt-rs-256-jwks`)
 ## @param authServices.certificate Path to certificate used to sign JWTs (only used for types `jwt-rs-256-crt`, `jwt-es-256-crt`, `jwt-es-512-crt`)
 ## @param authServices.targetAudience Custom JWT token audience
+## @param authServices.additionalAdminUserId Additional Ledger admin user, the default `participant_admin` (created at startup)
 ##
 authServices:
   enabled: false
@@ -467,6 +493,7 @@ authServices:
   url: "https://mydomain.com/auth/jwks.json"
   certificate: "/path/to/jwt.crt"
   targetAudience: ""
+  additionalAdminUserId: ""
 
 ## @section Container ports
 
@@ -483,10 +510,12 @@ ports:
 
 ## @section Deployment configuration
 
-## @param environment Container environment variables
+## @extra environment Container environment variables
+## @param environment.JDK_JAVA_OPTIONS Java launcher environment variable
 ## @param environmentSecrets Container secret environment variables
 ##
-environment: {}
+environment:
+  JDK_JAVA_OPTIONS: "-XX:+ExitOnOutOfMemoryError -XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70"
 environmentSecrets: {}
 
 ## @param deployment.annotations Deployment extra annotations
@@ -530,12 +559,20 @@ securityContext:
 
 ## @param affinity Affinity for pods assignment
 ## @param nodeSelector Node labels for pods assignment
-## @param resources Resources requests/limits for Canton container
+## @extra resources Resources requests/limits for Canton container
 ## @param tolerations Tolerations for pods assignment
 ##
 affinity: {}
 nodeSelector: {}
-resources: {}
+resources:
+  ## @skip resources.requests.cpu
+  ## @skip resources.limits.cpu
+  ## @skip resources.limits.memory
+  requests:
+    cpu: 500m
+  limits:
+    cpu: 2
+    memory: 3Gi
 tolerations: []
 
 ## @param livenessProbe Override `livenessProbe` default configuration
@@ -674,16 +711,14 @@ testing:
         ##
         enabled: false
         ## @extra testing.bootstrap.remoteDomainManager.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-domain-manager`
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerName Cert-manager issuer name
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerName Issuer name
         ##
         certManager:
-          issuerGroup: "cert-manager.io"
-          issuerKind: "Issuer"
+          issuerGroup: ""
+          issuerKind: ""
           issuerName: ""
-          fsGroup: 65532
         ## @param testing.bootstrap.remoteDomainManager.tls.ca CA certificate, if empty `""` JVM default trust store is used
         ##
         ca: "/tls-domain-manager/ca.crt"
@@ -692,16 +727,14 @@ testing:
         ##
         enabled: false
         ## @extra testing.bootstrap.remoteDomainManager.mtls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-domain-manager`
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerGroup Cert-Manager issuer group. Allowed values: `cert-manager.io`, `cas-issuer.jetstack.io`, `cert-manager.k8s.cloudflare.com`, etc.
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerKind  Cert-Manager issuer kind. Allowed values: `Issuer`, `ClusterIssuer`, `GoogleCASIssuer`, `OriginIssuer`, etc.
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerName Cert-manager issuer name
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.fsGroup Cert-manager FS Group of mounted files, should be paired with and match container `runAsGroup`
+        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerName Issuer name
         ##
         certManager:
-          issuerGroup: "cert-manager.io"
-          issuerKind: "Issuer"
+          issuerGroup: ""
+          issuerKind: ""
           issuerName: ""
-          fsGroup: 65532
         ## @param testing.bootstrap.remoteDomainManager.mtls.chain Certificate chain
         ## @param testing.bootstrap.remoteDomainManager.mtls.key Certificate private key (PKCS-8)
         chain: "/mtls-domain-manager/tls.crt"
