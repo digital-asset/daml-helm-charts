@@ -4,6 +4,32 @@ entries:
   - annotations:
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
+    appVersion: 2.7.1
+    created: "2023-09-01T15:47:48.647023586Z"
+    description: A Helm chart for Canton Domains
+    digest: c4d2db36f4844f506f2c73ad60583df7f6c77f82fea4cb38db8830f7aaa8715a
+    home: https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-domain
+    icon: https://raw.githubusercontent.com/digital-asset/daml-helm-charts/main/images/canton-logo.png
+    keywords:
+    - canton
+    - cluster
+    - daml
+    - domain
+    - grpc
+    - ledger
+    kubeVersion: '>= 1.22.0-0'
+    maintainers:
+    - name: Digital Asset
+      url: https://github.com/digital-asset/
+    name: canton-domain
+    sources:
+    - https://docs.daml.com/canton/about.html
+    urls:
+    - https://github.com/digital-asset/daml-helm-charts/releases/download/canton-domain-0.4.0/canton-domain-0.4.0.tgz
+    version: 0.4.0
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+    apiVersion: v2
     appVersion: 2.7.0
     created: "2023-08-15T15:35:50.43538738Z"
     description: A Helm chart for Canton Domains
@@ -132,6 +158,32 @@ entries:
     - https://github.com/digital-asset/daml-helm-charts/releases/download/canton-domain-0.0.7/canton-domain-0.0.7.tgz
     version: 0.0.7
   canton-participant:
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+    apiVersion: v2
+    appVersion: 2.7.1
+    created: "2023-09-01T15:47:49.64511239Z"
+    description: A Helm chart for Canton Participants
+    digest: af93f3615939e9ea81d81e96ba7020b2f956700955a2b9a7368756a79127b16b
+    home: https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant
+    icon: https://raw.githubusercontent.com/digital-asset/daml-helm-charts/main/images/canton-logo.png
+    keywords:
+    - canton
+    - cluster
+    - daml
+    - grpc
+    - ledger
+    - participant
+    kubeVersion: '>= 1.22.0-0'
+    maintainers:
+    - name: Digital Asset
+      url: https://github.com/digital-asset/
+    name: canton-participant
+    sources:
+    - https://docs.daml.com/canton/about.html
+    urls:
+    - https://github.com/digital-asset/daml-helm-charts/releases/download/canton-participant-0.4.0/canton-participant-0.4.0.tgz
+    version: 0.4.0
   - annotations:
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
@@ -266,6 +318,32 @@ entries:
   - annotations:
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
+    appVersion: 2.7.1
+    created: "2023-09-01T15:47:50.684510095Z"
+    description: A Helm chart for Daml HTTP JSON API service
+    digest: 619a8d1955d3b2a11f6a129c170bdced09fbf6514a2a70a6252e3cecd0b80e87
+    home: https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-http-json
+    icon: https://raw.githubusercontent.com/digital-asset/daml-helm-charts/main/images/daml-logo.png
+    keywords:
+    - api
+    - daml
+    - http
+    - json
+    - ledger
+    - service
+    kubeVersion: '>= 1.22.0-0'
+    maintainers:
+    - name: Digital Asset
+      url: https://github.com/digital-asset/
+    name: daml-http-json
+    sources:
+    - https://docs.daml.com/json-api/index.html
+    urls:
+    - https://github.com/digital-asset/daml-helm-charts/releases/download/daml-http-json-0.4.0/daml-http-json-0.4.0.tgz
+    version: 0.4.0
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+    apiVersion: v2
     appVersion: 2.7.0
     created: "2023-08-15T15:35:52.550070819Z"
     description: A Helm chart for Daml HTTP JSON API service
@@ -397,6 +475,30 @@ entries:
   - annotations:
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
+    appVersion: 2.7.1
+    created: "2023-09-01T15:47:51.935407682Z"
+    description: A Helm chart for Daml Trigger service
+    digest: 5b9cbfa1aa438424e6af5ccf5d1a649878d3bba8680df55f5bac825b2eb98753
+    home: https://github.com/digital-asset/daml-helm-charts/tree/main/charts/daml-trigger
+    icon: https://raw.githubusercontent.com/digital-asset/daml-helm-charts/main/images/daml-logo.png
+    keywords:
+    - daml
+    - ledger
+    - service
+    - trigger
+    kubeVersion: '>= 1.22.0-0'
+    maintainers:
+    - name: Digital Asset
+      url: https://github.com/digital-asset/
+    name: daml-trigger
+    sources:
+    - https://docs.daml.com/tools/trigger-service/index.html
+    urls:
+    - https://github.com/digital-asset/daml-helm-charts/releases/download/daml-trigger-0.4.0/daml-trigger-0.4.0.tgz
+    version: 0.4.0
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+    apiVersion: v2
     appVersion: 2.7.0
     created: "2023-08-15T15:35:53.697863181Z"
     description: A Helm chart for Daml Trigger service
@@ -514,4 +616,4 @@ entries:
     urls:
     - https://github.com/digital-asset/daml-helm-charts/releases/download/daml-trigger-0.0.7/daml-trigger-0.0.7.tgz
     version: 0.0.7
-generated: "2023-08-15T15:35:53.696479994Z"
+generated: "2023-09-01T15:47:51.933483347Z"
