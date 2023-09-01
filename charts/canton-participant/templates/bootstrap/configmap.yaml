@@ -34,19 +34,24 @@ data:
     logger.warn("TLS to sequencer is disabled ⚠️")
     {{- end }}
 
-    val domainAlias = {{ .Values.bootstrap.remoteSequencer.domainAlias | quote }}
+    val domainAlias = {{ .Values.bootstrap.remoteSequencer.domain.alias | quote }}
 
     {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
     val domainManager = domainManagers.remote.head
-    val domainId = domainManager.id
+    val domainId = Some(domainManager.id)
     if (domainManager.participants.list.exists(_.item.participant == participant.id)) {
       logger.info(s"Participant ${participant.name} already registered to domain ${domainManager.name}")
     } else {
       logger.info(s"Registering participant ${participant.name} to domain ${domainManager.name}")
       domainManager.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
     }
-    {{- else -}}
-    val domainId = DomainId.tryFromString({{ .Values.bootstrap.remoteSequencer.domainId | quote }})
+    {{- else }}
+    {{- if .Values.bootstrap.remoteSequencer.domain.verifyId }}
+    {{- include "participant.bootstrapDomainId" . | nindent 4 }}
+    {{- else }}
+    logger.warn("You are not checking the target domain ID, you could join any domain ⚠️")
+    val domainId = None
+    {{- end }}
     {{- end }}
 
     val sequencerURL = {{ include "sequencer.url" . | quote }}
@@ -65,10 +70,10 @@ data:
       domainAlias,
       connection,
       false,
-      Some(domainId),
+      domainId,
       100,
-      Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.initialRetryDelay | quote }}).toSeconds)),
-      Some(NonNegativeFiniteDuration.ofSeconds(Duration({{ .Values.bootstrap.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
+      Some(NonNegativeFiniteDuration.tryOfSeconds(Duration({{ .Values.bootstrap.remoteSequencer.initialRetryDelay | quote }}).toSeconds)),
+      Some(NonNegativeFiniteDuration.tryOfSeconds(Duration({{ .Values.bootstrap.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
     )
 
     if (participant.domains.is_registered(domainAlias)) {

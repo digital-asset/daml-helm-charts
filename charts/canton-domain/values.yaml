@@ -8,15 +8,15 @@ nameOverride: ""
 ##
 fullnameOverride: ""
 
-## @param image.registry Canton Docker image registry
-## @param image.repository Canton Docker image repository
-## @param image.tag Canton Docker image tag (immutable tags are recommended)
-## @param image.digest Canton Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
-## @param image.pullPolicy Canton Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
-## @param image.pullSecrets Specify Docker registry existing secret names as an array
+## @param image.registry Canton container image registry
+## @param image.repository Canton container image repository
+## @param image.tag Canton container image tag (immutable tags are recommended)
+## @param image.digest Canton container image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
+## @param image.pullPolicy Canton container image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
+## @param image.pullSecrets Specify container registry existing secret names as an array
 ##
 image:
-  ## Private Docker image
+  ## Private container image
   registry: digitalasset-docker.jfrog.io
   repository: canton-enterprise
   tag: ""
@@ -223,13 +223,13 @@ console:
   ## @param console.terminationGracePeriodSeconds Stop the pod immediately by default, tailing `/dev/null` to stay up
   ##
   terminationGracePeriodSeconds: 0
-  ## @extra console.image Specific Docker image to be able to start a Canton console. Reusing `image.registry`, `image.pullPolicy` and `image.pullSecrets`
-  ## @param console.image.repository Canton console Docker image repository
-  ## @param console.image.tag Canton console Docker image tag (immutable tags are recommended)
-  ## @param console.image.digest Canton console Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
+  ## @extra console.image Specific container image to be able to start a Canton console. Reusing `image.registry`, `image.pullPolicy` and `image.pullSecrets`
+  ## @param console.image.repository Canton console container image repository
+  ## @param console.image.tag Canton console container image tag (immutable tags are recommended)
+  ## @param console.image.digest Canton console container image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
   ##
   image:
-    ## Private Docker image
+    ## Private container image
     repository: canton-enterprise
     tag: ""
     digest: ""
@@ -493,6 +493,9 @@ manager:
     ## @param manager.storage.maxConnections Database connection pool maximum connections
     ##
     maxConnections: 10
+  ## @param manager.configOverride Raw Canton configuration file `canton { ... }`
+  ##
+  configOverride: ""
   ## @param manager.ports.admin Admin API container port (gRPC)
   ## @param manager.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
   ## @param manager.ports.metrics Promotheus exporter container port (HTTP)
@@ -627,6 +630,9 @@ mediator:
     ## @param mediator.storage.maxConnections Database connection pool maximum connections
     ##
     maxConnections: 10
+  ## @param mediator.configOverride Raw Canton configuration file `canton { ... }`
+  ##
+  configOverride: ""
   ## @param mediator.ports.admin Admin API container port (gRPC)
   ## @param mediator.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
   ## @param mediator.ports.metrics Promotheus exporter container port (HTTP)
@@ -760,6 +766,9 @@ sequencer:
   ## @param sequencer.config Sequencer extra configuration, to use along a custom `sequencer.type` (optional)
   ##
   config: ""
+  ## @param sequencer.configOverride Raw Canton configuration file `canton { ... }`
+  ##
+  configOverride: ""
   ## @param sequencer.ports.public Ledger API container port (gRPC)
   ## @param sequencer.ports.admin Admin API container port (gRPC)
   ## @param sequencer.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)

@@ -21,7 +21,11 @@ remote-participants {
       address = {{ $remoteParticipant.host }}
       port = {{ ($remoteParticipant.ports).admin | default 4002 }}
       {{- if (($remoteParticipant.tls).admin).enabled }}
+      {{- if (($remoteParticipant.mtls).admin).enabled }}
       {{- include "canton.tls.remote" (list $remoteParticipant.tls.admin $remoteParticipant.mtls.admin) | indent 6 }}
+      {{- else }}
+      {{- include "canton.tls.remote" (list $remoteParticipant.tls.admin nil) | indent 6 }}
+      {{- end }}
       {{- end }}
     }
   }

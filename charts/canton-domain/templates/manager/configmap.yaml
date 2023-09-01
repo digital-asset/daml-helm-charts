@@ -36,3 +36,7 @@ data:
 
       {{- include "canton.monitoring" (list . "manager") | nindent 6 }}
     }
+  {{- with .Values.manager.configOverride }}
+  manager-override.conf: |
+  {{- . | nindent 4 }}
+  {{- end }}

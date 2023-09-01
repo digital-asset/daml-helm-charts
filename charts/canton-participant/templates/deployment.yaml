@@ -63,6 +63,9 @@ spec:
             - "--log-level-canton={{ .Values.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.logLevel.stdout }}"
             - "--config=/canton/participant.conf"
+            {{- if .Values.configOverride }}
+            - "--config=/canton/participant-override.conf"
+            {{- end }}
           envFrom:
             {{- if .Values.environment }}
             - configMapRef:
@@ -123,6 +126,12 @@ spec:
               mountPath: /canton/participant.conf
               subPath: participant.conf
               readOnly: true
+            {{- if .Values.configOverride }}
+            - name: config
+              mountPath: /canton/participant-override.conf
+              subPath: participant-override.conf
+              readOnly: true
+            {{- end }}
             {{- if .Values.tls.public.enabled }}
             - name: tls-public
               mountPath: "/tls-public"

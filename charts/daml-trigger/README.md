@@ -121,12 +121,12 @@ it will be mounted as files into folder `/tls`.
 | `nameOverride`            | String to partially override `common.name` template (will maintain the release name)                               | `""`                           |
 | `fullnameOverride`        | String to fully override `common.fullname` template                                                                | `""`                           |
 | `replicaCount`            | Number of Participant pods to deploy                                                                               | `1`                            |
-| `image.registry`          | Docker image registry                                                                                              | `digitalasset-docker.jfrog.io` |
-| `image.repository`        | Docker image repository                                                                                            | `trigger-service`              |
-| `image.tag`               | Docker image tag (immutable tags are recommended)                                                                  | `""`                           |
-| `image.digest`            | Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`                     | `""`                           |
-| `image.pullPolicy`        | Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                                        | `IfNotPresent`                 |
-| `image.pullSecrets`       | Specify Docker registry existing secret names as an array                                                          | `[]`                           |
+| `image.registry`          | Container image registry                                                                                           | `digitalasset-docker.jfrog.io` |
+| `image.repository`        | Container image repository                                                                                         | `trigger-service`              |
+| `image.tag`               | Container image tag (immutable tags are recommended)                                                               | `""`                           |
+| `image.digest`            | Container image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`                  | `""`                           |
+| `image.pullPolicy`        | Container image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`                                     | `IfNotPresent`                 |
+| `image.pullSecrets`       | Specify container registry existing secret names as an array                                                       | `[]`                           |
 | `commonLabels`            | Add labels to all the deployed resources                                                                           | `{}`                           |
 | `certManager`             | Cert-manager CSI driver defaults                                                                                   |                                |
 | `certManager.duration`    | Requested certificates validity period. If empty `""` defaults to `720h`                                           | `87660h`                       |

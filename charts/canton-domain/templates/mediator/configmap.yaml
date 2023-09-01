@@ -32,3 +32,7 @@ data:
 
       {{- include "canton.monitoring" (list . "mediator") | nindent 6 }}
     }
+  {{- with .Values.mediator.configOverride }}
+  mediator-override.conf: |
+  {{- . | nindent 4 }}
+  {{- end }}

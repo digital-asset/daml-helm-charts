@@ -64,6 +64,9 @@ spec:
             - "--log-level-canton={{ .Values.common.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
             - "--config=/canton/sequencer.conf"
+            {{- if .Values.sequencer.configOverride }}
+            - "--config=/canton/sequencer-override.conf"
+            {{- end }}
           envFrom:
             {{- if or .Values.common.environment .Values.sequencer.environment }}
             - configMapRef:
@@ -124,6 +127,12 @@ spec:
               mountPath: /canton/sequencer.conf
               subPath: sequencer.conf
               readOnly: true
+            {{- if .Values.sequencer.configOverride }}
+            - name: config
+              mountPath: /canton/sequencer-override.conf
+              subPath: sequencer-override.conf
+              readOnly: true
+            {{- end }}
             {{- if .Values.common.tls.public.enabled }}
             - name: tls-public
               mountPath: "/tls-public"

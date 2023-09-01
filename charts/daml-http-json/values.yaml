@@ -11,15 +11,15 @@ fullnameOverride: ""
 ## @param replicaCount Number of Participant pods to deploy
 replicaCount: 1
 
-## @param image.registry Docker image registry
-## @param image.repository Docker image repository
-## @param image.tag Docker image tag (immutable tags are recommended)
-## @param image.digest Docker image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
-## @param image.pullPolicy Docker image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
-## @param image.pullSecrets Specify Docker registry existing secret names as an array
+## @param image.registry Container image registry
+## @param image.repository Container image repository
+## @param image.tag Container image tag (immutable tags are recommended)
+## @param image.digest Container image digest in the way `sha256:aa...`. If this parameter is set, overrides `image.tag`
+## @param image.pullPolicy Container image pull policy. Allowed values: `Always`, `Never`, `IfNotPresent`
+## @param image.pullSecrets Specify container registry existing secret names as an array
 ##
 image:
-  ## Private Docker image
+  ## Private container image
   registry: digitalasset-docker.jfrog.io
   repository: http-json
   tag: ""
