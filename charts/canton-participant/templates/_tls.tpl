@@ -93,5 +93,5 @@ Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{- define "sequencer.tls.name" -}}
-{{- print "tls-" .Values.bootstrap.remoteSequencer.domainAlias -}}
+{{- print "tls-" .Values.bootstrap.remoteSequencer.domain.alias -}}
 {{- end -}}

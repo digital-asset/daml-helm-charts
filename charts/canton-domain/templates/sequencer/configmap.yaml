@@ -53,3 +53,7 @@ data:
 
       {{- include "canton.monitoring" (list . "sequencer") | nindent 6 }}
     }
+  {{- with .Values.sequencer.configOverride }}
+  sequencer-override.conf: |
+  {{- . | nindent 4 }}
+  {{- end }}

@@ -63,6 +63,9 @@ spec:
             - "--log-level-canton={{ .Values.common.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
             - "--config=/canton/mediator.conf"
+            {{- if .Values.mediator.configOverride }}
+            - "--config=/canton/mediator-override.conf"
+            {{- end }}
           envFrom:
             {{- if or .Values.common.environment .Values.mediator.environment }}
             - configMapRef:
@@ -121,6 +124,12 @@ spec:
               mountPath: /canton/mediator.conf
               subPath: mediator.conf
               readOnly: true
+            {{- if .Values.mediator.configOverride }}
+            - name: config
+              mountPath: /canton/mediator-override.conf
+              subPath: mediator-override.conf
+              readOnly: true
+            {{- end }}
             {{- if .Values.common.tls.admin.enabled }}
             - name: tls-admin
               mountPath: "/tls-admin"

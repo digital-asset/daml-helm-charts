@@ -63,6 +63,9 @@ spec:
             - "--log-level-canton={{ .Values.common.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
             - "--config=/canton/manager.conf"
+            {{- if .Values.manager.configOverride }}
+            - "--config=/canton/manager-override.conf"
+            {{- end }}
           envFrom:
             {{- if or .Values.common.environment .Values.manager.environment }}
             - configMapRef:
@@ -121,6 +124,12 @@ spec:
               mountPath: /canton/manager.conf
               subPath: manager.conf
               readOnly: true
+            {{- if .Values.manager.configOverride }}
+            - name: config
+              mountPath: /canton/manager-override.conf
+              subPath: manager-override.conf
+              readOnly: true
+            {{- end }}
             {{- if .Values.common.tls.admin.enabled }}
             - name: tls-admin
               mountPath: "/tls-admin"

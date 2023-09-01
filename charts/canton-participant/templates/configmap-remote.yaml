@@ -57,7 +57,7 @@ data:
       }
       {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
       remote-domain-managers {
-        {{ .Values.bootstrap.remoteSequencer.domainAlias }} {
+        {{ .Values.bootstrap.remoteSequencer.domain.alias }} {
           {{- with .Values.testing.bootstrap.remoteDomainManager }}
           admin-api {
             address = {{ .host | quote }}
