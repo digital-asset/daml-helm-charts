@@ -26,6 +26,7 @@ PostgreSQL server versions `11` to `14` are supported by Canton and Daml service
 
 If you install each Helm chart once (Domain, Participant, HTTP JSON API service & Trigger service)
 using a shared PostgreSQL server for all databases, you should start with 4 vCPUs/cores and 16Go RAM.
+Check the storage to make sure you have enough space, IOPS and throughput available.
 
 ## Availability
 
@@ -64,8 +65,14 @@ The default JVM trust store with common public CA certificates will be used.
 ## Scaling
 
 In case your PostgreSQL server load gets high you can either or both:
-- Scale vertically using a bigger server with more CPU/RAM
+- Scale vertically using a bigger server with more CPU/RAM and faster storage
 - Scale horizontally and host each database on a different PostgreSQL server
+
+To achieve high performance under heavy workload, make sure your server has enough CPU/RAM and
+its storage has enough space, IOPS and throughput available.
+
+On most cloud providers' SaaS solution, the default storage max IOPS and max throughput are scaled according
+to its size, there might also be different tiers/types.
 
 ---
 ## Debugging

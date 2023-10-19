@@ -1,5 +1,5 @@
 {{/* This script must be idempotent, it can run again even if domain and participant(s) are already initialized */}}
-{{- if .Values.bootstrap.enabled }}
+{{- if .Values.bootstrapHook.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -12,7 +12,7 @@ metadata:
     {{- end }}
 data:
   bootstrap.canton: |
-    logger.info("Bootstrap start")
+    logger.info("Bootstrap script start")
 
     val domainManager = domainManagers.remote.head
     val mediator = mediators.remote.head
@@ -21,7 +21,7 @@ data:
     import com.digitalasset.canton.config.NonNegativeDuration
 
     logger.debug("Setting script commands timeout")
-    console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrap.commandsTimeout | quote }}).toSeconds))
+    console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrapHook.commandsTimeout | quote }}).toSeconds))
 
     nodes.remote.foreach { node =>
       logger.info(s"Waiting for ${node.name} to be running")
@@ -31,7 +31,7 @@ data:
     logger.info(s"Bootstrapping domain ${domainManager.name}")
     domainManager.setup.bootstrap_domain(Seq(sequencer), Seq(mediator))
 
-    {{ if .Values.testing.bootstrap.remoteParticipants -}}
+    {{ if .Values.testing.bootstrapHook.remoteParticipants -}}
     logger.info("Bootstrapping participant(s)")
     participants.remote.foreach { participant =>
       logger.info(s"Waiting for participant ${participant.name} to be initialized")
@@ -53,16 +53,8 @@ data:
 
       logger.info(s"Pinging participant ${participant.name} to make sure everything is alright")
       participant.health.ping(participant)
-
-      logger.info(s"Setting participant ${participant.name} resource limits")
-      participant.resources.set_resource_limits(
-        ResourceLimits(
-          maxRate = Some({{ .Values.bootstrap.participants.resourceLimits.maxRate }}),
-          maxDirtyRequests = Some({{ .Values.bootstrap.participants.resourceLimits.maxDirtyRequests }})
-        )
-      )
     }
     {{- end }}
 
-    logger.info("Bootstrap succeeded")
+    logger.info("Bootstrap script succeeded")
 {{- end }}

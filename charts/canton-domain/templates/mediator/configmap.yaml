@@ -36,3 +36,7 @@ data:
   mediator-override.conf: |
   {{- . | nindent 4 }}
   {{- end }}
+  {{- with .Values.mediator.bootstrapScript }}
+  mediator.canton: |
+  {{- . | nindent 4 }}
+  {{- end }}

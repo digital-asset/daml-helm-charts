@@ -57,3 +57,7 @@ data:
   sequencer-override.conf: |
   {{- . | nindent 4 }}
   {{- end }}
+  {{- with .Values.sequencer.bootstrapScript }}
+  sequencer.canton: |
+  {{- . | nindent 4 }}
+  {{- end }}

@@ -19,9 +19,9 @@ certificate = {{ .Values.authServices.certificate | quote }}
 Ensure domain ID is defined if want to use it in the bootstrap
 */}}
 {{- define "participant.bootstrapDomainId" -}}
-{{- if .Values.bootstrap.remoteSequencer.domain.id }}
-val domainId = Some(DomainId.tryFromString({{ .Values.bootstrap.remoteSequencer.domain.id | quote }}))
+{{- if .Values.bootstrapHook.remoteSequencer.domain.id }}
+val domainId = Some(DomainId.tryFromString({{ .Values.bootstrapHook.remoteSequencer.domain.id | quote }}))
 {{- else }}
-{{- fail "empty value for key 'bootstrap.remoteSequencer.domain.id' (Canton Domain ID)" }}
+{{- fail "empty value for key 'bootstrapHook.remoteSequencer.domain.id' (Canton Domain ID)" }}
 {{- end }}
 {{- end -}}

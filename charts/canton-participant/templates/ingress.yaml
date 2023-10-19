@@ -27,7 +27,7 @@ spec:
             pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
-                name: {{ template "canton.fullname" . }}
+                name: {{ template "common.fullname" . }}
                 port:
                   name: public
   {{- with .Values.ingress.tls }}

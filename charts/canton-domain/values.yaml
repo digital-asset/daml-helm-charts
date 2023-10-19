@@ -73,8 +73,8 @@ storage:
   ## @param storage.existingSecret.name Name of existing secret with user credentials
   ## @param storage.existingSecret.key Name of key in existing secret with user password
   ## Secret must be manually created in the namespace
-  ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
-  ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+  ## If existingSecret.name is set: environment variable PGPASSWORD will be mounted from the scepcified secret/key
+  ## Alternatively you can set key PGPASSWORD directly in environmentSecrets
   ##
   existingSecret:
     name: ""
@@ -96,51 +96,41 @@ storage:
   ##
   maxConnections: 10
 
-## @section Bootstrap configuration (not merged with `common` parameters)
+## @section Bootstrap Hook configuration (not merged with `common` parameters)
 
-## @extra bootstrap Initialize your domain and remote participant(s) listed in `testing.bootstrap.remoteParticipants`
-## @param bootstrap.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
-## @param bootstrap.backoffLimit Specifies the number of retries before marking this job failed
-## @param bootstrap.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
-## @param bootstrap.commandsTimeout Script commands timeout. Example values: `10s`, `10m' or `10h`
+## @extra bootstrapHook Initialize your domain and remote participant(s) listed in `testing.bootstrapHook.remoteParticipants`
+## @param bootstrapHook.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
+## @param bootstrapHook.backoffLimit Specifies the number of retries before marking this job failed
+## @param bootstrapHook.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
+## @param bootstrapHook.commandsTimeout Script commands timeout. Example values: `10s`, `10m' or `10h`
 ##
-bootstrap:
-  enabled: false
+bootstrapHook:
+  enabled: true
   backoffLimit: 2
   activeDeadlineSeconds: 600
   commandsTimeout: "1m"
-  ## @extra bootstrap.participants Participant(s) specific settings
-  ## @extra bootstrap.participants.resourceLimits Set Participant(s) resource limits
-  ## @param bootstrap.participants.resourceLimits.maxRate The maximum rate of command submissions through the Ledger API. Negative value = no limit.
-  ## @param bootstrap.participants.resourceLimits.maxDirtyRequests The maximum number of dirty requests. Negative value = no limit.
-  ## ref: https://docs.daml.com/canton/usermanual/performance.html
-  ##
-  participants:
-    resourceLimits:
-      maxRate: 10000
-      maxDirtyRequests: 1000
-  ## @extra bootstrap.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
-  ## @param bootstrap.logLevel.root Canton and external libraries, but not `stdout`
-  ## @param bootstrap.logLevel.canton Only the Canton logger
-  ## @param bootstrap.logLevel.stdout Usually the text displayed in the Canton console
+  ## @extra bootstrapHook.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+  ## @param bootstrapHook.logLevel.root Canton and external libraries, but not `stdout`
+  ## @param bootstrapHook.logLevel.canton Only the Canton logger
+  ## @param bootstrapHook.logLevel.stdout Usually the text displayed in the Canton console
   ##
   logLevel:
     root: "INFO"
     canton: "INFO"
     stdout: "INFO"
-  ## @extra bootstrap.environment Environment variables (not merged with `common.environment`)
-  ## @param bootstrap.environmentSecrets Secret environment variables (not merged with `common.environmentSecrets`)
-  ## @param bootstrap.environment.JDK_JAVA_OPTIONS Java launcher environment variable
+  ## @extra bootstrapHook.environment Environment variables (not merged with `common.environment`)
+  ## @param bootstrapHook.environmentSecrets Secret environment variables (not merged with `common.environmentSecrets`)
+  ## @param bootstrapHook.environment.JDK_JAVA_OPTIONS Java launcher environment variable
   ##
   environment:
     JDK_JAVA_OPTIONS: "-XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70"
   environmentSecrets: {}
-  ## @extra bootstrap.job Job and Helm hook configuration
-  ## @param bootstrap.job.annotations Job extra annotations
-  ## @param bootstrap.job.labels Job extra labels
-  ## @param bootstrap.job.helmHook Annotation `helm.sh/hook` value
-  ## @param bootstrap.job.helmHookWeight Annotation `helm.sh/hook-weight` value
-  ## @param bootstrap.job.helmHookDeletePolicy Annotation `helm.sh/hook-delete-policy` value
+  ## @extra bootstrapHook.job Job and Helm hook configuration
+  ## @param bootstrapHook.job.annotations Job extra annotations
+  ## @param bootstrapHook.job.labels Job extra labels
+  ## @param bootstrapHook.job.helmHook Annotation `helm.sh/hook` value
+  ## @param bootstrapHook.job.helmHookWeight Annotation `helm.sh/hook-weight` value
+  ## @param bootstrapHook.job.helmHookDeletePolicy Annotation `helm.sh/hook-delete-policy` value
   ## ref: https://helm.sh/docs/topics/charts_hooks/
   ##
   job:
@@ -149,12 +139,12 @@ bootstrap:
     helmHook: "post-install,post-upgrade"
     helmHookWeight: "5"
     helmHookDeletePolicy: "before-hook-creation"
-  ## @param bootstrap.pod.annotations Extra annotations for bootstrap Job pods
-  ## @param bootstrap.pod.labels Extra labels for bootstrap Job pods
-  ## @param bootstrap.pod.securityContext.enabled Enable bootstrap Job pods Security Context
-  ## @param bootstrap.pod.securityContext.fsGroup Special supplemental GID that applies to all containers in a pod
-  ## @param bootstrap.pod.securityContext.fsGroupChangePolicy Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always`
-  ## @param bootstrap.pod.securityContext.sysctls List of namespaced sysctls used for the pod
+  ## @param bootstrapHook.pod.annotations Extra annotations for bootstrap Job pods
+  ## @param bootstrapHook.pod.labels Extra labels for bootstrap Job pods
+  ## @param bootstrapHook.pod.securityContext.enabled Enable bootstrap Job pods Security Context
+  ## @param bootstrapHook.pod.securityContext.fsGroup Special supplemental GID that applies to all containers in a pod
+  ## @param bootstrapHook.pod.securityContext.fsGroupChangePolicy Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always`
+  ## @param bootstrapHook.pod.securityContext.sysctls List of namespaced sysctls used for the pod
   ##
   pod:
     annotations: {}
@@ -164,11 +154,11 @@ bootstrap:
       fsGroup: 65532
       fsGroupChangePolicy: "Always"
       sysctls: []
-  ## @param bootstrap.securityContext.enabled Enable bootstrap container Security Context
-  ## @param bootstrap.securityContext.readOnlyRootFilesystem Whether this container has a read-only root filesystem
-  ## @param bootstrap.securityContext.runAsGroup The GID to run the entrypoint of the container process
-  ## @param bootstrap.securityContext.runAsNonRoot Indicates that the container must run as a non-root user
-  ## @param bootstrap.securityContext.runAsUser The UID to run the entrypoint of the container process
+  ## @param bootstrapHook.securityContext.enabled Enable bootstrap container Security Context
+  ## @param bootstrapHook.securityContext.readOnlyRootFilesystem Whether this container has a read-only root filesystem
+  ## @param bootstrapHook.securityContext.runAsGroup The GID to run the entrypoint of the container process
+  ## @param bootstrapHook.securityContext.runAsNonRoot Indicates that the container must run as a non-root user
+  ## @param bootstrapHook.securityContext.runAsUser The UID to run the entrypoint of the container process
   ##
   securityContext:
     enabled: true
@@ -176,39 +166,39 @@ bootstrap:
     runAsGroup: 65532
     runAsNonRoot: true
     runAsUser: 65532
-  ## @param bootstrap.affinity Affinity for pods assignment
-  ## @param bootstrap.nodeSelector Node labels for pods assignment
-  ## @extra bootstrap.resources Resources requests/limits for bootstrap container
-  ## @param bootstrap.tolerations Tolerations for pods assignment
+  ## @param bootstrapHook.affinity Affinity for pods assignment
+  ## @param bootstrapHook.nodeSelector Node labels for pods assignment
+  ## @extra bootstrapHook.resources Resources requests/limits for bootstrap container
+  ## @param bootstrapHook.tolerations Tolerations for pods assignment
   ##
   affinity: {}
   nodeSelector: {}
   resources:
-    ## @skip bootstrap.resources.requests.cpu
-    ## @skip bootstrap.resources.limits.cpu
-    ## @skip bootstrap.resources.limits.memory
+    ## @skip bootstrapHook.resources.requests.cpu
+    ## @skip bootstrapHook.resources.limits.cpu
+    ## @skip bootstrapHook.resources.limits.memory
     requests:
       cpu: 100m
     limits:
       cpu: 1
       memory: 1Gi
   tolerations: []
-  ## @param bootstrap.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
-  ## @param bootstrap.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ## @param bootstrapHook.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param bootstrapHook.extraVolumes Specify extra list of additional volumes for bootstrap pod
   ##
   extraVolumeMounts: []
   extraVolumes: []
-  ## @param bootstrap.serviceAccount.annotations Service Account extra annotations
-  ## @param bootstrap.serviceAccount.labels Service Account extra labels
-  ## @param bootstrap.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
-  ## @param bootstrap.serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
+  ## @param bootstrapHook.serviceAccount.annotations Service Account extra annotations
+  ## @param bootstrapHook.serviceAccount.labels Service Account extra labels
+  ## @param bootstrapHook.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+  ## @param bootstrapHook.serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
   ##
   serviceAccount:
     annotations: {}
     labels: {}
     automountServiceAccountToken: false
     extraSecrets: []
-  ## @param bootstrap.rbac.rules Custom RBAC rules to set
+  ## @param bootstrapHook.rbac.rules Custom RBAC rules to set
   ##
   rbac:
     rules: []
@@ -333,8 +323,8 @@ common:
       ##
       enabled: false
       ## @extra common.tls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-public`
-      ## @param common.tls.public.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-      ## @param common.tls.public.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+      ## @param common.tls.public.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+      ## @param common.tls.public.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
       ## @param common.tls.public.certManager.issuerName Issuer name
       ##
       certManager:
@@ -362,8 +352,8 @@ common:
       ##
       enabled: false
       ## @extra common.tls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-admin`
-      ## @param common.tls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-      ## @param common.tls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+      ## @param common.tls.admin.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+      ## @param common.tls.admin.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
       ## @param common.tls.admin.certManager.issuerName Issuer name
       ##
       certManager:
@@ -395,8 +385,8 @@ common:
       ##
       enabled: false
       ## @extra common.mtls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-admin`
-      ## @param common.mtls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-      ## @param common.mtls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+      ## @param common.mtls.admin.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+      ## @param common.mtls.admin.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
       ## @param common.mtls.admin.certManager.issuerName Issuer name
       ##
       certManager:
@@ -411,7 +401,7 @@ common:
       chain: "/mtls-admin/tls.crt"
       key: "/mtls-admin/tls.key"
 
-  ## @section Common parameters for the `boostrap` and `console` only
+  ## @section Common parameters for the `bootstrap` and `console` only
   ##
   ## @extra common.features Enable additional commands
   ## @param common.features.enablePreviewCommands Enable preview commands (unstable)
@@ -484,8 +474,8 @@ manager:
     ## @param manager.storage.existingSecret.name Name of existing secret with user credentials
     ## @param manager.storage.existingSecret.key Name of key in existing secret with user password
     ## Secret must be manually created in the namespace
-    ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
-    ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+    ## If existingSecret.name is set: environment variable PGPASSWORD will be mounted from the scepcified secret/key
+    ## Alternatively you can set key PGPASSWORD directly in environmentSecrets
     ##
     existingSecret:
       name: ""
@@ -494,8 +484,10 @@ manager:
     ##
     maxConnections: 10
   ## @param manager.configOverride Raw Canton configuration file `canton { ... }`
+  ## @param manager.bootstrapScript Raw Canton bootstrap script, automatically ran after node has started
   ##
   configOverride: ""
+  bootstrapScript: ""
   ## @param manager.ports.admin Admin API container port (gRPC)
   ## @param manager.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
   ## @param manager.ports.metrics Promotheus exporter container port (HTTP)
@@ -562,8 +554,8 @@ manager:
     ports:
       admin: 4801
       metrics: 8081
-  ## @param manager.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
-  ## @param manager.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ## @param manager.extraVolumeMounts Specify extra list of additional volumeMounts for manager container
+  ## @param manager.extraVolumes Specify extra list of additional volumes for manager pod
   ##
   extraVolumeMounts: []
   extraVolumes: []
@@ -621,8 +613,8 @@ mediator:
     ## @param mediator.storage.existingSecret.name Name of existing secret with user credentials
     ## @param mediator.storage.existingSecret.key Name of key in existing secret with user password
     ## Secret must be manually created in the namespace
-    ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
-    ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+    ## If existingSecret.name is set: environment variable PGPASSWORD will be mounted from the scepcified secret/key
+    ## Alternatively you can set key PGPASSWORD directly in environmentSecrets
     ##
     existingSecret:
       name: ""
@@ -631,8 +623,10 @@ mediator:
     ##
     maxConnections: 10
   ## @param mediator.configOverride Raw Canton configuration file `canton { ... }`
+  ## @param mediator.bootstrapScript Raw Canton bootstrap script, automatically ran after node has started
   ##
   configOverride: ""
+  bootstrapScript: ""
   ## @param mediator.ports.admin Admin API container port (gRPC)
   ## @param mediator.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
   ## @param mediator.ports.metrics Promotheus exporter container port (HTTP)
@@ -699,8 +693,8 @@ mediator:
     ports:
       admin: 4602
       metrics: 8081
-  ## @param mediator.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
-  ## @param mediator.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ## @param mediator.extraVolumeMounts Specify extra list of additional volumeMounts for mediator container
+  ## @param mediator.extraVolumes Specify extra list of additional volumes for mediator pod
   ##
   extraVolumeMounts: []
   extraVolumes: []
@@ -754,8 +748,8 @@ sequencer:
     ## @param sequencer.storage.existingSecret.name Name of existing secret with user credentials
     ## @param sequencer.storage.existingSecret.key Name of key in existing secret with user password
     ## Secret must be manually created in the namespace
-    ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
-    ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+    ## If existingSecret.name is set: environment variable PGPASSWORD will be mounted from the scepcified secret/key
+    ## Alternatively you can set key PGPASSWORD directly in environmentSecrets
     ##
     existingSecret:
       name: ""
@@ -763,12 +757,14 @@ sequencer:
     ## @param sequencer.storage.maxConnections Database connection pool maximum connections
     ##
     maxConnections: 10
-  ## @param sequencer.config Sequencer extra configuration, to use along a custom `sequencer.type` (optional)
+  ## @param sequencer.config Sequencer extra configuration, to use along a custom `sequencer.type`
   ##
   config: ""
   ## @param sequencer.configOverride Raw Canton configuration file `canton { ... }`
+  ## @param sequencer.bootstrapScript Raw Canton bootstrap script, automatically ran after node has started
   ##
   configOverride: ""
+  bootstrapScript: ""
   ## @param sequencer.ports.public Ledger API container port (gRPC)
   ## @param sequencer.ports.admin Admin API container port (gRPC)
   ## @param sequencer.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
@@ -844,8 +840,8 @@ sequencer:
     sessionAffinity:
       enabled: true
       timeout: 3600
-  ## @param sequencer.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
-  ## @param sequencer.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ## @param sequencer.extraVolumeMounts Specify extra list of additional volumeMounts for sequencer container
+  ## @param sequencer.extraVolumes Specify extra list of additional volumes for sequencer pod
   ##
   extraVolumeMounts: []
   extraVolumes: []
@@ -853,7 +849,7 @@ sequencer:
   ## @param sequencer.ingress.annotations Ingress extra annotations
   ## @param sequencer.ingress.labels Ingress extra labels
   ## @param sequencer.ingress.className Set `ingressClassName` on the ingress record
-  ## @param sequencer.ingress.host Default host for the ingress resource (DNS record to cluster load balancer)
+  ## @param sequencer.ingress.host Fully qualified domain name of a network host
   ## @param sequencer.ingress.path Path to sequencer **public API**
   ## @param sequencer.ingress.pathType Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific`
   ## @param sequencer.ingress.tls Enable TLS configuration for `hostname`
@@ -920,24 +916,24 @@ sequencer:
 ## @section Automated testing configuration (do not use in production)
 
 testing:
-  bootstrap:
-    ## @param testing.bootstrap.remoteParticipants List of remote Canton participants, only the `bootstrap` and `console`  will connect to them.<br />`name` and `host` are mandatory for each of them, otherwise the default is used
-    ## @extra testing.bootstrap.remoteParticipants[*].name Participant name
-    ## @extra testing.bootstrap.remoteParticipants[*].host Participant hostname
-    ## @extra testing.bootstrap.remoteParticipants[*].ports.admin Participant admin port (gRPC)
-    ## @extra testing.bootstrap.remoteParticipants[*].tls.admin.enabled Enable TLS to Participant admin API
-    ## @extra testing.bootstrap.remoteParticipants[*].tls.admin.ca Participant TLS CA certificate
-    ## @extra testing.bootstrap.remoteParticipants[*].tls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-<participant_name>`
-    ## @extra testing.bootstrap.remoteParticipants[*].tls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-    ## @extra testing.bootstrap.remoteParticipants[*].tls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
-    ## @extra testing.bootstrap.remoteParticipants[*].tls.admin.certManager.issuerName Issuer name
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.enabled Enable mTLS to Participant admin API
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.chain Bootstrap and console mTLS certificate chain
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.key Bootstrap and console mTLS certificate key (PKCS-8)
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-<participant_name>`
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
-    ## @extra testing.bootstrap.remoteParticipants[*].mtls.admin.certManager.issuerName Issuer name
+  bootstrapHook:
+    ## @param testing.bootstrapHook.remoteParticipants List of remote Canton participants, only the `bootstrap` and `console`  will connect to them.<br />`name` and `host` are mandatory for each of them, otherwise the default is used
+    ## @extra testing.bootstrapHook.remoteParticipants[*].name Participant name
+    ## @extra testing.bootstrapHook.remoteParticipants[*].host Participant hostname
+    ## @extra testing.bootstrapHook.remoteParticipants[*].ports.admin Participant admin port (gRPC)
+    ## @extra testing.bootstrapHook.remoteParticipants[*].tls.admin.enabled Enable TLS to Participant admin API
+    ## @extra testing.bootstrapHook.remoteParticipants[*].tls.admin.ca Participant TLS CA certificate
+    ## @extra testing.bootstrapHook.remoteParticipants[*].tls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-<participant_name>`
+    ## @extra testing.bootstrapHook.remoteParticipants[*].tls.admin.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+    ## @extra testing.bootstrapHook.remoteParticipants[*].tls.admin.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
+    ## @extra testing.bootstrapHook.remoteParticipants[*].tls.admin.certManager.issuerName Issuer name
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.enabled Enable mTLS to Participant admin API
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.chain Bootstrap hook and console mTLS certificate chain
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.key Bootstrap hook and console mTLS certificate key (PKCS-8)
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-<participant_name>`
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
+    ## @extra testing.bootstrapHook.remoteParticipants[*].mtls.admin.certManager.issuerName Issuer name
     ##
     remoteParticipants: []
       # - name: "participant1"

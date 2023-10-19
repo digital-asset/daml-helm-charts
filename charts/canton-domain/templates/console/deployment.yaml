@@ -77,21 +77,20 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /canton/remote.conf
+              mountPath: /etc/canton
               readOnly: true
-              subPath: remote.conf
             {{- if .Values.common.tls.public.enabled }}
             - name: tls-public
-              mountPath: "/tls-public"
+              mountPath: /tls-public
               readOnly: true
             {{- end }}
             {{- if .Values.common.tls.admin.enabled }}
             - name: tls-admin
-              mountPath: "/tls-admin"
+              mountPath: /tls-admin
               readOnly: true
             {{- if .Values.common.mtls.admin.enabled }}
             - name: mtls-admin
-              mountPath: "/mtls-admin"
+              mountPath: /mtls-admin
               readOnly: true
             {{- end }}
             {{- end }}

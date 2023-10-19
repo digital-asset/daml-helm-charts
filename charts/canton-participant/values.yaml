@@ -51,10 +51,12 @@ certManager:
 ## @param participantName Mandatory Canton Participant name
 ## @param uniqueContractKeys When enabled, Participant can only connect to a Domain with unique contract keys enabled as well
 ## @param configOverride Raw Canton configuration file `canton { ... }`
+## @param bootstrapScript Raw Canton bootstrap script, automatically ran after node has started
 ##
 participantName: "participant1"
 uniqueContractKeys: false
 configOverride: ""
+bootstrapScript: ""
 
 ## @extra storage PostgreSQL configuration
 
@@ -71,8 +73,8 @@ storage:
   ## @param storage.existingSecret.name Name of existing secret with user credentials
   ## @param storage.existingSecret.key Name of key in existing secret with user password
   ## Secret must be manually created in the namespace
-  ## If existingSecret.name is set: environment variable CANTON_DB_PASSWORD will be mounted from the scepcified secret/key
-  ## Alternatively you can set key CANTON_DB_PASSWORD directly in environmentSecrets
+  ## If existingSecret.name is set: environment variable PGPASSWORD will be mounted from the scepcified secret/key
+  ## Alternatively you can set key PGPASSWORD directly in environmentSecrets
   ##
   existingSecret:
     name: ""
@@ -93,27 +95,30 @@ storage:
   ## @param storage.maxConnections Database connection pool maximum connections
   ##
   maxConnections: 10
+  ## @param storage.asyncCommitEnabled Enable database transaction asynchronous commits
+  ##
+  asyncCommitEnabled: true
 
-## @section Bootstrap configuration
+## @section Bootstrap Hook configuration
 
-## @extra bootstrap Initialize your participant, connecting to a remote sequencer
-## @param bootstrap.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
-## @param bootstrap.backoffLimit Specifies the number of retries before marking this job failed
-## @param bootstrap.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
-## @param bootstrap.commandsTimeout Script commands timeout. Example values: `10s`, `10m' or `10h`
+## @extra bootstrapHook Initialize your participant, connecting to a remote sequencer
+## @param bootstrapHook.enabled Enable Job (Helm chart hook), will create one or more ephemeral Pods
+## @param bootstrapHook.backoffLimit Specifies the number of retries before marking this job failed
+## @param bootstrapHook.activeDeadlineSeconds Specifies the duration in seconds relative to the startTime that the job may be continuously active before the system tries to terminate it
+## @param bootstrapHook.commandsTimeout Script commands timeout. Example values: `10s`, `10m' or `10h`
 ##
-bootstrap:
+bootstrapHook:
   enabled: false
   backoffLimit: 2
   activeDeadlineSeconds: 600
   commandsTimeout: "1m"
-  ## @extra bootstrap.remoteSequencer Remote sequencer connection configuration
+  ## @extra bootstrapHook.remoteSequencer Remote sequencer connection configuration
   remoteSequencer:
-    ## @param bootstrap.remoteSequencer.domain.alias Domain alias
-    ## @param bootstrap.remoteSequencer.domain.id Domain ID (mandatory if `verifyId` is `true`)
-    ## @param bootstrap.remoteSequencer.domain.verifyId Verify the ID of the domain this participant will connect to, strongly advised
-    ## @param bootstrap.remoteSequencer.host Sequencer host
-    ## @param bootstrap.remoteSequencer.port Sequencer port, if empty `""` HTTP/HTTPS default is used (`80`/`443`)
+    ## @param bootstrapHook.remoteSequencer.domain.alias Domain alias
+    ## @param bootstrapHook.remoteSequencer.domain.id Domain ID (mandatory if `verifyId` is `true`)
+    ## @param bootstrapHook.remoteSequencer.domain.verifyId Verify the ID of the domain this participant will connect to, strongly advised
+    ## @param bootstrapHook.remoteSequencer.host Sequencer host
+    ## @param bootstrapHook.remoteSequencer.port Sequencer port, if empty `""` HTTP/HTTPS default is used (`80`/`443`)
     ##
     domain:
       alias: "mydomain"
@@ -122,49 +127,49 @@ bootstrap:
     host: "mysequencer.domain.com"
     port: ""
     tls:
-      ## @param bootstrap.remoteSequencer.tls.enabled Enable TLS to Sequencer
+      ## @param bootstrapHook.remoteSequencer.tls.enabled Enable TLS to Sequencer
       ##
       enabled: false
-      ## @extra bootstrap.remoteSequencer.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-<domain_alias>`
-      ## @param bootstrap.remoteSequencer.tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-      ## @param bootstrap.remoteSequencer.tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
-      ## @param bootstrap.remoteSequencer.tls.certManager.issuerName Issuer name
+      ## @extra bootstrapHook.remoteSequencer.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-<domain_alias>`
+      ## @param bootstrapHook.remoteSequencer.tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
+      ## @param bootstrapHook.remoteSequencer.tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+      ## @param bootstrapHook.remoteSequencer.tls.certManager.issuerName Issuer name
       ##
       certManager:
         issuerGroup: ""
         issuerKind: ""
         issuerName: ""
-      ## @param bootstrap.remoteSequencer.tls.ca CA certificate, if empty `""` JVM default trust store is used
+      ## @param bootstrapHook.remoteSequencer.tls.ca CA certificate, if empty `""` JVM default trust store is used.<br />If TLS to the sequencer is enabled, a volume `tls-sequencer` is mounted to `/tls-sequencer`
       ##
-      ca: "/tls-mydomain/ca.crt"
-    ## @param bootstrap.remoteSequencer.initialRetryDelay Initial retry delay. Example values: `10s`, `10m' or `10h`
-    ## @param bootstrap.remoteSequencer.maxRetryDelay Maximum retry delay. Example values: `10s`, `10m' or `10h`
+      ca: "/tls-sequencer/ca.crt"
+    ## @param bootstrapHook.remoteSequencer.initialRetryDelay Initial retry delay. Example values: `10s`, `10m' or `10h`
+    ## @param bootstrapHook.remoteSequencer.maxRetryDelay Maximum retry delay. Example values: `10s`, `10m' or `10h`
     ##
     initialRetryDelay: "30s"
     maxRetryDelay: "10m"
 
-  ## @extra bootstrap.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
-  ## @param bootstrap.logLevel.root Canton and external libraries, but not `stdout`
-  ## @param bootstrap.logLevel.canton Only the Canton logger
-  ## @param bootstrap.logLevel.stdout Usually the text displayed in the Canton console
+  ## @extra bootstrapHook.logLevel Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR`
+  ## @param bootstrapHook.logLevel.root Canton and external libraries, but not `stdout`
+  ## @param bootstrapHook.logLevel.canton Only the Canton logger
+  ## @param bootstrapHook.logLevel.stdout Usually the text displayed in the Canton console
   ##
   logLevel:
     root: "INFO"
     canton: "INFO"
     stdout: "INFO"
-  ## @extra bootstrap.environment Environment variables
-  ## @param bootstrap.environmentSecrets Secret environment variables
-  ## @param bootstrap.environment.JDK_JAVA_OPTIONS Java launcher environment variable
+  ## @extra bootstrapHook.environment Environment variables
+  ## @param bootstrapHook.environmentSecrets Secret environment variables
+  ## @param bootstrapHook.environment.JDK_JAVA_OPTIONS Java launcher environment variable
   ##
   environment:
     JDK_JAVA_OPTIONS: "-XX:InitialRAMPercentage=70 -XX:MaxRAMPercentage=70"
   environmentSecrets: {}
-  ## @extra bootstrap.job Bootstrap Job and Helm hook configuration
-  ## @param bootstrap.job.annotations Job extra annotations
-  ## @param bootstrap.job.labels Job extra labels
-  ## @param bootstrap.job.helmHook Annotation `helm.sh/hook` value
-  ## @param bootstrap.job.helmHookWeight Annotation `helm.sh/hook-weight` value
-  ## @param bootstrap.job.helmHookDeletePolicy Annotation `helm.sh/hook-delete-policy` value
+  ## @extra bootstrapHook.job Bootstrap Job and Helm hook configuration
+  ## @param bootstrapHook.job.annotations Job extra annotations
+  ## @param bootstrapHook.job.labels Job extra labels
+  ## @param bootstrapHook.job.helmHook Annotation `helm.sh/hook` value
+  ## @param bootstrapHook.job.helmHookWeight Annotation `helm.sh/hook-weight` value
+  ## @param bootstrapHook.job.helmHookDeletePolicy Annotation `helm.sh/hook-delete-policy` value
   ## ref: https://helm.sh/docs/topics/charts_hooks/
   ##
   job:
@@ -173,12 +178,12 @@ bootstrap:
     helmHook: "post-install,post-upgrade"
     helmHookWeight: "5"
     helmHookDeletePolicy: "before-hook-creation"
-  ## @param bootstrap.pod.annotations Extra annotations for bootstrap Job pods
-  ## @param bootstrap.pod.labels Extra labels for bootstrap Job pods
-  ## @param bootstrap.pod.securityContext.enabled Enable bootstrap Job pods Security Context
-  ## @param bootstrap.pod.securityContext.fsGroup Special supplemental GID that applies to all containers in a pod
-  ## @param bootstrap.pod.securityContext.fsGroupChangePolicy Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always`
-  ## @param bootstrap.pod.securityContext.sysctls List of namespaced sysctls used for the pod
+  ## @param bootstrapHook.pod.annotations Extra annotations for bootstrap Job pods
+  ## @param bootstrapHook.pod.labels Extra labels for bootstrap Job pods
+  ## @param bootstrapHook.pod.securityContext.enabled Enable bootstrap Job pods Security Context
+  ## @param bootstrapHook.pod.securityContext.fsGroup Special supplemental GID that applies to all containers in a pod
+  ## @param bootstrapHook.pod.securityContext.fsGroupChangePolicy Defines behavior of changing ownership and permission of the volume before being exposed inside pods. Valid values are `OnRootMismatch` and `Always`
+  ## @param bootstrapHook.pod.securityContext.sysctls List of namespaced sysctls used for the pod
   ##
   pod:
     annotations: {}
@@ -188,11 +193,11 @@ bootstrap:
       fsGroup: 65532
       fsGroupChangePolicy: "Always"
       sysctls: []
-  ## @param bootstrap.securityContext.enabled Enable bootstrap container Security Context
-  ## @param bootstrap.securityContext.readOnlyRootFilesystem Whether this container has a read-only root filesystem
-  ## @param bootstrap.securityContext.runAsGroup The GID to run the entrypoint of the container process
-  ## @param bootstrap.securityContext.runAsNonRoot Indicates that the container must run as a non-root user
-  ## @param bootstrap.securityContext.runAsUser The UID to run the entrypoint of the container process
+  ## @param bootstrapHook.securityContext.enabled Enable bootstrap container Security Context
+  ## @param bootstrapHook.securityContext.readOnlyRootFilesystem Whether this container has a read-only root filesystem
+  ## @param bootstrapHook.securityContext.runAsGroup The GID to run the entrypoint of the container process
+  ## @param bootstrapHook.securityContext.runAsNonRoot Indicates that the container must run as a non-root user
+  ## @param bootstrapHook.securityContext.runAsUser The UID to run the entrypoint of the container process
   ##
   securityContext:
     enabled: true
@@ -200,41 +205,41 @@ bootstrap:
     runAsGroup: 65532
     runAsNonRoot: true
     runAsUser: 65532
-  ## @param bootstrap.affinity Affinity for pods assignment
-  ## @param bootstrap.nodeSelector Node labels for pods assignment
-  ## @extra bootstrap.resources Resources requests/limits for bootstrap container
-  ## @param bootstrap.tolerations Tolerations for pods assignment
+  ## @param bootstrapHook.affinity Affinity for pods assignment
+  ## @param bootstrapHook.nodeSelector Node labels for pods assignment
+  ## @extra bootstrapHook.resources Resources requests/limits for bootstrap container
+  ## @param bootstrapHook.tolerations Tolerations for pods assignment
   ##
   affinity: {}
   nodeSelector: {}
   resources:
-    ## @skip bootstrap.resources.requests.cpu
-    ## @skip bootstrap.resources.limits.cpu
-    ## @skip bootstrap.resources.limits.memory
+    ## @skip bootstrapHook.resources.requests.cpu
+    ## @skip bootstrapHook.resources.limits.cpu
+    ## @skip bootstrapHook.resources.limits.memory
     requests:
       cpu: 100m
     limits:
       cpu: 1
       memory: 1Gi
   tolerations: []
-  ## @param bootstrap.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
-  ## @param bootstrap.extraVolumes Specify extra list of additional volumes for bootstrap pod
+  ## @param bootstrapHook.extraVolumeMounts Specify extra list of additional volumeMounts for bootstrap container
+  ## @param bootstrapHook.extraVolumes Specify extra list of additional volumes for bootstrap pod
   ##
   extraVolumeMounts: []
   extraVolumes: []
-  ## @extra bootstrap.serviceAccount.create Creation of `ServiceAccount` for bootstrap pod(s) is enabled with global switch `serviceAccount.create`
-  ## @param bootstrap.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
-  ## @param bootstrap.serviceAccount.annotations Service Account extra annotations
-  ## @param bootstrap.serviceAccount.labels Service Account extra labels
-  ## @param bootstrap.serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
+  ## @extra bootstrapHook.serviceAccount.create Creation of `ServiceAccount` for bootstrap pod(s) is enabled with global switch `serviceAccount.create`
+  ## @param bootstrapHook.serviceAccount.automountServiceAccountToken API token automatically mounted into pods using this ServiceAccount. Set to `false` if pods do not use the K8s API
+  ## @param bootstrapHook.serviceAccount.annotations Service Account extra annotations
+  ## @param bootstrapHook.serviceAccount.labels Service Account extra labels
+  ## @param bootstrapHook.serviceAccount.extraSecrets List of extra secrets allowed to be used by pods running using this ServiceAccount
   ##
   serviceAccount:
     annotations: {}
     labels: {}
     automountServiceAccountToken: false
     extraSecrets: []
-  ## @extra bootstrap.rbac.create Creation of RBAC resources for bootstrap pod(s) is enabled with global switch `rbac.create`
-  ## @param bootstrap.rbac.rules Custom RBAC rules to set
+  ## @extra bootstrapHook.rbac.create Creation of RBAC resources for bootstrap pod(s) is enabled with global switch `rbac.create`
+  ## @param bootstrapHook.rbac.rules Custom RBAC rules to set
   ##
   rbac:
     rules: []
@@ -341,7 +346,7 @@ console:
     rules: []
 
 common:
-  ## @section Common parameters for the `boostrap` and `console` only
+  ## @section Common parameters for the `bootstrap` and `console` only
   ##
   ## @extra common.features Enable additional commands
   ## @param common.features.enablePreviewCommands Enable preview commands (unstable)
@@ -383,8 +388,8 @@ tls:
     ##
     enabled: false
     ## @extra tls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-public`
-    ## @param tls.public.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-    ## @param tls.public.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param tls.public.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+    ## @param tls.public.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
     ## @param tls.public.certManager.issuerName Issuer name
     ## @param tls.public.certManager.ipSans IP addresses the certificate will be requested for.
     ##
@@ -414,14 +419,16 @@ tls:
     ##
     enabled: false
     ## @extra tls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-admin`
-    ## @param tls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-    ## @param tls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param tls.admin.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+    ## @param tls.admin.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
     ## @param tls.admin.certManager.issuerName Issuer name
+    ## @param tls.admin.certManager.ipSans IP addresses the certificate will be requested for.
     ##
     certManager:
       issuerGroup: ""
       issuerKind: ""
       issuerName: ""
+      ipSans: "0.0.0.0"
     ## @param tls.admin.ca CA certificate, if empty `""` JVM default trust store is used
     ## @param tls.admin.chain Certificate chain
     ## @param tls.admin.key Certificate private key (PKCS-8)
@@ -447,8 +454,8 @@ mtls:
     ##
     enabled: false
     ## @extra mtls.public.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-public`
-    ## @param mtls.public.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-    ## @param mtls.public.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param mtls.public.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+    ## @param mtls.public.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
     ## @param mtls.public.certManager.issuerName Issuer name
     ##
     certManager:
@@ -467,8 +474,8 @@ mtls:
     ##
     enabled: false
     ## @extra mtls.admin.certManager Cert-manager CSI driver configuration (only used when TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-admin`
-    ## @param mtls.admin.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-    ## @param mtls.admin.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+    ## @param mtls.admin.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+    ## @param mtls.admin.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
     ## @param mtls.admin.certManager.issuerName Issuer name
     ##
     certManager:
@@ -499,6 +506,35 @@ authServices:
   certificate: "/path/to/jwt.crt"
   targetAudience: ""
   additionalAdminUserId: ""
+
+## @section Caching configuration
+
+## @param caching.maxContractStateCacheSize Maximum size of the Ledger API server's contract state cache.
+## @param caching.maxContractKeyStateCacheSize Maximum size of the Ledger API server's contract key state cache.
+## @param caching.maxTransactionsInMemoryFanOutBufferSize Maximum size of the Ledger API server's in-memory fan-out buffer for serving transaction streams.
+## @param caching.contractStore.maxSize Maximum size of the synchronisation protocol's contract store cache.
+## @param caching.contractStore.expireAfterAccess Expiry time after accessing values from the synchronisation protocol's contract store cache.
+##
+caching:
+  maxContractStateCacheSize: 1000000
+  maxContractKeyStateCacheSize: 1000000
+  maxTransactionsInMemoryFanOutBufferSize: 100000
+  contractStore:
+    maxSize: 1000000
+    expireAfterAccess: "10m"
+
+## @section Command Service configuration
+## @param commandService.maxCommandsInFlight Maximum number of submitted commands waiting to be completed in parallel. The default upstream value (256) is too low.
+## @param commandService.maxRate The maximum rate of command submissions through the Ledger API. Negative value = no limit.
+## @param commandService.maxDirtyRequests The maximum number of dirty requests. Negative value = no limit.
+## @param commandService.maxBurstFactor The burst factor which will trigger the enforcement of maxRate.
+## ref: https://docs.daml.com/canton/usermanual/performance.html
+##
+commandService:
+  maxCommandsInFlight: 10000
+  maxRate: 200
+  maxDirtyRequests: 500
+  maxBurstFactor: 10
 
 ## @section Container ports
 
@@ -616,7 +652,7 @@ service:
 ## @param ingress.annotations Ingress extra annotations
 ## @param ingress.labels Ingress extra labels
 ## @param ingress.className Set `ingressClassName` on the ingress record
-## @param ingress.host Default host for the ingress resource (DNS record to cluster load balancer)
+## @param ingress.host Fully qualified domain name of a network host
 ## @param ingress.path Path to participant Ledger API
 ## @param ingress.pathType Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific`
 ## @param ingress.tls Enable TLS configuration for `hostname`
@@ -702,45 +738,45 @@ metrics:
 ## @section Automated testing configuration (do not use in production)
 
 testing:
-  bootstrap:
-    ## @param testing.bootstrap.automaticDomainRegistration Automatically adds the participant in the domain allow-list.
+  bootstrapHook:
+    ## @param testing.bootstrapHook.automaticDomainRegistration Automatically adds the participant in the domain allow-list.
     automaticDomainRegistration: false
-    ## @extra testing.bootstrap.remoteDomainManager Remote domain manager connection configuration
+    ## @extra testing.bootstrapHook.remoteDomainManager Remote domain manager connection configuration
     remoteDomainManager:
-      ## @param testing.bootstrap.remoteDomainManager.host Domain manager host
-      ## @param testing.bootstrap.remoteDomainManager.port Domain manager port
+      ## @param testing.bootstrapHook.remoteDomainManager.host Domain manager host
+      ## @param testing.bootstrapHook.remoteDomainManager.port Domain manager port
       host: ""
       port: 4801
       tls:
-        ## @param testing.bootstrap.remoteDomainManager.tls.enabled Enable TLS to Domain manager
+        ## @param testing.bootstrapHook.remoteDomainManager.tls.enabled Enable TLS to Domain manager
         ##
         enabled: false
-        ## @extra testing.bootstrap.remoteDomainManager.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-domain-manager`
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
-        ## @param testing.bootstrap.remoteDomainManager.tls.certManager.issuerName Issuer name
+        ## @extra testing.bootstrapHook.remoteDomainManager.tls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/tls-domain-manager`
+        ## @param testing.bootstrapHook.remoteDomainManager.tls.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+        ## @param testing.bootstrapHook.remoteDomainManager.tls.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
+        ## @param testing.bootstrapHook.remoteDomainManager.tls.certManager.issuerName Issuer name
         ##
         certManager:
           issuerGroup: ""
           issuerKind: ""
           issuerName: ""
-        ## @param testing.bootstrap.remoteDomainManager.tls.ca CA certificate, if empty `""` JVM default trust store is used
+        ## @param testing.bootstrapHook.remoteDomainManager.tls.ca CA certificate, if empty `""` JVM default trust store is used
         ##
         ca: "/tls-domain-manager/ca.crt"
       mtls:
-        ## @param testing.bootstrap.remoteDomainManager.mtls.enabled Enable mTLS to Domain manager
+        ## @param testing.bootstrapHook.remoteDomainManager.mtls.enabled Enable mTLS to Domain manager
         ##
         enabled: false
-        ## @extra testing.bootstrap.remoteDomainManager.mtls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-domain-manager`
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
-        ## @param testing.bootstrap.remoteDomainManager.mtls.certManager.issuerName Issuer name
+        ## @extra testing.bootstrapHook.remoteDomainManager.mtls.certManager Cert-manager CSI driver configuration (only used if TLS is enabled and `issuerName` is defined), will automatically mount certificates in folder `/mtls-domain-manager`
+        ## @param testing.bootstrapHook.remoteDomainManager.mtls.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+        ## @param testing.bootstrapHook.remoteDomainManager.mtls.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
+        ## @param testing.bootstrapHook.remoteDomainManager.mtls.certManager.issuerName Issuer name
         ##
         certManager:
           issuerGroup: ""
           issuerKind: ""
           issuerName: ""
-        ## @param testing.bootstrap.remoteDomainManager.mtls.chain Certificate chain
-        ## @param testing.bootstrap.remoteDomainManager.mtls.key Certificate private key (PKCS-8)
+        ## @param testing.bootstrapHook.remoteDomainManager.mtls.chain Certificate chain
+        ## @param testing.bootstrapHook.remoteDomainManager.mtls.key Certificate private key (PKCS-8)
         chain: "/mtls-domain-manager/tls.crt"
         key: "/mtls-domain-manager/tls.key"

@@ -63,9 +63,12 @@ spec:
             - "--log-level-root={{ .Values.common.logLevel.root }}"
             - "--log-level-canton={{ .Values.common.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
-            - "--config=/canton/sequencer.conf"
+            - "--config=/etc/canton/sequencer.conf"
             {{- if .Values.sequencer.configOverride }}
-            - "--config=/canton/sequencer-override.conf"
+            - "--config=/etc/canton/sequencer-override.conf"
+            {{- end }}
+            {{- if .Values.sequencer.bootstrapScript }}
+            - "--bootstrap=/etc/canton/sequencer.canton"
             {{- end }}
           envFrom:
             {{- if or .Values.common.environment .Values.sequencer.environment }}
@@ -78,7 +81,7 @@ spec:
             {{- end }}
           env:
           {{- if .Values.sequencer.storage.existingSecret.name }}
-            - name: CANTON_DB_PASSWORD
+            - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.sequencer.storage.existingSecret.name }}
@@ -124,33 +127,26 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /canton/sequencer.conf
-              subPath: sequencer.conf
+              mountPath: /etc/canton
               readOnly: true
-            {{- if .Values.sequencer.configOverride }}
-            - name: config
-              mountPath: /canton/sequencer-override.conf
-              subPath: sequencer-override.conf
-              readOnly: true
-            {{- end }}
             {{- if .Values.common.tls.public.enabled }}
             - name: tls-public
-              mountPath: "/tls-public"
+              mountPath: /tls-public
               readOnly: true
             {{- end }}
             {{- if .Values.common.tls.admin.enabled }}
             - name: tls-admin
-              mountPath: "/tls-admin"
+              mountPath: /tls-admin
               readOnly: true
             {{- if .Values.common.mtls.admin.enabled }}
             - name: mtls-admin
-              mountPath: "/mtls-admin"
+              mountPath: /mtls-admin
               readOnly: true
             {{- end }}
             {{- end }}
             {{- if .Values.storage.certificatesSecret }}
             - name: pgtls
-              mountPath: "/pgtls"
+              mountPath: /pgtls
               readOnly: true
             {{- end }}
             {{- with .Values.sequencer.extraVolumeMounts }}

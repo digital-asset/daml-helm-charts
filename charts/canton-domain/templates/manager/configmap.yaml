@@ -40,3 +40,7 @@ data:
   manager-override.conf: |
   {{- . | nindent 4 }}
   {{- end }}
+  {{- with .Values.manager.bootstrapScript }}
+  manager.canton: |
+  {{- . | nindent 4 }}
+  {{- end }}

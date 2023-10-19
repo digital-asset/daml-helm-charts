@@ -21,7 +21,7 @@ storage {
       serverName = {{ $top.Values.storage.host | quote }}
       portNumber = {{ $top.Values.storage.port }}
       user = {{ $component.storage.user | quote }}
-      password = ${?CANTON_DB_PASSWORD}
+      password = ${?PGPASSWORD}
       databaseName = {{ $component.storage.database | quote }}
       ssl = {{ $top.Values.storage.ssl }}
       {{- if $top.Values.storage.ssl }}

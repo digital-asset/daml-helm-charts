@@ -62,9 +62,12 @@ spec:
             - "--log-level-root={{ .Values.common.logLevel.root }}"
             - "--log-level-canton={{ .Values.common.logLevel.canton }}"
             - "--log-level-stdout={{ .Values.common.logLevel.stdout }}"
-            - "--config=/canton/mediator.conf"
+            - "--config=/etc/canton/mediator.conf"
             {{- if .Values.mediator.configOverride }}
-            - "--config=/canton/mediator-override.conf"
+            - "--config=/etc/canton/mediator-override.conf"
+            {{- end }}
+            {{- if .Values.mediator.bootstrapScript }}
+            - "--bootstrap=/etc/canton/mediator.canton"
             {{- end }}
           envFrom:
             {{- if or .Values.common.environment .Values.mediator.environment }}
@@ -77,7 +80,7 @@ spec:
             {{- end }}
           env:
           {{- if .Values.mediator.storage.existingSecret.name }}
-            - name: CANTON_DB_PASSWORD
+            - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.mediator.storage.existingSecret.name }}
@@ -121,28 +124,21 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /canton/mediator.conf
-              subPath: mediator.conf
+              mountPath: /etc/canton
               readOnly: true
-            {{- if .Values.mediator.configOverride }}
-            - name: config
-              mountPath: /canton/mediator-override.conf
-              subPath: mediator-override.conf
-              readOnly: true
-            {{- end }}
             {{- if .Values.common.tls.admin.enabled }}
             - name: tls-admin
-              mountPath: "/tls-admin"
+              mountPath: /tls-admin
               readOnly: true
             {{- if .Values.common.mtls.admin.enabled }}
             - name: mtls-admin
-              mountPath: "/mtls-admin"
+              mountPath: /mtls-admin
               readOnly: true
             {{- end }}
             {{- end }}
             {{- if .Values.storage.certificatesSecret }}
             - name: pgtls
-              mountPath: "/pgtls"
+              mountPath: /pgtls
               readOnly: true
             {{- end }}
             {{- with .Values.mediator.extraVolumeMounts }}

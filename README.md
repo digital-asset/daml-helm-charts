@@ -81,6 +81,8 @@ Please refer to the README of each Helm chart for detailed instructions on how t
 
 For further information refer to the [Daml documentation](https://docs.daml.com/).
 
+## [Changelog](./CHANGELOG.md)
+
 ## [Contributing guidelines](./CONTRIBUTING.md)
 
 ## License

@@ -54,9 +54,9 @@ spec:
           securityContext: {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
           args:
-            - "--config=/etc/trigger-service/trigger.conf"
             - "--log-level-root={{ .Values.logLevel }}"
             - "--log-encoder={{ .Values.logEncoder }}"
+            - "--config=/etc/trigger/trigger.conf"
           envFrom:
             {{- if .Values.environment }}
             - configMapRef:
@@ -68,7 +68,7 @@ spec:
             {{- end }}
           {{- if .Values.storage.existingSecret.name }}
           env:
-            - name: TRIGGER_DB_PASSWORD
+            - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.storage.existingSecret.name }}
@@ -104,22 +104,21 @@ spec:
             failureThreshold: 3
           volumeMounts:
             - name: config
-              mountPath: /etc/trigger-service/trigger.conf
-              subPath: trigger.conf
+              mountPath: /etc/trigger
               readOnly: true
             {{- if .Values.tls.enabled }}
             - name: tls
-              mountPath: "/tls"
+              mountPath: /tls
               readOnly: true
             {{- if .Values.mtls.enabled }}
             - name: mtls
-              mountPath: "/mtls"
+              mountPath: /mtls
               readOnly: true
             {{- end }}
             {{- end }}
             {{- if .Values.storage.certificatesSecret }}
             - name: pgtls
-              mountPath: "/pgtls"
+              mountPath: /pgtls
               readOnly: true
             {{- end }}
             {{- with .Values.extraVolumeMounts }}

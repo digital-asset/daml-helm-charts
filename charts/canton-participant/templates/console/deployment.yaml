@@ -77,38 +77,37 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /canton/remote.conf
+              mountPath: /etc/canton
               readOnly: true
-              subPath: remote.conf
             {{- if .Values.tls.public.enabled }}
             - name: tls-public
-              mountPath: "/tls-public"
+              mountPath: /tls-public
               readOnly: true
             {{- if .Values.mtls.public.enabled }}
             - name: mtls-public
-              mountPath: "/mtls-public"
+              mountPath: /mtls-public
               readOnly: true
             {{- end }}
             {{- end }}
             {{- if .Values.tls.admin.enabled }}
             - name: tls-admin
-              mountPath: "/tls-admin"
+              mountPath: /tls-admin
               readOnly: true
             {{- if .Values.mtls.admin.enabled }}
             - name: mtls-admin
-              mountPath: "/mtls-admin"
+              mountPath: /mtls-admin
               readOnly: true
             {{- end }}
             {{- end }}
-            {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
-            {{- with .Values.testing.bootstrap.remoteDomainManager }}
+            {{- if .Values.testing.bootstrapHook.automaticDomainRegistration }}
+            {{- with .Values.testing.bootstrapHook.remoteDomainManager }}
             {{- if .tls.enabled }}
             - name: tls-domain-manager
-              mountPath: "/tls-domain-manager"
+              mountPath: /tls-domain-manager
               readOnly: true
             {{- if .mtls.enabled }}
             - name: mtls-domain-manager
-              mountPath: "/mtls-domain-manager"
+              mountPath: /mtls-domain-manager
               readOnly: true
             {{- end }}
             {{- end }}
@@ -138,8 +137,8 @@ spec:
         {{- with .Values.console.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
-        {{- with .Values.testing.bootstrap.remoteDomainManager }}
+        {{- if .Values.testing.bootstrapHook.automaticDomainRegistration }}
+        {{- with .Values.testing.bootstrapHook.remoteDomainManager }}
         {{- if and .tls.enabled .tls.certManager.issuerName }}
         # Dummy certificate only used to mount the root CA certificate
         {{- include "certManager.csi" (list $ "bootstrap" "tls-domain-manager" .tls.certManager "") | indent 8 }}

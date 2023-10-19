@@ -14,7 +14,7 @@ storage {
       serverName = {{ .Values.storage.host | quote }}
       portNumber = {{ .Values.storage.port }}
       user = {{ .Values.storage.user | quote }}
-      password = ${?CANTON_DB_PASSWORD}
+      password = ${?PGPASSWORD}
       databaseName = {{ .Values.storage.database | quote }}
       ssl = {{ .Values.storage.ssl }}
       {{- if .Values.storage.ssl }}
