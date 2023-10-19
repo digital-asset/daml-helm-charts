@@ -13,7 +13,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-  json.conf: |
+  http-json.conf: |
     {
       server {
         address = "0.0.0.0"
@@ -43,7 +43,7 @@ data:
       query-store {
         base-config {
           user = {{ .Values.storage.user | quote }}
-          password = ${?JSON_API_DB_PASSWORD}
+          password = ${?PGPASSWORD}
           driver = "org.postgresql.Driver"
           url = {{ include "storage.url" . | trim | quote }}
           {{- with .Values.storage.tablePrefix }}

@@ -62,8 +62,8 @@ storage:
   ## @param storage.existingSecret.name Name of existing secret with user credentials
   ## @param storage.existingSecret.key Name of key in existing secret with user password
   ## Secret must be manually created in the namespace
-  ## If existingSecret.name is set: environment variable JSON_API_DB_PASSWORD will be mounted from the scepcified secret/key
-  ## Alternatively you can set key JSON_API_DB_PASSWORD directly in environmentSecrets
+  ## If existingSecret.name is set: environment variable PGPASSWORD will be mounted from the scepcified secret/key
+  ## Alternatively you can set key PGPASSWORD directly in environmentSecrets
   ##
   existingSecret:
     name: ""
@@ -115,8 +115,8 @@ tls:
   ##
   enabled: false
   ## @extra tls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/tls`
-  ## @param tls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-  ## @param tls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+  ## @param tls.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+  ## @param tls.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
   ## @param tls.certManager.issuerName Issuer name
   ##
   certManager:
@@ -142,8 +142,8 @@ mtls:
   ##
   enabled: false
   ## @extra mtls.certManager Cert-manager CSI driver configuration (only used when TLS is enabled), will automatically mount certificates in folder `/mtls`
-  ## @param mtls.certManager.issuerGroup Issuer group (optional), defaults to `certManager.issuerGroup` if empty
-  ## @param mtls.certManager.issuerKind Issuer kind (optional), defaults to `certManager.issuerKind` if empty
+  ## @param mtls.certManager.issuerGroup Issuer group, defaults to `certManager.issuerGroup` if empty
+  ## @param mtls.certManager.issuerKind Issuer kind, defaults to `certManager.issuerKind` if empty
   ## @param mtls.certManager.issuerName Issuer name
   ##
   certManager:
@@ -268,7 +268,7 @@ service:
 ## @param ingress.annotations Ingress extra annotations
 ## @param ingress.labels Ingress extra labels
 ## @param ingress.className Set `ingressClassName` on the ingress record
-## @param ingress.hostname Default host for the ingress resource
+## @param ingress.host Fully qualified domain name of a network host
 ## @param ingress.path Path to HTTP JSON API
 ## @param ingress.pathType Determines the interpretation of the `Path` matching.  Allowed values: `Exact`, `Prefix`, `ImplementationSpecific`
 ## @param ingress.tls Enable TLS configuration for `hostname`
@@ -278,7 +278,7 @@ ingress:
   annotations: {}
   labels: {}
   className: ""
-  hostname: "http-json.domain.com"
+  host: ""
   path: "/"
   pathType: "Prefix"
   tls: []

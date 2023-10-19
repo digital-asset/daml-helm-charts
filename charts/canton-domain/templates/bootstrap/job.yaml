@@ -1,14 +1,14 @@
-{{- if .Values.bootstrap.enabled }}
+{{- if .Values.bootstrapHook.enabled }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ template "common.fullname" . }}-bootstrap
   annotations:
-    "helm.sh/hook": {{ .Values.bootstrap.job.helmHook | quote }}
-    "helm.sh/hook-weight": {{ .Values.bootstrap.job.helmHookWeight | quote }}
-    "helm.sh/hook-delete-policy": {{ .Values.bootstrap.job.helmHookDeletePolicy | quote }}
-    {{- with .Values.bootstrap.job.annotations }}
+    "helm.sh/hook": {{ .Values.bootstrapHook.job.helmHook | quote }}
+    "helm.sh/hook-weight": {{ .Values.bootstrapHook.job.helmHookWeight | quote }}
+    "helm.sh/hook-delete-policy": {{ .Values.bootstrapHook.job.helmHookDeletePolicy | quote }}
+    {{- with .Values.bootstrapHook.job.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels: {{- include "common.labels" . | nindent 4 }}
@@ -16,12 +16,12 @@ metadata:
     {{- with .Values.commonLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.bootstrap.job.labels }}
+    {{- with .Values.bootstrapHook.job.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  backoffLimit: {{ .Values.bootstrap.backoffLimit }}
-  activeDeadlineSeconds: {{ .Values.bootstrap.activeDeadlineSeconds }}
+  backoffLimit: {{ .Values.bootstrapHook.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.bootstrapHook.activeDeadlineSeconds }}
   template:
     metadata:
       annotations:
@@ -29,7 +29,7 @@ spec:
         "checksum/env": {{ include (print $.Template.BasePath "/bootstrap/configmap-env.yaml") . | sha256sum | quote }}
         "checksum/secret": {{ include (print $.Template.BasePath "/bootstrap/secret-env.yaml") . | sha256sum | quote }}
         "checksum/script": {{ include (print $.Template.BasePath "/bootstrap/configmap.yaml") . | sha256sum | quote }}
-        {{- with .Values.bootstrap.pod.annotations }}
+        {{- with .Values.bootstrapHook.pod.annotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels: {{- include "common.labels" . | nindent 8 }}
@@ -37,7 +37,7 @@ spec:
         {{- with .Values.commonLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.bootstrap.pod.labels }}
+        {{- with .Values.bootstrapHook.pod.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -48,72 +48,68 @@ spec:
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: Never
-      {{- if .Values.bootstrap.pod.securityContext.enabled }}
-      securityContext: {{- omit .Values.bootstrap.pod.securityContext "enabled" | toYaml | nindent 8 }}
+      {{- if .Values.bootstrapHook.pod.securityContext.enabled }}
+      securityContext: {{- omit .Values.bootstrapHook.pod.securityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       containers:
         - name: canton
           image: {{ include "common.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
-          {{- if .Values.bootstrap.securityContext.enabled }}
-          securityContext: {{- omit .Values.bootstrap.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- if .Values.bootstrapHook.securityContext.enabled }}
+          securityContext: {{- omit .Values.bootstrapHook.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
           args:
             - "run"
             - "--log-profile=container"
             - "--log-encoder={{ .Values.common.logEncoder }}"
-            - "--log-level-root={{ .Values.bootstrap.logLevel.root }}"
-            - "--log-level-canton={{ .Values.bootstrap.logLevel.canton }}"
-            - "--log-level-stdout={{ .Values.bootstrap.logLevel.stdout }}"
-            - "--config=/canton/remote.conf"
-            - "/canton/bootstrap.canton"
+            - "--log-level-root={{ .Values.bootstrapHook.logLevel.root }}"
+            - "--log-level-canton={{ .Values.bootstrapHook.logLevel.canton }}"
+            - "--log-level-stdout={{ .Values.bootstrapHook.logLevel.stdout }}"
+            - "--config=/etc/canton/remote.conf"
+            - "/etc/canton/bootstrap.canton"
           envFrom:
-            {{- if .Values.bootstrap.environment }}
+            {{- if .Values.bootstrapHook.environment }}
             - configMapRef:
                 name: {{ include "common.fullname" . }}-bootstrap-envmap
             {{- end }}
-            {{- if .Values.bootstrap.environmentSecrets }}
+            {{- if .Values.bootstrapHook.environmentSecrets }}
             - secretRef:
                 name: {{ include "common.fullname" . }}-bootstrap-secretmap
             {{- end }}
-          {{- with .Values.bootstrap.resources }}
+          {{- with .Values.bootstrapHook.resources }}
           resources: {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: bootstrap
-              mountPath: /canton/bootstrap.canton
-              subPath: bootstrap.canton
-              readOnly: true
             - name: config
-              mountPath: /canton/remote.conf
-              subPath: remote.conf
+              mountPath: /etc/canton
               readOnly: true
             {{- if .Values.common.tls.public.enabled }}
             - name: tls-public
-              mountPath: "/tls-public"
+              mountPath: /tls-public
               readOnly: true
             {{- end }}
             {{- if .Values.common.tls.admin.enabled }}
             - name: tls-admin
-              mountPath: "/tls-admin"
+              mountPath: /tls-admin
               readOnly: true
             {{- if .Values.common.mtls.admin.enabled }}
             - name: mtls-admin
-              mountPath: "/mtls-admin"
+              mountPath: /mtls-admin
               readOnly: true
             {{- end }}
             {{- end }}
             {{ include "remoteParticipants.volumeMounts" . | nindent 12 | trim }}
-            {{- with .Values.bootstrap.extraVolumeMounts }}
+            {{- with .Values.bootstrapHook.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
-        - name: bootstrap
-          configMap:
-            name: {{ include "common.fullname" . }}-bootstrap
         - name: config
-          configMap:
-            name: {{ include "common.fullname" . }}-remote
+          projected:
+            sources:
+            - configMap:
+                name: {{ include "common.fullname" . }}-bootstrap
+            - configMap:
+                name: {{ include "common.fullname" . }}-remote
         {{- if and .Values.common.tls.public.enabled .Values.common.tls.public.certManager.issuerName }}
         # Dummy certificate only used to mount the root CA certificate
         {{- include "certManager.csi" (list . "bootstrap" "tls-public" .Values.common.tls.public.certManager "") | indent 8 }}
@@ -126,16 +122,16 @@ spec:
         {{- end }}
         {{- end }}
         {{ include "remoteParticipants.volumes" (list . "bootstrap") | nindent 8 | trim }}
-        {{- with .Values.bootstrap.extraVolumes }}
+        {{- with .Values.bootstrapHook.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.bootstrap.nodeSelector }}
+      {{- with .Values.bootstrapHook.nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.bootstrap.affinity }}
+      {{- with .Values.bootstrapHook.affinity }}
       affinity: {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.bootstrap.tolerations }}
+      {{- with .Values.bootstrapHook.tolerations }}
       tolerations: {{- toYaml . | nindent 8 }}
       {{- end }}
 {{- end }}

@@ -75,23 +75,13 @@ Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{- define "sequencer.url" -}}
-{{- if .Values.bootstrap.remoteSequencer.tls.enabled -}}
+{{- if .Values.bootstrapHook.remoteSequencer.tls.enabled -}}
 https
 {{- else -}}
 http
 {{- end -}}
-://{{ .Values.bootstrap.remoteSequencer.host }}
-{{- with .Values.bootstrap.remoteSequencer.port -}}
+://{{ .Values.bootstrapHook.remoteSequencer.host }}
+{{- with .Values.bootstrapHook.remoteSequencer.port -}}
 :{{ . }}
 {{- end -}}
-{{- end -}}
-
-{{/*
-Generate remote sequencer TLS name.
-
-Params:
-  - Context - Dict - Required. Current context for the template evaluation.
-*/}}
-{{- define "sequencer.tls.name" -}}
-{{- print "tls-" .Values.bootstrap.remoteSequencer.domain.alias -}}
 {{- end -}}

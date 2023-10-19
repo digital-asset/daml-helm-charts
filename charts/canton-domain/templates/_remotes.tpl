@@ -2,14 +2,14 @@
 {{/*
 Generate remote-participants configuration block.
 Ports and TLS configuration might be missing.
-The bootstrap and console are not using the remote participant(s) public API (aka Ledger API),
+The bootstrap hook and console are not using the remote participant(s) public API (aka Ledger API),
 hence the empty string address and default port number.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{ define "remoteParticipants" }}
-{{ range $remoteParticipant := .Values.testing.bootstrap.remoteParticipants }}
+{{ range $remoteParticipant := .Values.testing.bootstrapHook.remoteParticipants }}
 remote-participants {
   {{ $remoteParticipant.name }} {
     ledger-api {
@@ -34,20 +34,20 @@ remote-participants {
 {{ end }}
 
 {{/*
-Generate bootstrap and console TLS and mTLS certificate volumeMounts for remote participant(s) using the Cert-manager CSI driver.
+Generate bootstrap hook and console TLS and mTLS certificate volumeMounts for remote participant(s) using the Cert-manager CSI driver.
 
 Params:
   - Context - Dict - Required. Current context for the template evaluation.
 */}}
 {{- define "remoteParticipants.volumeMounts" }}
-{{- range $remoteParticipant := .Values.testing.bootstrap.remoteParticipants }}
+{{- range $remoteParticipant := .Values.testing.bootstrapHook.remoteParticipants }}
 {{- if (($remoteParticipant.tls).admin).enabled }}
 - name: tls-{{ $remoteParticipant.name }}
-  mountPath: "/tls-{{ $remoteParticipant.name }}"
+  mountPath: /tls-{{ $remoteParticipant.name }}
   readOnly: true
 {{- if (($remoteParticipant.mtls).admin).enabled }}
 - name: mtls-{{ $remoteParticipant.name }}
-  mountPath: "/mtls-{{ $remoteParticipant.name }}"
+  mountPath: /mtls-{{ $remoteParticipant.name }}
   readOnly: true
 {{- end }}
 {{- end }}
@@ -75,7 +75,7 @@ Params:
 {{- end -}}
 
 {{/*
-Generate bootstrap and console TLS and mTLS certificate volumes for remote participant(s) using the Cert-manager CSI driver.
+Generate bootstrap hook and console TLS and mTLS certificate volumes for remote participant(s) using the Cert-manager CSI driver.
 
 Optional sub keys:
 - "remoteParticipant.tls.admin.certManager.issuerGroup"
@@ -91,7 +91,7 @@ Params:
 {{- define "remoteParticipants.volumes" }}
 {{- $top              := index . 0 }}
 {{- $component        := index . 1 }}
-{{- range $remoteParticipant := $top.Values.testing.bootstrap.remoteParticipants }}
+{{- range $remoteParticipant := $top.Values.testing.bootstrapHook.remoteParticipants }}
 {{- if and (($remoteParticipant.tls).admin).enabled ((($remoteParticipant.tls).admin).certManager).issuerName }}
 # Dummy certificate only used to mount the root CA certificate
 {{- include "certManager.csi" (list $top $component (include "remoteParticipant.tls.name" $remoteParticipant.name) $remoteParticipant.tls.admin.certManager "") }}

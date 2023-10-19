@@ -1,5 +1,5 @@
 {{/* This script must be idempotent, it can run again even if this participant are already initialized */}}
-{{- if .Values.bootstrap.enabled }}
+{{- if .Values.bootstrapHook.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -12,7 +12,7 @@ metadata:
     {{- end }}
 data:
   bootstrap.canton: |
-    logger.info("Bootstrap start")
+    logger.info("Bootstrap script start")
 
     import com.digitalasset.canton.config.NonNegativeDuration
     import com.digitalasset.canton.participant.domain.DomainConnectionConfig
@@ -23,20 +23,20 @@ data:
     val participant = participants.remote.head
 
     logger.debug("Setting script commands timeout")
-    console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrap.commandsTimeout | quote }}).toSeconds))
+    console.set_command_timeout(NonNegativeDuration.ofSeconds(Duration({{ .Values.bootstrapHook.commandsTimeout | quote }}).toSeconds))
 
     logger.info(s"Waiting for participant to be running")
     participant.health.wait_for_running()
 
-    {{- if .Values.bootstrap.remoteSequencer.tls.enabled }}
+    {{- if .Values.bootstrapHook.remoteSequencer.tls.enabled }}
     logger.debug("TLS to sequencer is enabled")
     {{- else }}
     logger.warn("TLS to sequencer is disabled ⚠️")
     {{- end }}
 
-    val domainAlias = {{ .Values.bootstrap.remoteSequencer.domain.alias | quote }}
+    val domainAlias = {{ .Values.bootstrapHook.remoteSequencer.domain.alias | quote }}
 
-    {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
+    {{- if .Values.testing.bootstrapHook.automaticDomainRegistration }}
     val domainManager = domainManagers.remote.head
     val domainId = Some(domainManager.id)
     if (domainManager.participants.list.exists(_.item.participant == participant.id)) {
@@ -46,7 +46,7 @@ data:
       domainManager.participants.set_state(participant.id, ParticipantPermission.Submission, TrustLevel.Ordinary)
     }
     {{- else }}
-    {{- if .Values.bootstrap.remoteSequencer.domain.verifyId }}
+    {{- if .Values.bootstrapHook.remoteSequencer.domain.verifyId }}
     {{- include "participant.bootstrapDomainId" . | nindent 4 }}
     {{- else }}
     logger.warn("You are not checking the target domain ID, you could join any domain ⚠️")
@@ -56,9 +56,9 @@ data:
 
     val sequencerURL = {{ include "sequencer.url" . | quote }}
 
-    {{ if and .Values.bootstrap.remoteSequencer.tls.enabled .Values.bootstrap.remoteSequencer.tls.ca -}}
+    {{ if and .Values.bootstrapHook.remoteSequencer.tls.enabled .Values.bootstrapHook.remoteSequencer.tls.ca -}}
     logger.info("Loading sequencer CA certificate file")
-    val certificate = BinaryFileUtil.tryReadByteStringFromFile({{ .Values.bootstrap.remoteSequencer.tls.ca | quote }})
+    val certificate = BinaryFileUtil.tryReadByteStringFromFile({{ .Values.bootstrapHook.remoteSequencer.tls.ca | quote }})
     logger.info("Creating sequencer gRPC connection with custom certificate")
     val connection = GrpcSequencerConnection.tryCreate(sequencerURL, Some(certificate))
     {{ else -}}
@@ -72,8 +72,8 @@ data:
       false,
       domainId,
       100,
-      Some(NonNegativeFiniteDuration.tryOfSeconds(Duration({{ .Values.bootstrap.remoteSequencer.initialRetryDelay | quote }}).toSeconds)),
-      Some(NonNegativeFiniteDuration.tryOfSeconds(Duration({{ .Values.bootstrap.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
+      Some(NonNegativeFiniteDuration.tryOfSeconds(Duration({{ .Values.bootstrapHook.remoteSequencer.initialRetryDelay | quote }}).toSeconds)),
+      Some(NonNegativeFiniteDuration.tryOfSeconds(Duration({{ .Values.bootstrapHook.remoteSequencer.maxRetryDelay | quote }}).toSeconds))
     )
 
     if (participant.domains.is_registered(domainAlias)) {
@@ -91,5 +91,5 @@ data:
     participant.domains.reconnect(domainAlias)
     logger.info("Pinging participant to make sure everything is alright")
     participant.health.ping(participant)
-    logger.info("Bootstrap succeeded")
+    logger.info("Bootstrap script succeeded")
 {{- end }}

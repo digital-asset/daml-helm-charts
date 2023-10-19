@@ -1,4 +1,4 @@
-{{- if and .Values.bootstrap.enabled .Values.bootstrap.environment }}
+{{- if and .Values.bootstrapHook.enabled .Values.bootstrapHook.environment }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -10,7 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-{{- range $key,$value := .Values.bootstrap.environment }}
+{{- range $key,$value := .Values.bootstrapHook.environment }}
   {{ $key }}: {{ $value | quote }}
 {{- end }}
 {{- end }}

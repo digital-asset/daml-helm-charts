@@ -40,7 +40,7 @@ data:
 
       trigger-store {
         user = {{ .Values.storage.user | quote }}
-        password = ${?TRIGGER_DB_PASSWORD}
+        password = ${?PGPASSWORD}
         driver = "org.postgresql.Driver"
         url = {{ include "storage.url" . | trim | quote }}
         {{- with .Values.storage.tablePrefix }}

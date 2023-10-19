@@ -17,7 +17,13 @@ data:
 
           ledger-api {
             address = "0.0.0.0"
+            command-service {
+              max-commands-in-flight = {{ .Values.commandService.maxCommandsInFlight }}
+            }
             port = {{ .Values.ports.public }}
+            {{- if .Values.storage.asyncCommitEnabled }}
+            postgres-data-source.synchronous-commit = off
+            {{- end }}
             {{- if .Values.tls.public.enabled }}
             tls {
               cert-chain-file = {{ .Values.tls.public.chain | quote }}
@@ -52,6 +58,10 @@ data:
             }
             {{- end }}
             {{- end }}
+    
+            max-contract-state-cache-size = {{ .Values.caching.maxContractStateCacheSize }}
+            max-contract-key-state-cache-size = {{ .Values.caching.maxContractKeyStateCacheSize }}
+            max-transactions-in-memory-fan-out-buffer-size = {{ .Values.caching.maxTransactionsInMemoryFanOutBufferSize }}
           }
 
           admin-api {
@@ -68,8 +78,8 @@ data:
               client-auth = {
                 type = "require"
                 admin-client {
-                  cert-chain-file = ""
-                  private-key-file = ""
+                  cert-chain-file = {{ .Values.mtls.admin.chain | quote }}
+                  private-key-file = {{ .Values.mtls.admin.key | quote }}
                 }
               }
               {{- end }}
@@ -77,6 +87,13 @@ data:
               ciphers = {{ include "canton.tls.ciphers" .Values.tls.admin.ciphers }}
             }
             {{- end }}
+          }
+
+          caching {
+            contract-store {
+              maximum-size = {{ .Values.caching.contractStore.maxSize }}
+              expire-after-access = {{ .Values.caching.contractStore.expireAfterAccess | quote }}
+            }
           }
 
           init.parameters.unique-contract-keys = {{ .Values.uniqueContractKeys }}
@@ -101,7 +118,29 @@ data:
       }
       {{- end }}
     }
+  participant.canton: |
+    {{- with .Values.commandService }}
+    participants.local.head.resources.set_resource_limits(
+      ResourceLimits(
+        {{- if lt (int .maxRate) 0 }}
+        maxRate = None,
+        {{- else }}
+        maxRate = Some({{ .maxRate }}),
+        {{- end }}
+        {{- if lt (int .maxDirtyRequests) 0 }}
+        maxDirtyRequests = None,
+        {{- else }}
+        maxDirtyRequests = Some({{ .maxDirtyRequests }}),
+        {{- end }}
+        maxBurstFactor = {{ .maxBurstFactor }}
+      )
+    )
+    {{- end }}
+    {{- with .Values.bootstrapScript }}
+    {{- . | nindent 4 }}
+    {{- end }}
   {{- with .Values.configOverride }}
   participant-override.conf: |
   {{- . | nindent 4 }}
   {{- end }}
+    

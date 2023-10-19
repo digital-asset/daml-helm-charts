@@ -1,5 +1,5 @@
 {{/* Used in deployment-console.yaml, bootstrap/job.yaml */}}
-{{- if or .Values.bootstrap.enabled .Values.console.enabled }}
+{{- if or .Values.bootstrapHook.enabled .Values.console.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -55,10 +55,10 @@ data:
           }
         }
       }
-      {{- if .Values.testing.bootstrap.automaticDomainRegistration }}
+      {{- if .Values.testing.bootstrapHook.automaticDomainRegistration }}
       remote-domain-managers {
-        {{ .Values.bootstrap.remoteSequencer.domain.alias }} {
-          {{- with .Values.testing.bootstrap.remoteDomainManager }}
+        {{ .Values.bootstrapHook.remoteSequencer.domain.alias }} {
+          {{- with .Values.testing.bootstrapHook.remoteDomainManager }}
           admin-api {
             address = {{ .host | quote }}
             port = {{ .port }}
