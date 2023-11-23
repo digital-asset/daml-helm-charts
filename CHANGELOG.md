@@ -10,6 +10,37 @@
 | [Trigger] | `daml-trigger` Helm chart
 | [All] |All Helm charts
 
+## `0.6.0`
+
+* Daml Enterprise `2.7.5`
+* [Canton] Enable KMS to encrypt/decrypt the node private keys stored in database (key: `kms`)
+* [JSON] Add in-memory storage switch (key: `testing.inMemoryStorage`), should only be used in development environments
+* [JSON] Add static content configuration (key: `testing.staticContent`), should only be used in development environments
+* [JSON] Add all optional configuration parameters
+  ```yaml
+  packageReloadInterval: "5s"
+  maxInboundMessageSize: 4194304
+  packageMaxInboundMessageSize: 4194304
+  maxTemplateIdCacheEntries: 1000
+  healthTimeoutSeconds: 5
+
+  websocketConfig:
+    maxDuration: "120m"
+    heartbeatPeriod: "5s"
+    mode: "shaping"
+  ```
+* [All] Prevent Helm from using scientific notation for large integers (enforce type)
+
+#### Breaking changes ⚠️
+
+* [Domain] Scale back sequencer deployment to 1 replica by default (key: `sequencer.replicaCount`)
+* [JSON] Key `allowInsecureTokens` renamed to `testing.allowInsecureTokens`
+* [All] Traefik `2.10+` custom resources update: `traefik.containo.us` -> `traefik.io`
+
+#### Preview for Daml Enterprise `2.8.0`
+
+* [Participant][JSON] Enable custom JWT `scope` for authentication (key: `authServices.targetScope`)
+
 ## `0.5.0`
 
 * Daml Enterprise `2.7.4`

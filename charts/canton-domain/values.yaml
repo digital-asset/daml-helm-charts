@@ -454,6 +454,29 @@ common:
     runAsGroup: 65532
     runAsNonRoot: true
     runAsUser: 65532
+  ## @extra common.kms Key Management Service (KMS) configuration
+  ## @param common.kms.enabled Enable KMS to encrypt/decrypt the node private keys stored in database.<br />Configure only one provider (`aws` or `gcp`)
+  ## @param common.kms.auditLogging Enable logging of every call made to KMS
+  ##
+  kms:
+    enabled: false
+    auditLogging: false
+    ## @extra common.kms.aws AWS KMS specific options
+    ## @param common.kms.aws.region AWS region
+    ## @param common.kms.aws.multiRegion Allow this key to be replicated into other AWS regions
+    ##
+    aws:
+      region: ""
+      multiRegion: false
+    ## @extra common.kms.gcp GCP KMS specific options
+    ## @param common.kms.gcp.locationId GCP location ID
+    ## @param common.kms.gcp.projectId GCP project ID
+    ## @param common.kms.gcp.keyRingId GCP key ring ID
+    ##
+    gcp:
+      locationId: ""
+      projectId: ""
+      keyRingId: ""
   ## @section Network Policy
   ##
   ## @param common.networkpolicy.enabled Enable Network Policy definitions
@@ -488,6 +511,10 @@ manager:
   ##
   configOverride: ""
   bootstrapScript: ""
+  ## @param manager.kms.key Wrapper key<br />AWS KMS: key ARN, key alias or key ID<br />AWS GCP: full name like `projects/<project_name>/locations/<location>/keyRings/<key_ring_name>/cryptoKeys/<key_name>`
+  ##
+  kms:
+    key: ""
   ## @param manager.ports.admin Admin API container port (gRPC)
   ## @param manager.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
   ## @param manager.ports.metrics Promotheus exporter container port (HTTP)
@@ -627,6 +654,10 @@ mediator:
   ##
   configOverride: ""
   bootstrapScript: ""
+  ## @param mediator.kms.key Wrapper key<br />AWS KMS: key ARN, key alias or key ID<br />AWS GCP: full name like `projects/<project_name>/locations/<location>/keyRings/<key_ring_name>/cryptoKeys/<key_name>`
+  ##
+  kms:
+    key: ""
   ## @param mediator.ports.admin Admin API container port (gRPC)
   ## @param mediator.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
   ## @param mediator.ports.metrics Promotheus exporter container port (HTTP)
@@ -765,6 +796,10 @@ sequencer:
   ##
   configOverride: ""
   bootstrapScript: ""
+  ## @param sequencer.kms.key Wrapper key<br />AWS KMS: key ARN, key alias or key ID<br />AWS GCP: full name like `projects/<project_name>/locations/<location>/keyRings/<key_ring_name>/cryptoKeys/<key_name>`
+  ##
+  kms:
+    key: ""
   ## @param sequencer.ports.public Ledger API container port (gRPC)
   ## @param sequencer.ports.admin Admin API container port (gRPC)
   ## @param sequencer.ports.health Health check port for gRPC liveness and readiness probes, not exposed (TLS always disabled)
@@ -777,7 +812,7 @@ sequencer:
     metrics: 8081
   ## @param sequencer.replicaCount Number of Sequencer pods to deploy
   ##
-  replicaCount: 2
+  replicaCount: 1
   ## @param sequencer.environment Environment variables,merged with `common.environment`
   ## @param sequencer.environmentSecrets Secret environment variables,merged with `common.environmentSecrets`
   ##

@@ -104,10 +104,6 @@ ledgerAPI:
   host: "participant"
   port: 4001
 
-## @param allowInsecureTokens Allow connections without a reverse proxy providing HTTPS<br />**DO NOT ALLOW INSECURE TOKENS IN PRODUCTION**
-##
-allowInsecureTokens: false
-
 ## @section TLS configuration
 
 tls:
@@ -163,6 +159,36 @@ mtls:
 ##
 logLevel: "INFO"
 logEncoder: "plain"
+
+## @section Optional configuration parameters
+
+## @param packageReloadInterval Interval to poll for package updates. Example values: `500ms`, `5s`, `10m`, `1h` or `1d`
+packageReloadInterval: "5s"
+## @param maxInboundMessageSize Maximum inbound message size in bytes
+maxInboundMessageSize: 4194304
+## @param packageMaxInboundMessageSize Maximum inbound message size in bytes used for uploading and downloading package updates. Defaults to the `max-inbound-message-size` setting.
+packageMaxInboundMessageSize: 4194304
+## @param maxTemplateIdCacheEntries Maximum cache size in entries for storing surrogate template id mappings. Defaults to None
+maxTemplateIdCacheEntries: 1000
+## @param healthTimeoutSeconds Health check timeout in seconds
+healthTimeoutSeconds: 5
+
+## @extra websocketConfig Websocket configuration
+## @param websocketConfig.heartbeatPeriod Server-side heartbeat interval duration
+## @param websocketConfig.maxDuration Maximum websocket session duration
+## @param websocketConfig.mode Stream throttle-mode. Allowed values: `shaping`, `enforcing`
+##
+websocketConfig:
+  maxDuration: "120m"
+  heartbeatPeriod: "5s"
+  mode: "shaping"
+
+## @section Authentication configuration
+
+## @param authServices.targetScope Custom JWT token scope (parser default: `daml_ledger_api`)
+##
+authServices:
+  targetScope: ""
 
 ## @section Container ports
 
@@ -332,3 +358,18 @@ metrics:
     labelLimit: 0
     labelNameLengthLimit: 0
     labelValueLengthLimit: 0
+
+## @section Testing configuration (do not use in production)
+
+## @param testing.inMemoryStorage Use in-memory storage disabling the whole PostgreSQL `storage` configuration
+## @param testing.allowInsecureTokens Allow connections without a reverse proxy providing HTTPS
+## @extra testing.staticContent Static content configuration
+## @param testing.staticContent.prefix URL prefix
+## @param testing.staticContent.directory Local directory that will be mapped to the URL prefix
+##
+testing:
+  inMemoryStorage: false
+  allowInsecureTokens: false
+  staticContent:
+    prefix: ""
+    directory: ""

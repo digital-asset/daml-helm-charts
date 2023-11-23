@@ -466,6 +466,7 @@ ingressRouteTCP:
 | `authServices.url`                   | URL to JWKS (only used for type `jwt-rs-256-jwks`)                                                               | `https://mydomain.com/auth/jwks.json` |
 | `authServices.certificate`           | Path to certificate used to sign JWTs (only used for types `jwt-rs-256-crt`, `jwt-es-256-crt`, `jwt-es-512-crt`) | `/path/to/jwt.crt`                    |
 | `authServices.targetAudience`        | Custom JWT token audience                                                                                        | `""`                                  |
+| `authServices.targetScope`           | Custom JWT token scope (parser default: `daml_ledger_api`)                                                       | `""`                                  |
 | `authServices.additionalAdminUserId` | Additional Ledger admin user, the default `participant_admin` (created at startup)                               | `""`                                  |
 
 ### Caching configuration
@@ -486,6 +487,21 @@ ingressRouteTCP:
 | `commandService.maxRate`             | The maximum rate of command submissions through the Ledger API. Negative value = no limit.                             | `200`   |
 | `commandService.maxDirtyRequests`    | The maximum number of dirty requests. Negative value = no limit.                                                       | `500`   |
 | `commandService.maxBurstFactor`      | The burst factor which will trigger the enforcement of maxRate.                                                        | `10`    |
+
+### Key Management Service (KMS) configuration
+
+| Name                  | Description                                                                                                                                                                       | Value   |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `kms.enabled`         | Enable KMS to encrypt/decrypt the node private keys stored in database.<br />Configure only one provider (`aws` or `gcp`)                                                         | `false` |
+| `kms.auditLogging`    | Enable logging of every call made to KMS                                                                                                                                          | `false` |
+| `kms.key`             | Wrapper key<br />AWS KMS: key ARN, key alias or key ID<br />AWS GCP: full name like `projects/<project_name>/locations/<location>/keyRings/<key_ring_name>/cryptoKeys/<key_name>` | `""`    |
+| `kms.aws`             | AWS KMS specific options                                                                                                                                                          |         |
+| `kms.aws.region`      | AWS region                                                                                                                                                                        | `""`    |
+| `kms.aws.multiRegion` | Allow this key to be replicated into other AWS regions                                                                                                                            | `false` |
+| `kms.gcp`             | GCP KMS specific options                                                                                                                                                          |         |
+| `kms.gcp.locationId`  | GCP location ID                                                                                                                                                                   | `""`    |
+| `kms.gcp.projectId`   | GCP project ID                                                                                                                                                                    | `""`    |
+| `kms.gcp.keyRingId`   | GCP key ring ID                                                                                                                                                                   | `""`    |
 
 ### Container ports
 

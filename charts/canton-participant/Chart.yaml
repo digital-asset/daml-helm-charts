@@ -1,8 +1,8 @@
 ---
 apiVersion: v2
 name: "canton-participant"
-version: 0.5.0
-appVersion: 2.7.4
+version: 0.6.0
+appVersion: 2.7.5
 kubeVersion: ">= 1.22.0-0"
 description: "A Helm chart for Canton Participants"
 home: https://github.com/digital-asset/daml-helm-charts/tree/main/charts/canton-participant

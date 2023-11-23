@@ -39,6 +39,6 @@ storage {
 
     }
   }
-  max-connections = {{ $component.storage.maxConnections }}
+  max-connections = {{ int $component.storage.maxConnections }}
 }
 {{- end -}}

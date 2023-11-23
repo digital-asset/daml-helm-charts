@@ -44,6 +44,10 @@ data:
             {{- end }}
           }
 
+          {{- if .Values.common.kms.enabled }}
+          {{- include "canton.kms" (list . "sequencer") | indent 10 }}
+          {{- end }}
+
           monitoring.grpc-health-server {
             address = "0.0.0.0"
             port = {{ .Values.sequencer.ports.health }}
