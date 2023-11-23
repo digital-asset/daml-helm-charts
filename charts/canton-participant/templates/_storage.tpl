@@ -31,6 +31,6 @@ storage {
       {{- end }}
     }
   }
-  max-connections = {{ .Values.storage.maxConnections }}
+  max-connections = {{ int .Values.storage.maxConnections }}
 }
 {{- end -}}

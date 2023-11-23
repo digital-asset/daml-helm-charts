@@ -17,9 +17,6 @@ data:
 
           ledger-api {
             address = "0.0.0.0"
-            command-service {
-              max-commands-in-flight = {{ .Values.commandService.maxCommandsInFlight }}
-            }
             port = {{ .Values.ports.public }}
             {{- if .Values.storage.asyncCommitEnabled }}
             postgres-data-source.synchronous-commit = off
@@ -51,6 +48,9 @@ data:
               {{- with .Values.authServices.targetAudience }}
               target-audience = {{ . | quote }}
               {{- end }}
+              {{- with .Values.authServices.targetScope }}
+              target-scope = {{ . | quote }}
+              {{- end }}
             }]
             {{- with .Values.authServices.additionalAdminUserId }}
             user-management-service = {
@@ -58,10 +58,11 @@ data:
             }
             {{- end }}
             {{- end }}
-    
-            max-contract-state-cache-size = {{ .Values.caching.maxContractStateCacheSize }}
-            max-contract-key-state-cache-size = {{ .Values.caching.maxContractKeyStateCacheSize }}
-            max-transactions-in-memory-fan-out-buffer-size = {{ .Values.caching.maxTransactionsInMemoryFanOutBufferSize }}
+
+            command-service.max-commands-in-flight = {{ int .Values.commandService.maxCommandsInFlight }}
+            max-contract-state-cache-size = {{ int .Values.caching.maxContractStateCacheSize }}
+            max-contract-key-state-cache-size = {{ int .Values.caching.maxContractKeyStateCacheSize }}
+            max-transactions-in-memory-fan-out-buffer-size = {{ int .Values.caching.maxTransactionsInMemoryFanOutBufferSize }}
           }
 
           admin-api {
@@ -91,7 +92,7 @@ data:
 
           caching {
             contract-store {
-              maximum-size = {{ .Values.caching.contractStore.maxSize }}
+              maximum-size = {{ int .Values.caching.contractStore.maxSize }}
               expire-after-access = {{ .Values.caching.contractStore.expireAfterAccess | quote }}
             }
           }
@@ -99,6 +100,10 @@ data:
           init.parameters.unique-contract-keys = {{ .Values.uniqueContractKeys }}
 
           replication.enabled = true
+
+          {{- if .Values.kms.enabled }}
+          {{- include "canton.kms" . | nindent 10 }}
+          {{- end }}
 
           monitoring.grpc-health-server {
             address = "0.0.0.0"
@@ -125,14 +130,14 @@ data:
         {{- if lt (int .maxRate) 0 }}
         maxRate = None,
         {{- else }}
-        maxRate = Some({{ .maxRate }}),
+        maxRate = Some({{ int .maxRate }}),
         {{- end }}
         {{- if lt (int .maxDirtyRequests) 0 }}
         maxDirtyRequests = None,
         {{- else }}
-        maxDirtyRequests = Some({{ .maxDirtyRequests }}),
+        maxDirtyRequests = Some({{ int .maxDirtyRequests }}),
         {{- end }}
-        maxBurstFactor = {{ .maxBurstFactor }}
+        maxBurstFactor = {{ int .maxBurstFactor }}
       )
     )
     {{- end }}
@@ -143,4 +148,3 @@ data:
   participant-override.conf: |
   {{- . | nindent 4 }}
   {{- end }}
-    

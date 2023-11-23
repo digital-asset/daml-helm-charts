@@ -161,7 +161,6 @@ it will be mounted as files into folder `/tls`.
 | `storage.startMode`                 | How the DB schema should be handled. Allowed values: `start-only`, `create-only`, `create-if-needed-and-start`, `create-and-start`          | `create-and-start` |
 | `ledgerAPI.host`                    | Ledger API hostname                                                                                                                         | `participant`      |
 | `ledgerAPI.port`                    | Ledger API port                                                                                                                             | `4001`             |
-| `allowInsecureTokens`               | Allow connections without a reverse proxy providing HTTPS<br />**DO NOT ALLOW INSECURE TOKENS IN PRODUCTION**                               | `false`            |
 
 ### TLS configuration
 
@@ -189,6 +188,26 @@ it will be mounted as files into folder `/tls`.
 | ------------ | --------------------------------------------------------------------------------- | ------- |
 | `logLevel`   | Log4j logging levels. Allowed values: `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR` | `INFO`  |
 | `logEncoder` | Logging encoder. Allowed values: `plain`, `json`                                  | `plain` |
+
+### Optional configuration parameters
+
+| Name                              | Description                                                                                                                                   | Value     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `packageReloadInterval`           | Interval to poll for package updates. Example values: `500ms`, `5s`, `10m`, `1h` or `1d`                                                      | `5s`      |
+| `maxInboundMessageSize`           | Maximum inbound message size in bytes                                                                                                         | `4194304` |
+| `packageMaxInboundMessageSize`    | Maximum inbound message size in bytes used for uploading and downloading package updates. Defaults to the `max-inbound-message-size` setting. | `4194304` |
+| `maxTemplateIdCacheEntries`       | Maximum cache size in entries for storing surrogate template id mappings. Defaults to None                                                    | `1000`    |
+| `healthTimeoutSeconds`            | Health check timeout in seconds                                                                                                               | `5`       |
+| `websocketConfig`                 | Websocket configuration                                                                                                                       |           |
+| `websocketConfig.heartbeatPeriod` | Server-side heartbeat interval duration                                                                                                       | `5s`      |
+| `websocketConfig.maxDuration`     | Maximum websocket session duration                                                                                                            | `120m`    |
+| `websocketConfig.mode`            | Stream throttle-mode. Allowed values: `shaping`, `enforcing`                                                                                  | `shaping` |
+
+### Authentication configuration
+
+| Name                       | Description                                                | Value |
+| -------------------------- | ---------------------------------------------------------- | ----- |
+| `authServices.targetScope` | Custom JWT token scope (parser default: `daml_ledger_api`) | `""`  |
 
 ### Container ports
 
@@ -275,6 +294,16 @@ it will be mounted as files into folder `/tls`.
 | `metrics.podMonitor.labelLimit`               | Per-scrape limit on number of labels that will be accepted for a sample (Prometheus versions 2.27 and newer)       | `0`     |
 | `metrics.podMonitor.labelNameLengthLimit`     | Per-scrape limit on length of labels name that will be accepted for a sample (Prometheus versions 2.27 and newer)  | `0`     |
 | `metrics.podMonitor.labelValueLengthLimit`    | Per-scrape limit on length of labels value that will be accepted for a sample (Prometheus versions 2.27 and newer) | `0`     |
+
+### Testing configuration (do not use in production)
+
+| Name                              | Description                                                                  | Value   |
+| --------------------------------- | ---------------------------------------------------------------------------- | ------- |
+| `testing.inMemoryStorage`         | Use in-memory storage disabling the whole PostgreSQL `storage` configuration | `false` |
+| `testing.allowInsecureTokens`     | Allow connections without a reverse proxy providing HTTPS                    | `false` |
+| `testing.staticContent`           | Static content configuration                                                 |         |
+| `testing.staticContent.prefix`    | URL prefix                                                                   | `""`    |
+| `testing.staticContent.directory` | Local directory that will be mapped to the URL prefix                        | `""`    |
 
 ---
 ## License

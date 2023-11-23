@@ -17,12 +17,12 @@ data:
     {
       server {
         address = "0.0.0.0"
-        port = {{ .Values.ports.http }}
+        port = {{ int .Values.ports.http }}
       }
 
       ledger-api {
         address = {{ .Values.ledgerAPI.host | quote }}
-        port = {{ .Values.ledgerAPI.port }}
+        port = {{ int .Values.ledgerAPI.port }}
 
         {{- if .Values.tls.enabled }}
         tls {
@@ -40,6 +40,7 @@ data:
         {{- end }}
       }
 
+      {{- if not .Values.testing.inMemoryStorage }}
       query-store {
         base-config {
           user = {{ .Values.storage.user | quote }}
@@ -49,16 +50,46 @@ data:
           {{- with .Values.storage.tablePrefix }}
           tablePrefix = {{ . | quote }}
           {{- end }}
-          pool-size = {{ .Values.storage.poolSize }}
-          min-idle = {{ .Values.storage.minIdle }}
+          pool-size = {{ int .Values.storage.poolSize }}
+          min-idle = {{ int .Values.storage.minIdle }}
           idle-timeout = {{ .Values.storage.idleTimeout | quote }}
           connection-timeout = {{ .Values.storage.connectionTimeout | quote }}
         }
 
         start-mode = {{ .Values.storage.startMode | quote }}
       }
+      {{- end }}
 
-      allow-insecure-tokens = {{ .Values.allowInsecureTokens }}
+      package-reload-interval = {{ .Values.packageReloadInterval | quote }}
+      max-inbound-message-size = {{ int .Values.maxInboundMessageSize }}
+      package-max-inbound-message-size = {{ int .Values.packageMaxInboundMessageSize }}
+      max-template-id-cache-entries = {{ int .Values.maxTemplateIdCacheEntries }}
+      health-timeout-seconds = {{ int .Values.healthTimeoutSeconds }}
+
+      {{ with .Values.websocketConfig }}
+      websocket-config {
+        max-duration = {{ .maxDuration | quote }}
+        heartbeat-period = {{ .heartbeatPeriod | quote }}
+        mode = {{ .mode | quote }}
+      }
+      {{ end }}
+
+      {{- with .Values.authServices.targetScope }}
+      auth-config {
+        target-scope = {{ . | quote }}
+      }
+      {{- end }}
+
+      {{- with .Values.testing.allowInsecureTokens }}
+      allow-insecure-tokens = {{ . }}
+      {{- end }}
+
+      {{- if or .Values.testing.staticContent.prefix .Values.testing.staticContent.directory}}
+      static-content {
+        prefix = {{ .Values.testing.staticContent.prefix | quote }}
+        directory = {{ .Values.testing.staticContent.directory | quote }}
+      }
+      {{- end }}
 
       {{- if .Values.metrics.enabled }}
       metrics {
