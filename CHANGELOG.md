@@ -10,6 +10,10 @@
 | [Trigger] | `daml-trigger` Helm chart
 | [All] |All Helm charts
 
+## `0.6.1`
+
+* Daml Enterprise `2.8.1`
+
 ## `0.6.0`
 
 * Daml Enterprise `2.7.5`
