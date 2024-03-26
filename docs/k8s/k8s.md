@@ -2029,7 +2029,7 @@ Note that the parameters section overrides any value in the `values.yaml` file, 
 1. Authenticate the repo for the [Daml Enterprise Deployment Resources](https://github.com/DACH-NY/daml-enterprise-deployment-blueprints/): 
 
 ```
-argocd repo add https://github.com/DACH-NY/daml-enterprise-deployment-blueprints.git –username &<your-username> –password <your-password>
+argocd repo add https://github.com/DACH-NY/daml-enterprise-deployment-blueprints.git –username <your-username> –password <your-password>
 ```
 
 2.  Apply the application file: 
