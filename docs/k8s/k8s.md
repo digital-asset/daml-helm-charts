@@ -2026,12 +2026,19 @@ Note that the parameters section overrides any value in the `values.yaml` file, 
 
 
 
-1. Authenticate the repo for the [Daml Enterprise Deployment Resources](https://github.com/DACH-NY/daml-enterprise-deployment-blueprints/): .. code-block:: bash \
-argocd repo add [https://github.com/DACH-NY/daml-enterprise-deployment-blueprints.git](https://github.com/DACH-NY/daml-enterprise-deployment-blueprints.git) –username &lt;your-username> –password &lt;your-password>
-2.  Apply the application file: \
+1. Authenticate the repo for the [Daml Enterprise Deployment Resources](https://github.com/DACH-NY/daml-enterprise-deployment-blueprints/): 
 
-**Azure** \
-`kubectl -n argocd apply -f azure/argocd/kubernetes-image-puller.yaml`
+```
+argocd repo add https://github.com/DACH-NY/daml-enterprise-deployment-blueprints.git –username &<your-username> –password <your-password>
+```
+
+2.  Apply the application file: 
+
+**Azure** 
+
+```
+kubectl -n argocd apply -f azure/argocd/kubernetes-image-puller.yaml
+```
 
 **AWS**
 
