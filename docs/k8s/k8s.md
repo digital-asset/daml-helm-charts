@@ -1902,7 +1902,7 @@ participant1-canton-participant-647b99cb8b-dbzrw    1/1     Running     0       
 **Azure**
 
 
-Switch the `kubectl` context and open an SSH tunnel to the private Kubernetes API: \
+1. Switch the `kubectl` context and open an SSH tunnel to the private Kubernetes API: \
 `cd azure/terraform/`
 
 
@@ -1912,12 +1912,31 @@ make kubectl-proxy
 ```
 
 
-1. Open a new terminal at the root of this repository
+2. Open a new terminal at the root of this repository
 
 Deploy everything with Helmfile: 
 
 ```
 cd azure/helmfile/
+helmfile apply --skip-diff-on-install
+```
+
+**AWS**
+
+1. Switch the kubectl context and open an SSH tunnel to the private Kubernetes API:
+
+```
+cd aws/terraform/
+./bootstraps/merge-kubeconfig.sh
+make kubectl-proxy
+```
+
+2. Open a new terminal at the root of this repository
+
+Deploy everything with Helmfile:
+
+```
+cd aws/helmfile/
 helmfile apply --skip-diff-on-install
 ```
 
@@ -2209,11 +2228,17 @@ Here are selected Kubernetes resource types and concepts that are relevant to ac
 
 
 1. [Service method](https://kubernetes.io/docs/concepts/services-networking/service/)
-    1. Sends workload only to Pods that are ready.
+
+    * Sends workload only to Pods that are ready.
+
 2. [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) > [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) > [Pods](https://kubernetes.io/docs/concepts/workloads/pods/)
-    2. The Scheduler tries to reach the number of ready Pods you request at all times.
+
+    * The Scheduler tries to reach the number of ready Pods you request at all times.
+
 3. [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
-    3. Ensures that a copy of a certain Pod runs on all nodes.
+
+    * Ensures that a copy of a certain Pod runs on all nodes.
+
 4. [Health probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)
-    4. Allows Kubernetes to determine which Pods may serve traffic or need to be restarted.
-    5. 
+
+    * Allows Kubernetes to determine which Pods may serve traffic or need to be restarted. 
