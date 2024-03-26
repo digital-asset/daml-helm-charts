@@ -129,8 +129,7 @@ ssh-keygen -m PEM -t rsa -b 4096 -f /path/to/ssh/key -C 'bastion@zero.k8s'
 
 ### Set up your cloud account
 
-**Azure**AWS
-**TK ADD AWS**
+**Azure**
 
 Log in to Azure and select the target subscription (if you have multiple ones):
 
@@ -141,12 +140,17 @@ az account list
 az account set --subscription <subscription_id>
 ```
 
+**AWS**
 
+Sign in to AWS with the account you would like to use. You may do this in multiple ways — for example, using SSO:
+
+```
+aws sso login --profile <your_profile>
+```
 
 ### Configure Terraform
 
-**Azure**AWS
-**TK ADD AWS**
+**Azure**
 
 To configure Terraform for your Azure subscription, follow these steps:
 
@@ -157,7 +161,15 @@ To configure Terraform for your Azure subscription, follow these steps:
 * Create your own backend configuration
 * Copy and customize the variables file [sample.tfvars](https://github.com/DACH-NY/daml-enterprise-deployment-blueprints/blob/main/azure/terraform/sample.tfvars). Use the resource group you just created. You can use the file name `terraform.tfvars` to avoid passing the argument `--var-file=/path/to/file.tfvars` on each run.
 
-> **Note:** There are multiple ways to [configure the backend](https://developer.hashicorp.com/terraform/language/settings/backends/configuration) and manage different environments (development, staging, production, and so on) within the same repository. Select the appropriate solution for your needs. For local testing, use the [Terraform default backend](https://developer.hashicorp.com/terraform/language/settings/backends/configuration#default-backend).
+**AWS**
+
+To configure Terraform for your AWS account, follow these steps:
+
+* Create your own backend configuration
+* Copy and customize the variables file sample.tfvars. You can use the file name terraform.tfvars to avoid passing the argument --var-file=/path/to/file.tfvars on each run.
+
+
+**Note:** There are multiple ways to [configure the backend](https://developer.hashicorp.com/terraform/language/settings/backends/configuration) and manage different environments (development, staging, production, and so on) within the same repository. Select the appropriate solution for your needs. For local testing, use the [Terraform default backend](https://developer.hashicorp.com/terraform/language/settings/backends/configuration#default-backend).
 
 
 To learn more about Terraform, consult the [Terraform documentation](https://developer.hashicorp.com/terraform/tutorials).
@@ -287,8 +299,7 @@ make bastion
 
 ### Default private IPv4 addressing plan
 
-**Azure**AWS
-**TK ADD AWS**
+**Azure**
 
 <table>
   <tr>
