@@ -60,9 +60,11 @@ data:
             {{- end }}
 
             command-service.max-commands-in-flight = {{ int .Values.commandService.maxCommandsInFlight }}
-            max-contract-state-cache-size = {{ int .Values.caching.maxContractStateCacheSize }}
-            max-contract-key-state-cache-size = {{ int .Values.caching.maxContractKeyStateCacheSize }}
-            max-transactions-in-memory-fan-out-buffer-size = {{ int .Values.caching.maxTransactionsInMemoryFanOutBufferSize }}
+            index-service {
+              max-contract-state-cache-size = {{ int .Values.caching.maxContractStateCacheSize }}
+              max-contract-key-state-cache-size = {{ int .Values.caching.maxContractKeyStateCacheSize }}
+              max-transactions-in-memory-fan-out-buffer-size = {{ int .Values.caching.maxTransactionsInMemoryFanOutBufferSize }}
+            }
           }
 
           admin-api {

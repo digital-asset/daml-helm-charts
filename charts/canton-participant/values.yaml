@@ -518,11 +518,11 @@ authServices:
 ## @param caching.contractStore.expireAfterAccess Expiry time after accessing values from the synchronisation protocol's contract store cache.
 ##
 caching:
-  maxContractStateCacheSize: 1000000
-  maxContractKeyStateCacheSize: 1000000
-  maxTransactionsInMemoryFanOutBufferSize: 100000
+  maxContractStateCacheSize: 10000
+  maxContractKeyStateCacheSize: 10000
+  maxTransactionsInMemoryFanOutBufferSize: 1000
   contractStore:
-    maxSize: 1000000
+    maxSize: 10000
     expireAfterAccess: "10m"
 
 ## @section Command Service configuration
